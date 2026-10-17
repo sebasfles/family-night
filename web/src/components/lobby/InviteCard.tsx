@@ -27,7 +27,7 @@ export function InviteCard({ code }: { code: string }) {
     >
       <div className="flex flex-col items-center gap-1">
         <p className="text-base font-semibold text-cream/70">Código de la sala</p>
-        <p className="font-mono text-6xl font-bold tracking-[0.2em] text-moon">{code}</p>
+        <p className="pl-[0.2em] font-mono text-6xl font-bold tracking-[0.2em] text-moon">{code}</p>
       </div>
       <div className="flex w-full flex-col gap-3 sm:flex-row">
         <Button variant="secondary" className="sm:flex-1" onClick={() => void copy()}>

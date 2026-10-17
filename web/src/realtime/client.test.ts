@@ -1,57 +1,8 @@
 import type { RoomEvent } from '@family-night/shared';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { snapshot } from '../test/app';
+import { FakeSocket } from '../test/fake-socket';
 import { BACKOFF_MAX_MS, realtimeConfigFromEnv, RoomChannel } from './client';
-
-class FakeSocket {
-  static instances: FakeSocket[] = [];
-  readonly url: string;
-  readonly protocols: string[];
-  readyState: number = WebSocket.CONNECTING;
-  sent: Record<string, unknown>[] = [];
-  onopen: (() => void) | null = null;
-  onmessage: ((message: { data: string }) => void) | null = null;
-  onclose: (() => void) | null = null;
-  onerror: (() => void) | null = null;
-
-  constructor(url: string, protocols: string[]) {
-    this.url = url;
-    this.protocols = protocols;
-    FakeSocket.instances.push(this);
-  }
-
-  send(data: string) {
-    this.sent.push(JSON.parse(data) as Record<string, unknown>);
-  }
-
-  close() {
-    this.readyState = WebSocket.CLOSED;
-  }
-
-  open() {
-    this.readyState = WebSocket.OPEN;
-    this.onopen?.();
-  }
-
-  receive(message: object) {
-    this.onmessage?.({ data: JSON.stringify(message) });
-  }
-
-  serverClose() {
-    this.readyState = WebSocket.CLOSED;
-    this.onclose?.();
-  }
-
-  subscription() {
-    return this.sent.find((message) => message.type === 'subscribe');
-  }
-
-  acceptSubscription() {
-    this.open();
-    this.receive({ type: 'connection_ack', connectionTimeoutMs: 300_000 });
-    this.receive({ type: 'subscribe_success', id: this.subscription()?.id });
-  }
-}
 
 const config = {
   httpDomain: 'abc.appsync-api.us-east-1.amazonaws.com',

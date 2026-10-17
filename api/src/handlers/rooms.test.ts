@@ -8,7 +8,8 @@ import {
   type RoomResponse,
   type RoomSnapshot,
 } from '@family-night/shared';
-import { describe, expect, test } from 'vitest';
+import { GetCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
+import { describe, expect, test, vi } from 'vitest';
 import { call, createHarness, newPlayer, type Harness } from '../test/harness.ts';
 
 async function json<T>(response: Response | Promise<Response>, status = 200): Promise<T> {
@@ -364,6 +365,40 @@ describe('presence and lazy host transfer', () => {
       lastSeenAt: new Date(harness.now() - 20_000).toISOString(),
     });
     expect(harness.published).toEqual([]);
+  });
+
+  test('a plain ping writes only presence, so a field changed after its read survives', async () => {
+    const { harness, member, code } = await roomWith(2);
+    const guest = member(1);
+    const { roomMembers } = harness.deps.repos;
+    const list = roomMembers.list.bind(roomMembers);
+    vi.spyOn(roomMembers, 'list').mockImplementationOnce(async (roomCode, nowMs) => {
+      const read = await list(roomCode, nowMs);
+      await harness.client.send(
+        new UpdateCommand({
+          TableName: harness.tables.roomMembers,
+          Key: { roomCode, playerId: guest.playerId },
+          UpdateExpression: 'SET totalScore = :score',
+          ExpressionAttributeValues: { ':score': 7 },
+        }),
+      );
+      return read;
+    });
+    harness.advance(20_000);
+
+    await json<RoomResponse>(call(harness, guest, 'POST', `/api/rooms/${code}/ping`));
+
+    const { Item } = await harness.client.send(
+      new GetCommand({
+        TableName: harness.tables.roomMembers,
+        Key: { roomCode: code, playerId: guest.playerId },
+      }),
+    );
+    expect(Item).toMatchObject({
+      totalScore: 7,
+      lastSeenAt: new Date(harness.now()).toISOString(),
+      lastActiveAt: new Date(harness.now()).toISOString(),
+    });
   });
 
   test('away greys the member out at once, then a ping brings them back, publishing once each', async () => {

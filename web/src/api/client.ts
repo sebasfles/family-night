@@ -42,17 +42,17 @@ interface RequestOptions {
   keepalive?: boolean;
 }
 
-async function headersFor(method: string, body: string): Promise<Record<string, string>> {
+const EMPTY_BODY_SHA256 = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+
+function headersFor(body: string, bodyHash: string | null): Record<string, string> {
   const headers: Record<string, string> = {};
   const identity = loadIdentity();
   if (identity) {
     headers[PLAYER_ID_HEADER] = identity.playerId;
     headers[PLAYER_TOKEN_HEADER] = identity.playerToken;
   }
-  if (method !== 'GET') {
-    headers['x-amz-content-sha256'] = await sha256Hex(body);
-    if (body) headers['content-type'] = 'application/json';
-  }
+  if (bodyHash) headers['x-amz-content-sha256'] = bodyHash;
+  if (body) headers['content-type'] = 'application/json';
   return headers;
 }
 
@@ -71,11 +71,12 @@ export async function request<T>(
   options: RequestOptions = {},
 ): Promise<T> {
   const body = options.body === undefined ? '' : JSON.stringify(options.body);
+  const bodyHash = method === 'GET' ? null : body ? await sha256Hex(body) : EMPTY_BODY_SHA256;
   let response: Response;
   try {
     response = await fetch(`/api${path}`, {
       method,
-      headers: await headersFor(method, body),
+      headers: headersFor(body, bodyHash),
       ...(body ? { body } : {}),
       ...(options.keepalive ? { keepalive: true } : {}),
     });

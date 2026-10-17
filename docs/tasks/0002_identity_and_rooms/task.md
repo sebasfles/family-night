@@ -159,3 +159,16 @@ Deferred:
 
 - The palette is always dark; the plan asks for dark mode by `prefers-color-scheme`, which implies a light theme too. Out of this task.
 - `index.html` `og:description` reads "Juegos para la familia, cada uno desde su celular." instead of the plan's "Únete a la sala y juguemos"; left as 0001 shipped it.
+
+### Round 2
+
+Applied all 6 findings:
+
+1. The non-bump write is `RoomMembersRepo.updatePresence`, an `UpdateExpression` on `lastSeenAt`, `lastActiveAt` and `ttl` with `attribute_exists`; `putExisting` is gone. Integration test: a `totalScore` written between the read and the ping survives.
+2. Bodyless POSTs send the constant empty-body hash with no `await` before `fetch`; only requests with a body await the digest. Tests: `api.away` has reached `fetch` before it returns, and the lobby's away call is in the mock right after the `visibilitychange` dispatch.
+3. `src/routes/$code/realtime.test.tsx` runs the route with a realtime config and `FakeSocket` (now shared in `src/test/fake-socket.ts`): subscription credentials, `member.kicked` for self goes home with "Te sacaron de la sala" (and for someone else does not), `room.updated` applied only when newer, and every `subscribe_success`, after a reconnect too, refetches the room.
+4. The room code and the home code field get a left padding equal to their tracking, so they center optically.
+5. When the list shows menus, rows without one reserve the 48 px slot; scores align.
+6. `window.scrollTo` is stubbed in `test-setup.ts`; the web run has no jsdom noise. `vi.unstubAllEnvs()` joins the cleanup.
+
+Screenshots refreshed. No disagreements, nothing deferred this round.

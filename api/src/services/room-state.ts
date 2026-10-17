@@ -98,7 +98,7 @@ async function commit(
   }
 
   if (changed.length === 0) return;
-  for (const member of changed) await roomMembers.putExisting(member);
+  for (const member of changed) await roomMembers.updatePresence(member);
   await rooms.renewTtl(state.room.roomCode, ttl);
 }
 

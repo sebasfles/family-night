@@ -254,11 +254,9 @@ describe('visibility', () => {
     await screen.findByText('ABCD');
 
     setVisibility('hidden');
-    await waitFor(() => {
-      expect(
-        mock.calls.find((call) => call.route === 'POST /api/rooms/ABCD/away')?.init,
-      ).toMatchObject({ keepalive: true });
-    });
+    expect(
+      mock.calls.find((call) => call.route === 'POST /api/rooms/ABCD/away')?.init,
+    ).toMatchObject({ keepalive: true });
 
     setVisibility('visible');
     expect(await screen.findByText('El host elegirá el juego.')).toBeVisible();

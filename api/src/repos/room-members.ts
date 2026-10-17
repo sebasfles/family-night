@@ -1,7 +1,7 @@
 import {
   GetCommand,
-  PutCommand,
   QueryCommand,
+  UpdateCommand,
   type DynamoDBDocumentClient,
 } from '@aws-sdk/lib-dynamodb';
 import { epochSeconds } from '../lib/time.ts';
@@ -63,12 +63,19 @@ export class RoomMembersRepo {
     return { Delete: { TableName: this.table, Key: { roomCode, playerId } } };
   }
 
-  async putExisting(member: MemberItem): Promise<void> {
+  async updatePresence(member: MemberItem): Promise<void> {
     await this.client.send(
-      new PutCommand({
+      new UpdateCommand({
         TableName: this.table,
-        Item: member,
+        Key: { roomCode: member.roomCode, playerId: member.playerId },
+        UpdateExpression: 'SET lastSeenAt = :lastSeenAt, lastActiveAt = :lastActiveAt, #ttl = :ttl',
         ConditionExpression: 'attribute_exists(playerId)',
+        ExpressionAttributeNames: { '#ttl': 'ttl' },
+        ExpressionAttributeValues: {
+          ':lastSeenAt': member.lastSeenAt,
+          ':lastActiveAt': member.lastActiveAt,
+          ':ttl': member.ttl,
+        },
       }),
     );
   }

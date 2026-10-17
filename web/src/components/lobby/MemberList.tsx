@@ -41,6 +41,7 @@ export function MemberList({
             host={member.playerId === hostId}
             self={member.playerId === selfId}
             canManage={isHost && member.playerId !== selfId}
+            menuColumn={isHost}
             onMakeHost={onMakeHost}
             onKick={onKick}
           />
@@ -56,11 +57,21 @@ interface MemberRowProps {
   host: boolean;
   self: boolean;
   canManage: boolean;
+  menuColumn: boolean;
   onMakeHost: (member: RoomMember) => void;
   onKick: (member: RoomMember) => void;
 }
 
-function MemberRow({ member, online, host, self, canManage, onMakeHost, onKick }: MemberRowProps) {
+function MemberRow({
+  member,
+  online,
+  host,
+  self,
+  canManage,
+  menuColumn,
+  onMakeHost,
+  onKick,
+}: MemberRowProps) {
   return (
     <li className="flex min-h-16 items-center gap-3 px-4 py-2">
       <span
@@ -85,7 +96,11 @@ function MemberRow({ member, online, host, self, canManage, onMakeHost, onKick }
       <p className="shrink-0 text-base font-semibold text-cream/80 tabular-nums">
         {member.totalScore} <span className="text-sm font-normal text-cream/60">pts</span>
       </p>
-      {canManage && <MemberMenu member={member} onMakeHost={onMakeHost} onKick={onKick} />}
+      {canManage ? (
+        <MemberMenu member={member} onMakeHost={onMakeHost} onKick={onKick} />
+      ) : (
+        menuColumn && <span aria-hidden="true" className="size-12 shrink-0" />
+      )}
     </li>
   );
 }

@@ -62,6 +62,17 @@ describe('the api client', () => {
     });
   });
 
+  test('a bodyless POST reaches fetch synchronously, so away leaves before the page freezes', () => {
+    signIn();
+    const mock = mockApi({
+      'POST /api/rooms/ABCD/away': () => new Response(null, { status: 204 }),
+    });
+
+    void api.away('ABCD');
+
+    expect(mock.calls.map((call) => call.route)).toEqual(['POST /api/rooms/ABCD/away']);
+  });
+
   test('turns the error envelope into an ApiError with the Spanish message', async () => {
     mockApi({
       'POST /api/rooms/ABCD/join': () => apiError(409, 'ROOM_FULL', 'La sala está llena'),

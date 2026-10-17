@@ -69,7 +69,7 @@ function Home() {
             spellCheck={false}
             enterKeyHint="go"
             placeholder="ABCD"
-            className="min-h-12 w-0 flex-1 rounded-2xl bg-night-soft px-4 text-center text-2xl font-bold tracking-[0.3em] uppercase ring-1 ring-cream/15 placeholder:text-cream/25 focus:ring-2 focus:ring-moon focus:outline-none"
+            className="min-h-12 w-0 flex-1 rounded-2xl bg-night-soft pr-4 pl-[calc(1rem+0.3em)] text-center text-2xl font-bold tracking-[0.3em] uppercase ring-1 ring-cream/15 placeholder:text-cream/25 focus:ring-2 focus:ring-moon focus:outline-none"
           />
           <Button type="submit" variant="secondary" disabled={!valid}>
             Unirme
