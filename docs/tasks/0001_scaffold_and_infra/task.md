@@ -119,3 +119,30 @@ Constraints:
 clearance: full, AWS account 985610663508 (`fless-family-night`, us-east-1, prd only: state bucket via CLI, terraform init/plan/apply), GitHub repo `sebasfles/family-night` via App 4985607 (variables, branch protection), PEM copied from cuentas-departamento tfvars.
 
 ## om-developer notes
+
+### Round 1 (2026-10-17)
+
+Done: pnpm workspace (`shared`, `api`, `web`) with the health slice, Terraform (`environments/prd`, `stacks/app`, leaf modules plus `appsync_events`), the three workflows; every target of `docs/TRD.md` green (see `verify.log`).
+Screenshots at 390, 768 and 1280 px in `.workspaces/0001_scaffold_and_infra/screenshots/`, with the health online and down.
+
+External actions, all on account 985610663508 with `AWS_PROFILE=fless-family-night`, us-east-1:
+
+- `aws s3api create-bucket` `family-night-terraform-state-985610663508`, then versioning Enabled, AES256 default encryption, public access block all true; verified with the matching get calls.
+- `terraform init` (S3 backend), `terraform plan -out`: 52 to add, 0 to change, 0 to destroy, all named in Scope; read before applying.
+- `terraform apply tfplan`: 52 added; a second `terraform plan -detailed-exitcode` exits 0 with no changes.
+- Checked over HTTPS: `/` and `/anything` 200 with the placeholder; `/api/health` through CloudFront 503 JSON from the bootstrap; the Function URL directly 403; POST with a body 403 without `x-amz-content-sha256` or with a wrong one, 503 from the bootstrap with the right one; security headers and CSP present.
+- Events API: connect with no token rejected (400 required headers), with a bogus token rejected (401), the authorizer invoked once and denied.
+- GitHub (through the App): nine Actions variables and `main` protection (checks `shared`, `api`, `web`, `infra`, `workflows`, not strict, no reviews, admins exempt) confirmed through the API.
+- The production web build loads under the live CSP with no violations.
+
+Decisions not recorded in the task:
+
+- TypeScript `~6.0.3` (as cuentas; typescript-eslint does not support 7), so `docs/TRD.md` loses "TypeScript 5".
+- The Lambda adapter is `@hono/aws-lambda`, since `hono/aws-lambda` is deprecated.
+- `version` in the health response is the short commit SHA, injected by esbuild from `GITHUB_SHA`; `dev` locally.
+- Bundles are zipped in Node with `fflate` and fixed timestamps, so the same source gives the same zip.
+- `deploy-web` uploads `assets/` immutable and every other file `no-cache`, and invalidates `/*`, because `og.png` and `favicon.svg` are not hashed.
+- The deploys also filter on the root workspace files (lockfile, `package.json`, base configs), which change both builds.
+- The site placeholder has no inline styles because the CSP forbids them.
+
+Pending: the 200 on `/api/health` and the web page live wait for the deploys on merge (Acceptance 7).

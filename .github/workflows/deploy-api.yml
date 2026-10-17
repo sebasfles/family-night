@@ -1,0 +1,79 @@
+name: Deploy api
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - api/**
+      - shared/**
+      - package.json
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - tsconfig.base.json
+      - eslint.config.base.mjs
+      - .nvmrc
+      - .github/workflows/deploy-api.yml
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: deploy-api
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Check shared and api
+        run: |
+          set -euo pipefail
+          for workspace in shared api; do
+            (cd "$workspace" && pnpm lint && pnpm typecheck && pnpm test)
+          done
+
+      - name: Build
+        working-directory: api
+        run: pnpm build
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+
+      - name: Deploy
+        working-directory: api
+        env:
+          API_FUNCTION: ${{ vars.FUNCTION_NAME }}
+          EVENTS_AUTH_FUNCTION: ${{ vars.EVENTS_AUTH_FUNCTION_NAME }}
+        run: |
+          set -euo pipefail
+
+          echo "### Deployed functions" >> "$GITHUB_STEP_SUMMARY"
+          for pair in "api:$API_FUNCTION" "events-auth:$EVENTS_AUTH_FUNCTION"; do
+            bundle="${pair%%:*}"
+            name="${pair#*:}"
+
+            aws lambda update-function-code --function-name "$name" \
+              --zip-file "fileb://dist/$bundle.zip" --no-cli-pager > /dev/null
+            aws lambda wait function-updated --function-name "$name"
+
+            echo "- \`$name\`" >> "$GITHUB_STEP_SUMMARY"
+          done

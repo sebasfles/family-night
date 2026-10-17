@@ -1,0 +1,17 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-night: #16133a;
+  --color-night-soft: #241f55;
+  --color-moon: #ffd166;
+  --color-cream: #fdf6e3;
+}
+
+html {
+  font-size: 18px;
+}
+
+body {
+  @apply bg-night text-cream antialiased;
+  font-family: system-ui, sans-serif;
+}

@@ -1,0 +1,10 @@
+packages:
+  - shared
+  - api
+  - web
+
+workspaceConcurrency: 1
+engineStrict: true
+
+onlyBuiltDependencies:
+  - esbuild
