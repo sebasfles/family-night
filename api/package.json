@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node --watch src/server.ts",
+    "dev": "node --env-file-if-exists=.env --watch src/server.ts",
     "lint": "eslint . && prettier --check .",
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit",
@@ -11,9 +11,17 @@
     "build": "node scripts/build.mjs"
   },
   "dependencies": {
+    "@aws-crypto/sha256-js": "^5.2.0",
+    "@aws-sdk/client-dynamodb": "^3.1152.0",
+    "@aws-sdk/credential-provider-node": "^3.972.86",
+    "@aws-sdk/lib-dynamodb": "^3.1152.0",
     "@family-night/shared": "workspace:*",
     "@hono/aws-lambda": "^1.0.1",
-    "hono": "^4.13.13"
+    "@smithy/protocol-http": "^5.6.2",
+    "@smithy/signature-v4": "^5.7.4",
+    "@smithy/types": "^4.19.0",
+    "hono": "^4.13.13",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@hono/node-server": "^2.1.5",

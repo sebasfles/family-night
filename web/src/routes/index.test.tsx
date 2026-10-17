@@ -1,39 +1,75 @@
-import type { HealthResponse } from '@family-night/shared';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { createMemoryHistory, RouterProvider } from '@tanstack/react-router';
-import { render, screen } from '@testing-library/react';
-import { expect, test, vi } from 'vitest';
-import { makeRouter } from '../router';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { expect, test } from 'vitest';
+import { apiError, me, mockApi, renderApp, signIn, snapshot } from '../test/app';
 
-function renderHome() {
-  const queryClient = new QueryClient();
-  const router = makeRouter(queryClient, createMemoryHistory({ initialEntries: ['/'] }));
-  render(
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>,
-  );
-}
+const meOk = () => Response.json({ playerId: me.playerId, name: me.name });
 
-test('home shows the title and the version the server reports', async () => {
-  const health: HealthResponse = { ok: true, version: 'abc1234' };
-  const fetchMock = vi.fn(() => Promise.resolve(Response.json(health)));
-  vi.stubGlobal('fetch', fetchMock);
+test('a first visit greets the new player by name', async () => {
+  mockApi({ 'POST /api/players': () => Response.json(me) });
 
-  renderHome();
+  renderApp('/');
 
-  expect(await screen.findByRole('heading', { name: 'Noche de juegos' })).toBeVisible();
-  expect(await screen.findByText('En línea, versión abc1234')).toBeVisible();
-  expect(fetchMock).toHaveBeenCalledWith('/api/health');
+  expect(await screen.findByText('Cóndor Veloz')).toBeVisible();
+  expect(screen.getByText(/Hola,/)).toHaveTextContent('Hola, Cóndor Veloz');
 });
 
-test('home says so when the server does not answer', async () => {
-  vi.stubGlobal(
-    'fetch',
-    vi.fn(() => Promise.resolve(new Response(null, { status: 503 }))),
-  );
+test('the server being down shows a retry instead of a new identity', async () => {
+  signIn();
+  const mock = mockApi({
+    'GET /api/players/me': () => apiError(500, 'INTERNAL_ERROR', 'Algo salió mal'),
+  });
 
-  renderHome();
+  renderApp('/');
 
-  expect(await screen.findByText('El servidor no responde')).toBeVisible();
+  expect(
+    await screen.findByRole(
+      'heading',
+      { name: 'No pudimos conectar con el servidor' },
+      { timeout: 5_000 },
+    ),
+  ).toBeVisible();
+  expect(mock.calls.some((call) => call.route === 'POST /api/players')).toBe(false);
+  expect(screen.getByRole('button', { name: 'Reintentar' })).toBeEnabled();
+});
+
+test('Crear sala opens the new room as its host', async () => {
+  signIn();
+  const room = snapshot({ roomCode: 'QRST' });
+  mockApi({
+    'GET /api/players/me': meOk,
+    'POST /api/rooms': () => Response.json({ room }, { status: 201 }),
+    'POST /api/rooms/QRST/join': () => Response.json({ room }),
+  });
+  const { router } = renderApp('/');
+
+  fireEvent.click(await screen.findByRole('button', { name: 'Crear sala' }));
+
+  await waitFor(() => {
+    expect(router.state.location.pathname).toBe('/QRST');
+  });
+  expect(await screen.findByText('QRST')).toBeVisible();
+});
+
+test('the code field uppercases, keeps four letters and enables Unirme only for a valid code', async () => {
+  signIn();
+  mockApi({ 'GET /api/players/me': meOk });
+  const { router } = renderApp('/');
+  const input = await screen.findByLabelText('Código de sala');
+  const join = screen.getByRole('button', { name: 'Unirme' });
+
+  fireEvent.change(input, { target: { value: 'ab1' } });
+  expect(input).toHaveValue('AB');
+  expect(join).toBeDisabled();
+
+  fireEvent.change(input, { target: { value: 'abcl' } });
+  expect(join).toBeDisabled();
+
+  fireEvent.change(input, { target: { value: 'abcdef' } });
+  expect(input).toHaveValue('ABCD');
+  expect(join).toBeEnabled();
+
+  fireEvent.click(join);
+  await waitFor(() => {
+    expect(router.state.location.pathname).toBe('/ABCD');
+  });
 });
