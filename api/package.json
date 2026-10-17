@@ -1,0 +1,24 @@
+{
+  "name": "@family-night/api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/server.ts",
+    "lint": "eslint . && prettier --check .",
+    "format": "prettier --write .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --no-file-parallelism",
+    "build": "node scripts/build.mjs"
+  },
+  "dependencies": {
+    "@family-night/shared": "workspace:*",
+    "@hono/aws-lambda": "^1.0.1",
+    "hono": "^4.13.13"
+  },
+  "devDependencies": {
+    "@hono/node-server": "^2.1.5",
+    "@types/aws-lambda": "^8.10.164",
+    "esbuild": "^0.28.2",
+    "fflate": "^0.8.3"
+  }
+}

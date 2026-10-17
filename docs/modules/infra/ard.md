@@ -1,6 +1,6 @@
 ---
 updated: 2026-10-17
-source: setup
+source: 0001_scaffold_and_infra
 ---
 
 # Infra: decisions
@@ -76,3 +76,21 @@ source: setup
 - Debt created: a cold start of the authorizer on the first connect after a quiet period.
 - Revisit when: a channel needs authorization finer than room membership.
 - Source: setup
+
+## 2026-10-17: No reserved concurrency; the account limit is the cap
+
+- Decision: `family-night-prd-api` has no reserved concurrency; the account's Lambda limit of 10 concurrent executions, shared with the authorizer, bounds abuse.
+- Alternatives rejected: reserved concurrency 20, which AWS refuses while the account limit is 10 (10 must stay unreserved); a Service Quotas increase first.
+- Reason: Sebastian's call; the account limit is already stricter than the planned 20, and a family needs far less.
+- Debt created: the abuse cap is an AWS quota, not code; if AWS raises the account limit, nothing bounds the API until a reservation is added.
+- Revisit when: `aws lambda get-account-settings` shows a limit above 10.
+- Source: 0001_scaffold_and_infra
+
+## 2026-10-17: Branch protection on main owned by Terraform, admins exempt
+
+- Decision: `github_branch_protection` requires the Checks jobs on `main`, not strict, with no required reviews and `enforce_admins = false`.
+- Alternatives rejected: protection set by hand in GitHub; enforcing it on admins, which would reject the om-manager's direct `planned` commit to `main`.
+- Reason: Sebastian's call; everything about the repository Terraform can own, it owns, and a solo owner cannot approve his own pull requests.
+- Debt created: none
+- Revisit when: a second person pushes to the repository.
+- Source: 0001_scaffold_and_infra

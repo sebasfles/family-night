@@ -1,6 +1,6 @@
 ---
 updated: 2026-10-17
-source: setup
+source: 0001_scaffold_and_infra
 ---
 
 # Deploy: decisions
@@ -35,3 +35,12 @@ source: setup
 - Debt created: none
 - Revisit when: a second environment is needed.
 - Source: setup
+
+## 2026-10-17: Hashed assets immutable, every other site file no-cache
+
+- Decision: `deploy-web` uploads `assets/` with a one year immutable cache and every other file (`index.html`, `og.png`, `favicon.svg`) with no-cache, then invalidates `/*`.
+- Alternatives rejected: everything but `index.html` immutable, as cuentas does, and invalidating only `/index.html`.
+- Reason: `og.png` and `favicon.svg` keep their names across builds, so an immutable cache would pin old versions for a year.
+- Debt created: none
+- Revisit when: a non-hashed file becomes large enough that no-cache costs.
+- Source: 0001_scaffold_and_infra

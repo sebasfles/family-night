@@ -6,6 +6,7 @@ docs/tasks/_drafts/
 node_modules/
 coverage/
 *.log
+!docs/tasks/**/verify.log
 
 # Secrets and local config
 .env
@@ -22,3 +23,6 @@ tfplan
 
 # Builds
 dist/
+.bootstrap/
+test-results/
+playwright-report/

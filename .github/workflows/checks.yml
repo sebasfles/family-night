@@ -1,0 +1,93 @@
+name: Checks
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  node:
+    name: ${{ matrix.workspace }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    strategy:
+      fail-fast: false
+      matrix:
+        workspace: [shared, api, web]
+
+    defaults:
+      run:
+        working-directory: ${{ matrix.workspace }}
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm run --if-present build
+
+  infra:
+    name: infra
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      TF_IN_AUTOMATION: "true"
+      TF_INPUT: "false"
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: 1.13.3
+          terraform_wrapper: false
+
+      - name: fmt
+        run: terraform fmt -check -recursive infra
+
+      - name: validate
+        run: |
+          terraform -chdir=infra/environments/prd init -backend=false
+          terraform -chdir=infra/environments/prd validate -no-color
+
+  workflows:
+    name: workflows
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+
+      - name: actionlint
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: npx --yes github-actionlint@1.7.12

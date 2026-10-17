@@ -1,12 +1,11 @@
 ---
 updated: 2026-10-17
-source: setup
+source: 0001_scaffold_and_infra
 ---
 
 # Technical Requirements Document
 
 Describes the whole application.
-The repository holds no code yet; this file states the agreed shape, which the first tasks create.
 Where it differs from `implementation-plan.md`, this file wins.
 
 ## Components
@@ -24,7 +23,7 @@ Node comes from `.nvmrc` (24).
 
 ### shared
 
-- Stack: TypeScript 5 strict (`noUncheckedIndexedAccess`), Vitest.
+- Stack: TypeScript 6 strict (`noUncheckedIndexedAccess`), Vitest.
 - Layout: `src/api.ts` request and response types per endpoint, `src/events.ts` realtime event types, `src/domain.ts` room, player and match types, `src/constants.ts` limits, `src/impostor/rules.ts` pure game rules.
 - Install: `pnpm install --frozen-lockfile` at the root.
 - Workspace files: none.
@@ -55,7 +54,7 @@ Node comes from `.nvmrc` (24).
 ### infra
 
 - Stack: Terraform >= 1.10, state in S3 (`family-night-terraform-state-985610663508`, created once with the AWS CLI), AWS provider 6, GitHub provider 6 through the shared GitHub App.
-- Layout: `environments/prd/` backend, providers and locals, `stacks/app/` the application, `modules/aws/*` leaf modules mirrored from cuentas-departamento.
+- Layout: `environments/prd/` backend, providers and locals, `stacks/app/` the application, `modules/aws/*` leaf modules adapted from cuentas-departamento plus `appsync_events`.
 - Install: `terraform init` in `environments/prd/`.
 - Workspace files: `environments/prd/terraform.tfvars` (ignored) holding `github_app_pem`, shape in `terraform.tfvars.example`.
 - Delivery: `terraform apply` from Sebastian's machine with `AWS_PROFILE=fless-family-night`, never from CI; see `modules/infra/trd.md`.
