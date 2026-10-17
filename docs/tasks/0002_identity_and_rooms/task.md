@@ -172,3 +172,8 @@ Applied all 6 findings:
 6. `window.scrollTo` is stubbed in `test-setup.ts`; the web run has no jsdom noise. `vi.unstubAllEnvs()` joins the cleanup.
 
 Screenshots refreshed. No disagreements, nothing deferred this round.
+
+### Documentation
+
+Platform `prd.md`, `trd.md`, `database.md`, `flows.md` and `ard.md` (six entries) updated; deploy `trd.md` notes that the api tests need Docker on the runner; the `Debt index` of `docs/ARD.md` gains three platform rows.
+Infra docs unchanged: they already describe the authorizer as built, and no resource changed.

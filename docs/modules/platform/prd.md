@@ -1,6 +1,6 @@
 ---
 updated: 2026-10-17
-source: setup
+source: 0002_identity_and_rooms
 ---
 
 # Platform: product
@@ -41,8 +41,8 @@ Errors and empty states: cancelling the share sheet does nothing.
 
 1. Everyone sees the members, a crown on the host, a green dot online or grey "ausente", the night's score, and "(tú)" on themselves.
 2. The host picks a game and its settings; others see the settings read only and "Esperando a que el host inicie...".
-3. The host can make another member host or remove one, for example a phone that was closed.
-4. Any member can leave after confirming.
+3. The host can make another member host or remove one, for example a phone that was closed; the removed phone goes home with "Te sacaron de la sala", and opening the link again lets it back in.
+4. Any member can leave after confirming; if the host leaves, the oldest online member takes the crown, and a room left empty waits for its next joiner, who becomes host.
 5. Starting a match moves every phone to the game screen; ending it or returning to the lobby moves every phone back, with nobody navigating by hand.
 
 Errors and empty states: Just One and Wavelength appear as "Próximamente".
@@ -75,4 +75,4 @@ Errors and empty states: Just One and Wavelength appear as "Próximamente".
 
 ## Open questions
 
-- Whether the optional QR code of the room is in phase 1 (the plan calls it optional).
+- None; the QR code of the room is out of phase 1 for now (Sebastian, 2026-10-17).

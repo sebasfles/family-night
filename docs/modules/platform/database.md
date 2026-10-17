@@ -1,6 +1,6 @@
 ---
 updated: 2026-10-17
-source: 0001_scaffold_and_infra
+source: 0002_identity_and_rooms
 ---
 
 # Platform: database
@@ -37,7 +37,10 @@ Multiword names are kebab case (`player-names`, `room-members`, `match-secrets`)
 - A room has at most 20 members; the 21st gets `ROOM_FULL`.
 - `Matches` sorts by ULID `matchId`, so a query by room code returns the night in order.
 - A room has at most one current match; starting another while one runs is `MATCH_IN_PROGRESS`.
-- The host is always a member; after 60 s of real silence the next request from an online member transfers it to the oldest online member.
+- The host is a member, except in an empty room, where `hostId` keeps the last host until the next joiner takes it.
+- `RoomMembers.lastActiveAt` is the real-activity time and only the member's own requests set it; away moves `lastSeenAt` back 60 s and never touches it. After 60 s without activity, any member request except away hands the role to the oldest online member by `joinedAt`.
+- Writes that change the snapshot are one transaction: the room update conditional on `version` plus the member puts and deletes. Presence-only writes update just `lastSeenAt`, `lastActiveAt` and `ttl` of the caller, never the whole item.
+- An item past its `ttl` but not yet deleted by DynamoDB is absent on every read; a new room may reuse an expired code.
 - A member is never removed for being offline, only by leave or kick.
 - `MatchSecrets` never enters a snapshot, an event or a log.
 
