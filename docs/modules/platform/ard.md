@@ -1,0 +1,96 @@
+---
+updated: 2026-10-17
+source: setup
+---
+
+# Platform: decisions
+
+## 2026-10-17: A permanent identity with a public id and a secret token
+
+- Decision: each device holds `playerId` (public, appears in snapshots) and `playerToken` (secret, 32 random bytes); the server keeps only the token's SHA-256, compared in constant time, and the token never leaves the device except in `x-player-token`.
+- Alternatives rejected: `playerId` alone as the credential; accounts with login.
+- Reason: everyone sees the id, so with it as credential an impostor could ask for another player's secret.
+- Debt created: a lost or cleared device is a new player with a new name and the old one is orphaned; accepted by the plan.
+- Revisit when: players ask to keep their name across devices.
+- Source: setup
+
+## 2026-10-17: Name uniqueness through a name table written in one transaction
+
+- Decision: a `PlayerNames` item per name, put together with the player in a single transaction with a not-exists condition; 20 retries, then a numeric suffix.
+- Alternatives rejected: unique by room only; a lookup on players by name.
+- Reason: the name must be globally unique and permanent, and DynamoDB has no unique index.
+- Debt created: 100 by 100 words give 10,000 combinations; past that, names get a number.
+- Revisit when: the suffix fallback starts to fire.
+- Source: setup
+
+## 2026-10-17: AppSync Events for realtime, only the server publishes
+
+- Decision: pub/sub over AppSync Events, namespace `rooms`, channel per room code; clients connect and subscribe through a Lambda authorizer that checks `playerId:playerToken` and room membership, publish is IAM granted only to the API Lambda; every event carries the full public snapshot.
+- Alternatives rejected: API Gateway WebSocket; clients publishing; patch style events.
+- Reason: Sebastian does not want to deal with WebSocket connection timeouts and lifecycle; a snapshot under 10 KB removes the need to refetch after each event.
+- Debt created: none
+- Revisit when: a channel needs authorization finer than room membership.
+- Source: setup
+
+## 2026-10-17: Versioned snapshots, optimistic locking and resync on reconnect
+
+- Decision: `Rooms.version` rises on every public change; clients drop snapshots with a version not greater than theirs; writes are conditional on the version and retry up to three times; lost events are not recovered from the channel, the client refetches the room on reconnect, on returning to the foreground and on rejoin.
+- Alternatives rejected: relying on ordered delivery; event replay.
+- Reason: the plan guards against out of order events and simultaneous actions.
+- Debt created: a failed publish is only logged, so a phone stays stale until the next event or reconnect.
+- Revisit when: stale phones are reported in play.
+- Source: setup
+
+## 2026-10-17: Presence derived from last seen, going offline sends no event
+
+- Decision: ping every 20 s while visible; online is under 45 s since `lastSeenAt`; the client recomputes every 5 s with the server's clock offset; events are published only when a member comes back or hides the tab (away call, which moves `lastSeenAt` back 60 s so the member greys out at once); the host transfer counts 60 s of real silence and ignores that setback.
+- Alternatives rejected: an event for every ping; server side timers.
+- Reason: there is no server process to notice silence, and per-ping events would flood the channel.
+- Debt created: the host transfer is lazy, so a room with no requests keeps a silent host until someone acts.
+- Revisit when: a room stays hostless in practice.
+- Source: setup
+
+## 2026-10-17: DynamoDB with one table per entity
+
+- Decision: seven on-demand tables (five owned by platform), two permanent without TTL, the rest expiring 24 h after the room's last activity.
+- Alternatives rejected: single table design.
+- Reason: Sebastian expects many games and wants them to scale without tangling.
+- Debt created: none
+- Revisit when: a screen needs data from several tables in one consistent read.
+- Source: setup
+
+## 2026-10-17: One Lambda with an internal Hono router
+
+- Decision: all routes, platform and game, in one function behind CloudFront under `/api/*`.
+- Alternatives rejected: a function per route.
+- Reason: family traffic, fewer cold starts, and the router keeps the code ordered; the contract does not change if it is split by prefix later.
+- Debt created: none
+- Revisit when: one game's load or deploy cadence differs from the rest.
+- Source: setup
+
+## 2026-10-17: The room snapshot decides the screen
+
+- Decision: the web keeps the snapshot in the query cache and a single effect in the `$code` route navigates by `currentMatch`; users never move between lobby and game by hand; mutations apply the returned snapshot with the same version rule and make no optimistic updates.
+- Alternatives rejected: per-screen state; navigation events.
+- Reason: the host starting or ending a match must move every phone, and a reload must return to the same place.
+- Debt created: none
+- Revisit when: a game needs a screen the snapshot cannot express.
+- Source: setup
+
+## 2026-10-17: A small own WebSocket client instead of Amplify
+
+- Decision: about a hundred lines speaking the AppSync Events protocol, with backoff of 1 s up to 30 s.
+- Alternatives rejected: the official Amplify events library.
+- Reason: avoid loading all of Amplify into the bundle.
+- Debt created: protocol changes of AppSync Events are on us.
+- Revisit when: AppSync Events changes its handshake, or the client grows past a few hundred lines.
+- Source: setup
+
+## 2026-10-17: Away is a keepalive fetch, not a beacon
+
+- Decision: on `visibilitychange` to hidden the web calls `POST /api/rooms/{code}/away` with `fetch` and `keepalive: true`, carrying the usual auth headers.
+- Alternatives rejected: `navigator.sendBeacon` with the credentials in the body, as the plan wrote.
+- Reason: CloudFront origin access control requires `x-amz-content-sha256` on requests with a body and beacons cannot set headers; a keepalive fetch survives the tab going to the background just as well and keeps the token out of the body.
+- Debt created: none
+- Revisit when: a browser in use drops keepalive requests on tab hide.
+- Source: setup

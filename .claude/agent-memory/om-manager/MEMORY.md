@@ -1,0 +1,2 @@
+- [Environment and accounts](reference_environment.md) — AWS profile fless-family-night, hosted zone family-night.fless.dev, GitHub alias personal-github
+- [House convention](feedback_house_convention.md) — mirror cuentas-departamento (Terraform, OIDC deploy, root folders); adapt pasted plans to it
