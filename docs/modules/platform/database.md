@@ -1,13 +1,13 @@
 ---
 updated: 2026-10-17
-source: setup
+source: 0001_scaffold_and_infra
 ---
 
 # Platform: database
 
 Keys, attributes and the TTL setup live in [the plan](../../implementation-plan.md#modelo-de-datos-dynamodb-multi-table) and, once built, in the repo classes under `api/src/repos/`; this file says what the module owns and what it must keep true.
 All tables are on demand and named `family-night-prd-{entity}` (for example `family-night-prd-rooms`); Terraform in `infra` provisions them.
-The kebab case of the multiword names (`player-names`, `room-members`, `match-secrets`) is.
+Multiword names are kebab case (`player-names`, `room-members`, `match-secrets`).
 
 ## Tables owned
 

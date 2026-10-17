@@ -1,6 +1,6 @@
 ---
 updated: 2026-10-17
-source: setup
+source: 0001_scaffold_and_infra
 ---
 
 # Platform: technical
@@ -14,7 +14,9 @@ Every payload change starts in `shared`, so an incompatible change breaks compil
 | Path | What |
 |---|---|
 | `shared/src/{api,events,domain,constants}.ts` | Types of every endpoint and event, the domain types, limits (members, TTL, thresholds, room code alphabet). Pure, no AWS. |
-| `api/src/index.ts` | The single Lambda entry; one Hono router for every route, platform and game. |
+| `api/src/index.ts`, `api/src/app.ts`, `api/src/server.ts` | The Lambda entry and the Node entry around one Hono app (`app.ts`) for every route, platform and game. |
+| `api/src/events-auth.ts` | The Events API authorizer, bundled as its own function; it denies everything until rooms exist. |
+| `api/scripts/build.mjs` | esbuild bundles of both functions, zipped reproducibly into `dist/api.zip` and `dist/events-auth.zip`. |
 | `api/src/lib/` | Errors with their codes, zod validation, authentication by header. |
 | `api/src/repos/` | One class per table; the only code that touches DynamoDB. |
 | `api/src/services/{players,rooms,presence,matches}` | Identity and names, rooms and host rules, ping and away, match start, abort, lobby and rematch. |
@@ -34,6 +36,7 @@ Authentication, membership and host rules are in [the plan](../../implementation
 
 | Method | Route | Purpose | Spec |
 |---|---|---|---|
+| GET | `/api/health` | `{ ok, version }` with the deployed commit; proves the CloudFront to Lambda path. No auth. | `shared/src/api.ts` |
 | POST | `/api/players` | Create the permanent player and name. No auth. | [plan](../../implementation-plan.md#jugadores) |
 | GET | `/api/players/me` | Validate stored identity; 401 makes the web start over. | [plan](../../implementation-plan.md#jugadores) |
 | POST | `/api/rooms` | Create a room; caller becomes host. | [plan](../../implementation-plan.md#salas) |

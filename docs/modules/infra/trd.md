@@ -1,6 +1,6 @@
 ---
 updated: 2026-10-17
-source: setup
+source: 0001_scaffold_and_infra
 ---
 
 # Infra: technical
@@ -14,7 +14,7 @@ The Terraform in this module replaces the plan's CDK and API Gateway (see [ard.m
 |---|---|
 | `infra/environments/prd` | Backend, providers, locals and variables of the one environment |
 | `infra/stacks/app` | The app: CDN, storage, database, function, realtime, GitHub OIDC and variables |
-| `infra/modules/aws/*` | Leaf modules copied from `cuentas-departamento`: `acm`, `cloudfront`, `dynamodb_table`, `lambda_function`, `s3` |
+| `infra/modules/aws/*` | Leaf modules copied from `cuentas-departamento` (`acm`, `cloudfront`, `dynamodb_table`, `lambda_function`, `s3`), adapted to this stack, plus `appsync_events` |
 
 ## Resources
 
@@ -23,7 +23,7 @@ The Terraform in this module replaces the plan's CDK and API Gateway (see [ard.m
   - `/api/*`: the Lambda's `AWS_IAM` Function URL through origin access control, caching disabled, all methods allowed, viewer headers forwarded except `Host`.
   - A response headers policy with the security headers and a CSP that allows only `self` and the AppSync Events HTTP and realtime domains.
 - S3 site bucket: private, readable by the distribution only.
-- Lambda `family-night-prd-api`: `nodejs24.x`, arm64, 512 MB, 10 s, reserved concurrency 20, log retention 14 days.
+- Lambda `family-night-prd-api`: `nodejs24.x`, arm64, 512 MB, 10 s, no reserved concurrency (the account limit of 10 is the cap, see [ard.md](ard.md)), log retention 14 days.
   - Role: read and write on the seven tables, publish on the `rooms` namespace of the Events API.
   - Permissions for CloudFront to invoke the function URL and the function.
   - Code starts as a bootstrap placeholder and is ignored after creation.
@@ -32,8 +32,9 @@ The Terraform in this module replaces the plan's CDK and API Gateway (see [ard.m
   - Authorizer Lambda `family-night-prd-events-auth`: `nodejs24.x`, arm64, read on `Players` and `RoomMembers`, invocable by the Events API, result TTL 300 s, log retention 14 days.
   - Both resources exist in AWS provider 6.69.0.
 - IAM role `family-night-prd-deploy`, trusted by the account's GitHub OIDC provider (owned by this stack) for `refs/heads/main` only, matching the repository's immutable OIDC subject (owner and repository with their numeric ids, read from the GitHub provider).
-  - It syncs the site bucket, updates the function's code and invalidates the distribution, nothing else.
-- Repository Actions variables: `AWS_REGION`, `AWS_ROLE_ARN`, `SITE_BUCKET`, `DISTRIBUTION_ID`, `SITE_URL`, `FUNCTION_NAME`, `VITE_EVENTS_HTTP_DOMAIN`, `VITE_EVENTS_REALTIME_DOMAIN`.
+  - It syncs the site bucket, updates the code of both functions and invalidates the distribution, nothing else.
+- Repository Actions variables: `AWS_REGION`, `AWS_ROLE_ARN`, `SITE_BUCKET`, `DISTRIBUTION_ID`, `SITE_URL`, `FUNCTION_NAME` (the API), `EVENTS_AUTH_FUNCTION_NAME`, `VITE_EVENTS_HTTP_DOMAIN`, `VITE_EVENTS_REALTIME_DOMAIN`.
+- Branch protection on `main`: the Checks jobs (`shared`, `api`, `web`, `infra`, `workflows`) are required, not strict, no reviews, admins exempt.
 
 Terraform owns configuration and the workflows own code: Lambda code and the site's `index.html` start as placeholders and are ignored after creation.
 

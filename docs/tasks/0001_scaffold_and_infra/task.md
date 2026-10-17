@@ -146,3 +146,5 @@ Decisions not recorded in the task:
 - The site placeholder has no inline styles because the CSP forbids them.
 
 Pending: the 200 on `/api/health` and the web page live wait for the deploys on merge (Acceptance 7).
+
+Documentation: infra, deploy and platform docs updated; `docs/TRD.md` edited too because Scope asks for it, although `document-task` leaves it to setup; new debt row in the `docs/ARD.md` index.

@@ -63,4 +63,5 @@ Rebuilt by `write-ard` on every run, kept current by `document-task` on every ta
 | infra | 2026-10-17 | Requests with a body need `x-amz-content-sha256`; no per-route throttle beyond reserved concurrency | Abuse shows up in logs |
 | infra | 2026-10-17 | Authorizer cold start on the first realtime connect after a quiet period | Players notice the delay |
 | infra | 2026-10-17 | State bucket settings are not in code | Bucket needs a change or a second environment |
+| infra | 2026-10-17 | The abuse cap is the account Lambda limit of 10, not a reservation | Account limit rises above 10 |
 | infra | 2026-10-17 | Certificate shares the stack's region | Working region changes |
