@@ -1,6 +1,6 @@
 ---
 updated: 2026-10-17
-source: 0002_identity_and_rooms
+source: 0003_impostor
 ---
 
 # Platform: database
@@ -36,7 +36,9 @@ Multiword names are kebab case (`player-names`, `room-members`, `match-secrets`)
 - A room code uses only `ABCDEFGHJKMNPQRSTUVWXYZ` (no I, L, O), is created with `attribute_not_exists`, and is retried at most 10 times on collision.
 - A room has at most 20 members; the 21st gets `ROOM_FULL`.
 - `Matches` sorts by ULID `matchId`, so a query by room code returns the night in order.
-- A room has at most one current match; starting another while one runs is `MATCH_IN_PROGRESS`.
+- A room has at most one current match; starting another while one runs is `MATCH_IN_PROGRESS`, and so is `/lobby` while it plays.
+- Aborting writes the match as `ABORTED` and sets `currentMatchId` to null in the same transaction; no points.
+- `Rooms.configs` holds each game's config as the host stored it; `usedWordIds` is a list owned by impostor.
 - The host is a member, except in an empty room, where `hostId` keeps the last host until the next joiner takes it.
 - `RoomMembers.lastActiveAt` is the real-activity time and only the member's own requests set it; away moves `lastSeenAt` back 60 s and never touches it. After 60 s without activity, any member request except away hands the role to the oldest online member by `joinedAt`.
 - Writes that change the snapshot are one transaction: the room update conditional on `version` plus the member puts and deletes. Presence-only writes update just `lastSeenAt`, `lastActiveAt` and `ttl` of the caller, never the whole item.

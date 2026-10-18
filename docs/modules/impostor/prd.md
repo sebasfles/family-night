@@ -1,6 +1,6 @@
 ---
 updated: 2026-10-17
-source: setup
+source: 0003_impostor
 ---
 
 # Impostor: product
@@ -29,14 +29,14 @@ Errors: if the server finds the settings invalid at start (too many impostors, n
 2. A civilian reads the word and its category.
 3. An impostor reads "Eres el impostor" and a clue, plus the category only if the host enabled it; impostors do not learn who the other impostors are.
 4. Everyone sees the speaking order with the first speaker highlighted.
-5. While they talk in person, each living player may vote for another living player and may change that vote until voting closes.
+5. While they talk in person, each living player may vote for another living player and may change that vote until voting closes; their own choice stays marked on their phone after a reload.
 6. Everyone sees who has voted (a check by the name) and "Votaron 4 de 6", never for whom.
 7. Voting closes by itself when every living player has voted, or earlier when the host closes it (with a confirmation when votes are missing); missing votes are abstentions.
 
 ### Result and next round
 
 1. Everyone sees the players ordered by votes, the eliminated one highlighted, and whether they were an impostor.
-2. A tie follows the host's rule and the screen says which: "Empate: nadie es eliminado" or "Empate: eliminado por sorteo".
+2. A tie follows the host's rule and the screen says which: "Empate: nadie es eliminado" or "Empate: eliminado por sorteo", naming the player drawn.
 3. If nobody voted, nobody is eliminated.
 4. If the match goes on, the host taps "Siguiente ronda" and voting reopens without the eliminated players.
 
@@ -67,7 +67,7 @@ Errors: if the server finds the settings invalid at start (too many impostors, n
 - The civilians win when no impostor is left alive; the impostors win when they are as many as the living civilians, or by a right last guess.
 - A last impostor who leaves the room, rather than being voted out, gets no last guess.
 - Words do not repeat within a night; when a category runs out, its used words become available again.
-- Points on the night's scoreboard: +1 for each civilian who took part (alive or eliminated) when civilians win, +2 for each impostor when impostors win.
+- Points on the night's scoreboard: +1 for each civilian who took part (alive or eliminated) when civilians win, +2 for each impostor when impostors win; only players still in the room when the match ends score.
 
 - If a living player leaves and every remaining living player has already voted, the vote closes by itself.
 - If the impostor making the last guess leaves the room, civilians win, as if the host had skipped the guess.

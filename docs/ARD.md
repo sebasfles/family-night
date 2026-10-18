@@ -1,6 +1,6 @@
 ---
 updated: 2026-10-17
-source: 0002_identity_and_rooms
+source: 0003_impostor
 ---
 
 # Architecture and Debt Record
@@ -63,6 +63,8 @@ Rebuilt by `write-ard` on every run, kept current by `document-task` on every ta
 | platform | 2026-10-17 | A failed host-only command does not hand over a silent host's crown | A silent host seen after such a failure |
 | platform | 2026-10-17 | A removed member can resubscribe within the 300 s authorizer cache | A removed member still receives events |
 | platform | 2026-10-17 | No light theme | A player asks for it |
+| impostor | 2026-10-17 | A vote changed in the instant of the close answers 200 but counts the earlier choice | A changed vote reported as not counted |
+| impostor | 2026-10-17 | Secrets and ballots expire 24 h after written, not renewed | A match runs past a day |
 | infra | 2026-10-17 | Requests with a body need `x-amz-content-sha256`; no per-route throttle beyond reserved concurrency | Abuse shows up in logs |
 | infra | 2026-10-17 | Authorizer cold start on the first realtime connect after a quiet period | Players notice the delay |
 | infra | 2026-10-17 | State bucket settings are not in code | Bucket needs a change or a second environment |
