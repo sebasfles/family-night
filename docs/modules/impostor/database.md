@@ -26,7 +26,7 @@ Table names carry the prefix `family-night-prd-`; the kebab-case suffixes below 
 
 ## Invariants kept in code
 
-- Nothing from `MatchSecrets` reaches the room snapshot, an event or a log; only `GET /matches/{id}/me` (filtered to the caller) and server logic read it.
+- Nothing from `MatchSecrets` reaches the room snapshot, an event or a log; only `GET /api/rooms/{code}/matches/{matchId}/me` (filtered to the caller) and server logic read it.
 - A player has at most one vote per round, because the sort key is the round plus the voter; changing a vote overwrites it.
 - A ballot is a plain put; the snapshot write that follows recomputes `votedPlayerIds` from the round's ballots and closes the round when every living player has one, so concurrent voters converge instead of conflicting.
 - `votedPlayerIds` keeps the closed round's voters, eliminated included, until the next round opens.

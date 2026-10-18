@@ -23,7 +23,7 @@ Multiword names are kebab case (`player-names`, `room-members`, `match-secrets`)
 
 | Table | Owner module | Relationship |
 |---|---|---|
-| `family-night-prd-match-secrets` | impostor | Read only by `GET /matches/{id}/me`, filtered to the caller, never to build a snapshot. |
+| `family-night-prd-match-secrets` | impostor | Read only by `GET /api/rooms/{code}/matches/{matchId}/me`, filtered to the caller, never to build a snapshot. |
 | `family-night-prd-votes` | impostor | Not touched by this module. |
 
 ## Invariants kept in code

@@ -1,6 +1,6 @@
 ---
 updated: 2026-10-17
-source: 0001_scaffold_and_infra
+source: 0003_impostor
 ---
 
 # Technical Requirements Document
@@ -107,7 +107,7 @@ Modules belong to the application and may span components.
 - Every command is a REST call; every realtime message is published by the Lambda, never by a client, and carries the full public room snapshot with a monotonic `version`.
 - Every request with a body carries `x-amz-content-sha256`, computed in the web client, because CloudFront origin access control signs requests to the Function URL.
 - Realtime subscribers authenticate with `playerId:playerToken` through the Events API's Lambda authorizer; no API key.
-- Secrets (word, role, clue) live only in `MatchSecrets` and reach a player only through `GET /api/matches/{id}/me`; they never enter a snapshot, an event or a log.
+- Secrets (word, role, clue) live only in `MatchSecrets` and reach a player only through `GET /api/rooms/{code}/matches/{matchId}/me`; they never enter a snapshot, an event or a log.
 - Writes that change the snapshot are conditional on `version` (optimistic locking, three retries); round numbers in bodies make game commands idempotent.
 - Errors are `{ error: { code, message } }` with the message in Spanish, shown as is by the UI.
 - Game rules are pure functions in `shared/src/impostor/rules.ts`, tested without AWS.
