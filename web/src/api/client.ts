@@ -4,10 +4,16 @@ import {
   type CreatePlayerResponse,
   type ErrorCode,
   type ErrorResponse,
+  type GameConfigRequest,
+  type GuessRequest,
   type LeaveRoomResponse,
+  type MatchSecretResponse,
   type MeResponse,
   type RoomResponse,
+  type RoundRequest,
   type TargetPlayerRequest,
+  type VoteRequest,
+  type WordCategoriesResponse,
 } from '@family-night/shared';
 import { loadIdentity } from '../identity/storage';
 
@@ -66,7 +72,7 @@ async function errorFrom(response: Response): Promise<ApiError> {
 }
 
 export async function request<T>(
-  method: 'GET' | 'POST',
+  method: 'GET' | 'POST' | 'PUT',
   path: string,
   options: RequestOptions = {},
 ): Promise<T> {
@@ -89,6 +95,8 @@ export async function request<T>(
 }
 
 const room = (code: string, action = '') => `/rooms/${code}${action}`;
+const match = (code: string, matchId: string, action: string) =>
+  room(code, `/matches/${matchId}/${action}`);
 
 export const api = {
   createPlayer: () => request<CreatePlayerResponse>('POST', '/players'),
@@ -103,4 +111,26 @@ export const api = {
     request<RoomResponse>('POST', room(code, '/kick'), { body }),
   makeHost: (code: string, body: TargetPlayerRequest) =>
     request<RoomResponse>('POST', room(code, '/host'), { body }),
+  wordCategories: () => request<WordCategoriesResponse>('GET', '/words/categories'),
+  updateConfig: (code: string, body: GameConfigRequest) =>
+    request<RoomResponse>('PUT', room(code, '/config'), { body }),
+  startMatch: (code: string, body: GameConfigRequest) =>
+    request<RoomResponse>('POST', room(code, '/matches'), { body }),
+  backToLobby: (code: string) => request<RoomResponse>('POST', room(code, '/lobby')),
+  matchSecret: (code: string, matchId: string) =>
+    request<MatchSecretResponse>('GET', match(code, matchId, 'me')),
+  abortMatch: (code: string, matchId: string) =>
+    request<RoomResponse>('POST', match(code, matchId, 'abort')),
+  rematch: (code: string, matchId: string) =>
+    request<RoomResponse>('POST', match(code, matchId, 'rematch')),
+  vote: (code: string, matchId: string, body: VoteRequest) =>
+    request<RoomResponse>('PUT', match(code, matchId, 'votes'), { body }),
+  closeVoting: (code: string, matchId: string, body: RoundRequest) =>
+    request<RoomResponse>('POST', match(code, matchId, 'close-voting'), { body }),
+  nextRound: (code: string, matchId: string, body: RoundRequest) =>
+    request<RoomResponse>('POST', match(code, matchId, 'next-round'), { body }),
+  guess: (code: string, matchId: string, body: GuessRequest) =>
+    request<RoomResponse>('POST', match(code, matchId, 'guess'), { body }),
+  skipGuess: (code: string, matchId: string) =>
+    request<RoomResponse>('POST', match(code, matchId, 'skip-guess')),
 };

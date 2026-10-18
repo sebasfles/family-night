@@ -1,9 +1,10 @@
-import { PRESENCE_RECOMPUTE_MS, type RoomMember, type RoomResponse } from '@family-night/shared';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { PRESENCE_RECOMPUTE_MS, type RoomMember } from '@family-night/shared';
+import { useMutation } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
 import { api } from '../../api/client';
-import { applyRoom, useRoom } from '../../api/room';
+import { useRoomMutation } from '../../api/match';
+import { useRoom } from '../../api/room';
 import { Button } from '../../components/Button';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { GamePicker } from '../../components/lobby/GamePicker';
@@ -12,25 +13,12 @@ import { MemberList } from '../../components/lobby/MemberList';
 import { useRoomSession } from '../../components/roomSession';
 import { useToast } from '../../components/useToast';
 import { useNow } from '../../components/useNow';
+import { LobbyPanel } from '../../games/impostor/LobbyPanel';
 import { useIdentity } from '../../identity/identity';
 
 export const Route = createFileRoute('/$code/')({
   component: Lobby,
 });
-
-function useRoomCommand(command: (member: RoomMember) => Promise<RoomResponse>) {
-  const queryClient = useQueryClient();
-  const toast = useToast();
-  return useMutation({
-    mutationFn: command,
-    onSuccess: ({ room }) => {
-      applyRoom(queryClient, room);
-    },
-    onError: (error) => {
-      toast(error.message);
-    },
-  });
-}
 
 function Lobby() {
   const { code } = Route.useParams();
@@ -41,8 +29,12 @@ function Lobby() {
   const room = useRoom(code).data;
   const [confirmLeave, setConfirmLeave] = useState(false);
 
-  const makeHost = useRoomCommand((member) => api.makeHost(code, { playerId: member.playerId }));
-  const kick = useRoomCommand((member) => api.kick(code, { playerId: member.playerId }));
+  const makeHost = useRoomMutation((member: RoomMember) =>
+    api.makeHost(code, { playerId: member.playerId }),
+  );
+  const kick = useRoomMutation((member: RoomMember) =>
+    api.kick(code, { playerId: member.playerId }),
+  );
   const leave = useMutation({
     mutationFn: session.leave,
     onError: (error) => {
@@ -73,9 +65,7 @@ function Lobby() {
 
       <GamePicker />
 
-      <p className="text-center text-base text-cream/70">
-        {isHost ? 'Eres el host: tú eliges el juego.' : 'El host elegirá el juego.'}
-      </p>
+      <LobbyPanel code={code} snapshot={snapshot} isHost={isHost} nowMs={now + clockOffsetMs} />
 
       <Button
         variant="ghost"

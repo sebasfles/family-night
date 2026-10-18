@@ -153,3 +153,27 @@ Decisions not in the plan:
 
 Pending: web (round 2), screenshots, docs.
 Deferred: none.
+
+### Round 2
+
+Findings:
+- 1: every clue in `impostor-words.json` rewritten to a trait shared by several words of its category (for example Francia "Europa", Elefante "Grande", Frozen "Princesas"); ids, words and Peruvian vocabulary untouched, only `clue` lines changed.
+- 2: the test is now "no clue contains its word".
+
+Did:
+- web: client gains `PUT` and every match endpoint; `api/match.ts` with `['match-secret', matchId]` (`staleTime: Infinity`), the categories query and a shared room mutation (no optimistic updates; the lobby reuses it).
+- `$code/route.tsx` effect: a current Impostor match sends the phone to `/$code/impostor`, none sends it back to the lobby.
+- Lobby: Impostor marked "Elegido", config panel (host edits through `PUT /config`, members read only), who will play, Iniciar or "Faltan N jugadores", "Esperando a que el host inicie…" for members.
+- `games/impostor/` and `$code/impostor.tsx`: header with host menu Terminar partida, card toggled by tap with vibration, turn order, voting, reveal, last chance, final, Eliminado and Espectador variants; vibration on every phase or round change.
+- Tests: Testing Library on navigation, card, voting, reveal, last chance, final and the lobby panel; a client test that a PUT carries the body hash.
+- Screenshots: 26 screens at 390, 768 and 1280 in `.workspaces/0003_impostor/screenshots/`.
+
+Decisions not in the plan:
+- The zod schema moved to `@family-night/shared/schemas`, imported only by the api: as a module-level call in `domain.ts` it was kept by tree shaking and put zod in the web bundle (largest chunk 124 KB to 40 KB).
+- The lobby clamps the shown impostor count to the cap of the online players and starts with what it shows, so a stored count above the cap after someone left never reaches the server.
+- The host updates config on every tap; controls lock while a change is in flight so taps cannot overwrite each other.
+- The reveal button label comes from the shared `outcome()` on public data; the final header reads "Fin de la partida" with the rounds played.
+- Departed players show as "Alguien que salió" where their name is no longer in the room.
+
+Pending: docs (on the clean signal).
+Deferred: none.

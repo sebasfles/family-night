@@ -2,7 +2,6 @@ import {
   closeVoting,
   everyoneVoted,
   guessOptions,
-  impostorConfigSchema,
   matchScores,
   maxImpostors,
   nextRound,
@@ -23,6 +22,7 @@ import {
   type RoundRequest,
   type VoteRequest,
 } from '@family-night/shared';
+import { impostorConfigSchema } from '@family-night/shared/schemas';
 import type { Deps } from '../../deps.ts';
 import { AppError } from '../../lib/errors.ts';
 import { iso, ttlFrom } from '../../lib/time.ts';

@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CodeRouteRouteImport } from './routes/$code/route'
 import { Route as CodeIndexRouteImport } from './routes/$code/index'
+import { Route as CodeImpostorRouteImport } from './routes/$code/impostor'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -28,28 +29,36 @@ const CodeIndexRoute = CodeIndexRouteImport.update({
   path: '/',
   getParentRoute: () => CodeRouteRoute,
 } as any)
+const CodeImpostorRoute = CodeImpostorRouteImport.update({
+  id: '/impostor',
+  path: '/impostor',
+  getParentRoute: () => CodeRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$code': typeof CodeRouteRouteWithChildren
+  '/$code/impostor': typeof CodeImpostorRoute
   '/$code/': typeof CodeIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/$code/impostor': typeof CodeImpostorRoute
   '/$code': typeof CodeIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/$code': typeof CodeRouteRouteWithChildren
+  '/$code/impostor': typeof CodeImpostorRoute
   '/$code/': typeof CodeIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/$code' | '/$code/'
+  fullPaths: '/' | '/$code' | '/$code/impostor' | '/$code/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/$code'
-  id: '__root__' | '/' | '/$code' | '/$code/'
+  to: '/' | '/$code/impostor' | '/$code'
+  id: '__root__' | '/' | '/$code' | '/$code/impostor' | '/$code/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -80,14 +89,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CodeIndexRouteImport
       parentRoute: typeof CodeRouteRoute
     }
+    '/$code/impostor': {
+      id: '/$code/impostor'
+      path: '/impostor'
+      fullPath: '/$code/impostor'
+      preLoaderRoute: typeof CodeImpostorRouteImport
+      parentRoute: typeof CodeRouteRoute
+    }
   }
 }
 
 interface CodeRouteRouteChildren {
+  CodeImpostorRoute: typeof CodeImpostorRoute
   CodeIndexRoute: typeof CodeIndexRoute
 }
 
 const CodeRouteRouteChildren: CodeRouteRouteChildren = {
+  CodeImpostorRoute: CodeImpostorRoute,
   CodeIndexRoute: CodeIndexRoute,
 }
 

@@ -69,10 +69,10 @@ test('room.updated is applied only when its version is newer', async () => {
   await enterSubscribed(room({ version: 3 }));
 
   push({ type: 'room.updated', room: room({ version: 4, hostId: guest.playerId }) });
-  expect(await screen.findByText('El host elegirá el juego.')).toBeVisible();
+  expect(await screen.findByText('Esperando a que el host inicie…')).toBeVisible();
 
   push({ type: 'room.updated', room: room({ version: 2, hostId: me.playerId }) });
-  expect(screen.getByText('El host elegirá el juego.')).toBeVisible();
+  expect(screen.getByText('Esperando a que el host inicie…')).toBeVisible();
 });
 
 test('every subscribe_success, after a reconnect too, refetches the room', async () => {

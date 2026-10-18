@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { IMPOSTOR_DEFAULTS } from '../constants.ts';
-import { impostorConfigSchema, type ImpostorConfig, type ImpostorPublic } from '../domain.ts';
+import type { ImpostorConfig, ImpostorPublic } from '../domain.ts';
+import { impostorConfigSchema } from '../schemas.ts';
 import {
   closeVoting,
   everyoneVoted,

@@ -42,7 +42,7 @@ describe('impostor-words.json', () => {
     }
   });
 
-  test('no clue gives its word away', () => {
+  test('no clue contains its word', () => {
     for (const entry of bank.categories.flatMap((category) => category.words)) {
       expect(entry.clue.trim(), entry.word).not.toBe('');
       expect(normalized(entry.clue), entry.word).not.toContain(normalized(entry.word));

@@ -2,6 +2,7 @@ import { ONLINE_WINDOW_MS, PRESENCE_RECOMPUTE_MS, type RoomSnapshot } from '@fam
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, onTestFinished, test, vi } from 'vitest';
 import { apiError, me, member, mockApi, renderApp, signIn, snapshot } from '../../test/app';
+import { impostorMatch } from '../../test/impostor-match';
 
 const guest = member({ playerId: '22222222-2222-4222-8222-222222222222', name: 'Zorro Astuto' });
 const away = member({
@@ -159,24 +160,25 @@ describe('the lobby', () => {
     await waitFor(() => {
       expect(screen.queryByRole('button', { name: /Opciones para/ })).toBeNull();
     });
-    expect(screen.getByText('El host elegirá el juego.')).toBeVisible();
+    expect(screen.getByText('Esperando a que el host inicie…')).toBeVisible();
   });
 
   test('a member who is not host gets no member menu', async () => {
     enterRoom('/ABCD', room({ hostId: guest.playerId }));
 
-    expect(await screen.findByText('El host elegirá el juego.')).toBeVisible();
+    expect(await screen.findByText('Esperando a que el host inicie…')).toBeVisible();
     expect(screen.queryByRole('button', { name: /Opciones para/ })).toBeNull();
   });
 
-  test('every game shows as coming soon', async () => {
+  test('Impostor is the chosen game and the others are coming soon', async () => {
     enterRoom('/ABCD');
 
     const games = await screen.findByRole('region', { name: 'Juegos' });
     for (const name of ['Impostor', 'Just One', 'Wavelength']) {
       expect(within(games).getByRole('heading', { name })).toBeVisible();
     }
-    expect(within(games).getAllByText('Próximamente')).toHaveLength(3);
+    expect(within(games).getByText('Elegido')).toBeVisible();
+    expect(within(games).getAllByText('Próximamente')).toHaveLength(2);
   });
 
   test('leaving asks first, then leaves and goes home', async () => {
@@ -259,7 +261,7 @@ describe('visibility', () => {
     ).toMatchObject({ keepalive: true });
 
     setVisibility('visible');
-    expect(await screen.findByText('El host elegirá el juego.')).toBeVisible();
+    expect(await screen.findByText('Esperando a que el host inicie…')).toBeVisible();
   });
 
   test('a kicked phone coming back is sent home with a message', async () => {
@@ -273,5 +275,132 @@ describe('visibility', () => {
 
     expect(await screen.findByText('Te sacaron de la sala')).toBeVisible();
     expect(router.state.location.pathname).toBe('/');
+  });
+});
+
+describe('the Impostor panel', () => {
+  const categories = [
+    { id: 'animales', name: 'Animales', count: 25 },
+    { id: 'comida', name: 'Comida', count: 25 },
+  ];
+  const players = (count: number) =>
+    Array.from({ length: count }, (_, index) =>
+      index === 0
+        ? member({ playerId: me.playerId, name: me.name })
+        : member({
+            playerId: `${String(index + 1).repeat(8)}-0000-4000-8000-000000000000`,
+            name: `Jugador ${String(index + 1)}`,
+          }),
+    );
+
+  function lobby(served: RoomSnapshot) {
+    const entered = enterRoom('/ABCD', served);
+    entered.mock.on('GET /api/words/categories', () => Response.json({ categories }));
+    return entered;
+  }
+
+  const body = (mock: ReturnType<typeof mockApi>, route: string): unknown => {
+    const sent = mock.calls.findLast((call) => call.route === route)?.init.body;
+    return typeof sent === 'string' ? JSON.parse(sent) : undefined;
+  };
+
+  test('with fewer than 3 online the host cannot start', async () => {
+    lobby(room());
+
+    expect(await screen.findByRole('button', { name: 'Faltan 1 jugador' })).toBeDisabled();
+    expect(screen.getByRole('heading', { name: 'Juegan 2' })).toBeVisible();
+  });
+
+  test('the host starts with the shown config and every phone moves to the game', async () => {
+    const served = room({ members: players(3) });
+    const { mock, router } = lobby(served);
+    mock.on('POST /api/rooms/ABCD/matches', () =>
+      Response.json(
+        {
+          room: {
+            ...served,
+            version: 9,
+            currentMatch: impostorMatch(served.members.map((m) => m.playerId)),
+          },
+        },
+        { status: 201 },
+      ),
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Iniciar' }));
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/ABCD/impostor');
+    });
+    expect(body(mock, 'POST /api/rooms/ABCD/matches')).toEqual({
+      gameType: 'IMPOSTOR',
+      config: served.configs.IMPOSTOR,
+    });
+  });
+
+  test('the impostor stepper is capped by the online players', async () => {
+    const { mock } = lobby(room({ members: players(6) }));
+    mock.on('PUT /api/rooms/ABCD/config', () =>
+      Response.json({ room: room({ members: players(6) }) }),
+    );
+
+    expect(await screen.findByText('Hasta 2 con 6 jugadores')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Un impostor más' }));
+
+    await waitFor(() => {
+      expect(body(mock, 'PUT /api/rooms/ABCD/config')).toMatchObject({
+        gameType: 'IMPOSTOR',
+        config: { impostorCount: 2 },
+      });
+    });
+  });
+
+  test('with 3 players one impostor is the most', async () => {
+    lobby(room({ members: players(3) }));
+    expect(await screen.findByText('Hasta 1 con 3 jugadores')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Un impostor más' })).toBeDisabled();
+  });
+
+  test('the host changes a setting and a category; the last category cannot go', async () => {
+    const served = room({ members: players(3) });
+    const { mock } = lobby(served);
+    mock.on('PUT /api/rooms/ABCD/config', () => Response.json({ room: served }));
+
+    fireEvent.click(await screen.findByRole('switch', { name: /Orden aleatorio/ }));
+    await waitFor(() => {
+      expect(body(mock, 'PUT /api/rooms/ABCD/config')).toMatchObject({
+        config: { randomOrder: false },
+      });
+    });
+
+    expect(await screen.findByRole('button', { name: 'Animales' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Comida' }));
+    await waitFor(() => {
+      expect(body(mock, 'PUT /api/rooms/ABCD/config')).toMatchObject({
+        config: { categories: ['animales', 'comida'] },
+      });
+    });
+  });
+
+  test('members see the config read-only and wait for the host', async () => {
+    lobby(room({ members: players(3), hostId: `${'2'.repeat(8)}-0000-4000-8000-000000000000` }));
+
+    expect(await screen.findByText('Esperando a que el host inicie…')).toBeVisible();
+    expect(screen.getByText('Solo el host puede cambiarla.')).toBeVisible();
+    expect(screen.getByRole('switch', { name: /Orden aleatorio/ })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Iniciar' })).toBeNull();
+  });
+
+  test('a refused start shows the server message', async () => {
+    const { mock } = lobby(room({ members: players(3) }));
+    mock.on('POST /api/rooms/ABCD/matches', () =>
+      apiError(422, 'INVALID_CONFIG', 'Con 3 jugadores puede haber como máximo 1 impostor'),
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Iniciar' }));
+
+    expect(
+      await screen.findByText('Con 3 jugadores puede haber como máximo 1 impostor'),
+    ).toBeVisible();
   });
 });

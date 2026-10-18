@@ -1,6 +1,12 @@
 import { normalizeRoomCode, PING_INTERVAL_MS, type RoomEvent } from '@family-night/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { createFileRoute, Outlet, redirect, useNavigate } from '@tanstack/react-router';
+import {
+  createFileRoute,
+  Outlet,
+  redirect,
+  useLocation,
+  useNavigate,
+} from '@tanstack/react-router';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { api, isApiError } from '../../api/client';
 import { applyRoom, roomKey, useRoom } from '../../api/room';
@@ -155,6 +161,17 @@ function RoomSession({ code }: { code: string }) {
   useEffect(() => {
     if (isApiError(room.error, 'NOT_MEMBER')) kicked();
   }, [room.error, kicked]);
+
+  const gameType = room.data?.snapshot.currentMatch?.gameType ?? null;
+  const onGame = useLocation({ select: (location) => location.pathname.endsWith('/impostor') });
+  useEffect(() => {
+    if (!room.data) return;
+    if (gameType === 'IMPOSTOR' && !onGame) {
+      void navigate({ to: '/$code/impostor', params: { code }, replace: true });
+    } else if (gameType === null && onGame) {
+      void navigate({ to: '/$code', params: { code }, replace: true });
+    }
+  }, [code, gameType, navigate, onGame, room.data]);
 
   const session = useMemo(
     () => ({

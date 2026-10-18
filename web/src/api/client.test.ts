@@ -39,6 +39,22 @@ describe('the api client', () => {
     });
   });
 
+  test('a PUT vote hashes its body like a POST', async () => {
+    signIn();
+    const mock = mockApi({
+      'PUT /api/rooms/ABCD/matches/M1/votes': () => Response.json({ room: snapshot() }),
+    });
+
+    await api.vote('ABCD', 'M1', { round: 2, targetId: 'p2' });
+
+    const { method, body, headers } = mock.calls[0]?.init ?? {};
+    expect(method).toBe('PUT');
+    expect(body).toBe('{"round":2,"targetId":"p2"}');
+    expect(headers).toMatchObject({
+      'x-amz-content-sha256': sha256('{"round":2,"targetId":"p2"}'),
+    });
+  });
+
   test('a GET carries no body hash', async () => {
     signIn();
     const mock = mockApi({ 'GET /api/rooms/ABCD': () => Response.json({ room: snapshot() }) });
