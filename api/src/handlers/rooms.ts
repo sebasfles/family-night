@@ -14,7 +14,9 @@ import {
 } from '../services/rooms.ts';
 import { parseBody, requirePlayer, roomCodeParam, type AppEnv } from './context.ts';
 import { impostorRoutes } from './impostor.ts';
+import { justOneRoutes } from './justone.ts';
 import { matchesRoutes } from './matches.ts';
+import { sharedMatchRoutes } from './shared-match.ts';
 import { wavelengthRoutes } from './wavelength.ts';
 
 const targetSchema: z.ZodType<TargetPlayerRequest> = z.object({ playerId: playerIdSchema });
@@ -57,6 +59,8 @@ export function roomsRoutes(deps: Deps) {
       });
     })
     .route('/', matchesRoutes(deps))
+    .route('/', sharedMatchRoutes(deps))
     .route('/', impostorRoutes(deps))
-    .route('/', wavelengthRoutes(deps));
+    .route('/', wavelengthRoutes(deps))
+    .route('/', justOneRoutes(deps));
 }

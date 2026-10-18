@@ -1,6 +1,6 @@
 ---
 updated: 2026-10-18
-source: 0004_wavelength
+source: 0005_just_one
 ---
 
 # Platform: decisions
@@ -220,3 +220,39 @@ source: 0004_wavelength
 - Debt created: none
 - Revisit when: a game's secret changes within a round.
 - Source: 0004_wavelength
+
+## 2026-10-18: Clue and guess paths shared by games with different bodies
+
+- Decision: `PUT {match}/clue` and `PUT {match}/guess` live in `handlers/shared-match.ts`, which checks membership, reads the match's `gameType` and hands the request to that game's handler, which parses its own body; a game without the path answers `STALE_ROUND`; `roundSchema` lives in `handlers/context.ts` so handler modules do not import each other. Extends "A route several games share lives in the platform router", whose revisit condition Just One met.
+- Alternatives rejected: per-game paths for the same action; one body schema that is the union of every game's.
+- Reason: Hono holds one handler per method and path, and each game must keep validating its own body.
+- Debt created: none
+- Revisit when: a shared path needs a check before the game is known beyond membership.
+- Source: 0005_just_one
+
+## 2026-10-18: The secret query is keyed by match, round and phase
+
+- Decision: `useMatchSecret` takes an optional phase as the last part of its key; Just One passes it, Impostor and Wavelength pass nothing. Extends "The secret query is keyed by match and round", whose revisit condition Just One met.
+- Alternatives rejected: invalidating the secret on every snapshot.
+- Reason: a Just One clue-giver's secret changes within a round (own clue in CLUE, every clue in REVIEW).
+- Debt created: none
+- Revisit when: a secret changes within a phase other than through the caller's own command.
+- Source: 0005_just_one
+
+## 2026-10-18: One match header and one cycles panel for every game
+
+- Decision: `web/src/components/MatchHeader.tsx` (round or end title, subtitle, optional badge, host menu) serves Impostor, Wavelength and Just One; `web/src/components/lobby/CyclesPanel.tsx` is the lobby panel of every game whose config is `{ cycles }`, typed by `CyclesGame`; the lobby maps each `gameType` to its panel.
+- Alternatives rejected: a copy per game folder.
+- Reason: copies drift with the next fix; pieces shared by game screens live in `web/src/components/`.
+- Debt created: none
+- Revisit when: a game's header or cycles panel needs more than a subtitle, a badge or a phrase.
+- Source: 0005_just_one
+
+## 2026-10-18: Config requests are mapped over the game type
+
+- Decision: `GameConfigRequest` is `{ gameType: G; config: GameConfigs[G] }` for each `G` of `GameType`, so a new game needs no edit there; the lobby's game pick sends `configs[game]` with one cast, since TypeScript cannot correlate the two across the union.
+- Alternatives rejected: a hand-written union and a ternary per game.
+- Reason: the third game showed the hand-written list as a place to forget.
+- Debt created: none
+- Revisit when: a game's config request needs more than its config.
+- Source: 0005_just_one

@@ -1,5 +1,6 @@
 import {
   IMPOSTOR_DEFAULTS,
+  JUST_ONE_DEFAULTS,
   ONLINE_WINDOW_MS,
   WAVELENGTH_DEFAULTS,
   type GameConfigs,
@@ -13,6 +14,7 @@ const now = Date.parse('2026-10-17T20:00:00.000Z');
 const configs: GameConfigs = {
   IMPOSTOR: { ...IMPOSTOR_DEFAULTS, categories: ['animales'] },
   WAVELENGTH: { ...WAVELENGTH_DEFAULTS },
+  JUST_ONE: { ...JUST_ONE_DEFAULTS },
 };
 
 function member(playerId: string, joinedMsAgo: number, seenMsAgo: number): MemberItem {

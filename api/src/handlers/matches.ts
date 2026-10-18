@@ -1,4 +1,4 @@
-import type { MatchSecretResponse, RoomResponse, RoundRequest } from '@family-night/shared';
+import type { MatchSecretResponse, RoomResponse } from '@family-night/shared';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import type { Deps } from '../deps.ts';
@@ -12,14 +12,12 @@ import {
   updateConfig,
   type ConfigBody,
 } from '../services/matches/index.ts';
-import { matchIdParam, parseBody, roomCodeParam, type AppEnv } from './context.ts';
+import { matchIdParam, parseBody, roomCodeParam, roundSchema, type AppEnv } from './context.ts';
 
 const configBodySchema: z.ZodType<ConfigBody> = z.object({
-  gameType: z.enum(['IMPOSTOR', 'WAVELENGTH']),
+  gameType: z.enum(['IMPOSTOR', 'WAVELENGTH', 'JUST_ONE']),
   config: z.unknown(),
 });
-
-export const roundSchema: z.ZodType<RoundRequest> = z.object({ round: z.int().min(1).max(99) });
 
 export function matchesRoutes(deps: Deps) {
   return new Hono<AppEnv>()

@@ -13,6 +13,7 @@ export interface RoomItem {
   currentMatchId: string | null;
   usedWordIds: string[];
   usedSpectrumIds: string[];
+  usedJustOneWordIds: string[];
   selectedGame: GameType;
   configs: Partial<GameConfigs>;
 }
@@ -24,6 +25,7 @@ export interface RoomBump {
   currentMatchId: string | null;
   usedWordIds: string[];
   usedSpectrumIds: string[];
+  usedJustOneWordIds: string[];
   selectedGame: GameType;
   configs: Partial<GameConfigs>;
   updatedAt: string;
@@ -50,6 +52,7 @@ export class RoomsRepo {
       currentMatchId: room.currentMatchId ?? null,
       usedWordIds: room.usedWordIds ?? [],
       usedSpectrumIds: room.usedSpectrumIds ?? [],
+      usedJustOneWordIds: room.usedJustOneWordIds ?? [],
       selectedGame: room.selectedGame ?? 'IMPOSTOR',
       configs: room.configs ?? {},
     };
@@ -75,6 +78,7 @@ export class RoomsRepo {
         UpdateExpression:
           'SET version = :next, hostId = :hostId, currentMatchId = :currentMatchId, ' +
           'usedWordIds = :usedWordIds, usedSpectrumIds = :usedSpectrumIds, ' +
+          'usedJustOneWordIds = :usedJustOneWordIds, ' +
           'selectedGame = :selectedGame, configs = :configs, updatedAt = :updatedAt, #ttl = :ttl',
         ConditionExpression: 'version = :expected',
         ExpressionAttributeNames: { '#ttl': 'ttl' },
@@ -85,6 +89,7 @@ export class RoomsRepo {
           ':currentMatchId': bump.currentMatchId,
           ':usedWordIds': bump.usedWordIds,
           ':usedSpectrumIds': bump.usedSpectrumIds,
+          ':usedJustOneWordIds': bump.usedJustOneWordIds,
           ':selectedGame': bump.selectedGame,
           ':configs': bump.configs,
           ':updatedAt': bump.updatedAt,

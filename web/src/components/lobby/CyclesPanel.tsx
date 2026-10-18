@@ -1,43 +1,54 @@
-import {
-  isOnline,
-  MIN_WAVELENGTH_PLAYERS,
-  WAVELENGTH_MAX_CYCLES,
-  type RoomSnapshot,
-  type WavelengthConfig,
-} from '@family-night/shared';
+import { isOnline, type GameConfigs, type GameType, type RoomSnapshot } from '@family-night/shared';
 import { api } from '../../api/client';
 import { useRoomMutation } from '../../api/match';
-import { StartSection } from '../../components/lobby/StartSection';
+import { StartSection } from './StartSection';
 
-interface LobbyPanelProps {
+export type CyclesGame = {
+  [G in GameType]: GameConfigs[G] extends { cycles: number } ? G : never;
+}[GameType];
+
+interface CyclesPanelProps {
   code: string;
   snapshot: RoomSnapshot;
   isHost: boolean;
   nowMs: number;
+  gameType: CyclesGame;
+  minPlayers: number;
+  maxCycles: number;
+  turn: string;
 }
 
-const CYCLES = Array.from({ length: WAVELENGTH_MAX_CYCLES }, (_, i) => i + 1);
-
-export function LobbyPanel({ code, snapshot, isHost, nowMs }: LobbyPanelProps) {
+export function CyclesPanel({
+  code,
+  snapshot,
+  isHost,
+  nowMs,
+  gameType,
+  minPlayers,
+  maxCycles,
+  turn,
+}: CyclesPanelProps) {
   const players = snapshot.members.filter((member) => isOnline(member.lastSeenAt, nowMs));
-  const config = snapshot.configs.WAVELENGTH;
+  const config = snapshot.configs[gameType];
   const rounds = config.cycles * players.length;
   const locked = !isHost;
+  const titleId = `${gameType.toLowerCase()}-config-title`;
+  const choices = Array.from({ length: maxCycles }, (_, i) => i + 1);
 
-  const update = useRoomMutation((next: WavelengthConfig) =>
-    api.updateConfig(code, { gameType: 'WAVELENGTH', config: next }),
+  const update = useRoomMutation((cycles: number) =>
+    api.updateConfig(code, { gameType, config: { cycles } }),
   );
-  const start = useRoomMutation(() => api.startMatch(code, { gameType: 'WAVELENGTH', config }));
+  const start = useRoomMutation(() => api.startMatch(code, { gameType, config }));
 
   return (
     <>
       <section
-        aria-labelledby="wavelength-config-title"
+        aria-labelledby={titleId}
         aria-busy={update.isPending || undefined}
         className="flex flex-col gap-5 rounded-3xl bg-night-soft p-5 ring-1 ring-cream/10"
       >
         <div className="flex flex-col gap-1">
-          <h2 id="wavelength-config-title" className="text-xl font-bold">
+          <h2 id={titleId} className="text-xl font-bold">
             Configuración
           </h2>
           {locked && <p className="text-base text-cream/70">Solo el host puede cambiarla.</p>}
@@ -48,7 +59,7 @@ export function LobbyPanel({ code, snapshot, isHost, nowMs }: LobbyPanelProps) {
             Vueltas
           </p>
           <div role="radiogroup" aria-labelledby="cycles-label" className="grid grid-cols-3 gap-2">
-            {CYCLES.map((cycles) => (
+            {choices.map((cycles) => (
               <button
                 key={cycles}
                 type="button"
@@ -56,7 +67,7 @@ export function LobbyPanel({ code, snapshot, isHost, nowMs }: LobbyPanelProps) {
                 aria-checked={config.cycles === cycles}
                 disabled={locked || update.isPending}
                 onClick={() => {
-                  if (config.cycles !== cycles) update.mutate({ cycles });
+                  if (config.cycles !== cycles) update.mutate(cycles);
                 }}
                 className={`min-h-12 rounded-2xl px-3 text-lg font-semibold focus-visible:ring-2 focus-visible:ring-moon focus-visible:outline-none disabled:cursor-default ${
                   config.cycles === cycles
@@ -69,8 +80,7 @@ export function LobbyPanel({ code, snapshot, isHost, nowMs }: LobbyPanelProps) {
             ))}
           </div>
           <p className="text-base text-cream/70">
-            Cada jugador es psíquico{' '}
-            {config.cycles === 1 ? 'una vez' : `${String(config.cycles)} veces`}
+            Cada jugador {turn} {config.cycles === 1 ? 'una vez' : `${String(config.cycles)} veces`}
             {players.length > 0 &&
               `: ${String(rounds)} ${rounds === 1 ? 'ronda' : 'rondas'} con ${String(players.length)} en línea`}
             .
@@ -80,7 +90,7 @@ export function LobbyPanel({ code, snapshot, isHost, nowMs }: LobbyPanelProps) {
 
       <StartSection
         players={players}
-        minPlayers={MIN_WAVELENGTH_PLAYERS}
+        minPlayers={minPlayers}
         isHost={isHost}
         starting={start.isPending}
         onStart={() => {

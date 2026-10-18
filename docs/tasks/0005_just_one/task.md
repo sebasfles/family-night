@@ -106,6 +106,7 @@ Decisions (om-reviewer, accepted by Sebastian):
 - The adivinador leaving in REVEAL changes nothing; a clue-giver leaving in CLUE or REVIEW takes only their own clue out; in GUESS or REVEAL the clues stay as they are.
 - One clue per clue-giver per round, not editable, second commit as Wavelength's guess; a clue is one word, no whitespace, 1 to 30 characters.
 - Round 1 delivers shared and api only; web follows from round 2.
+  Round 1 may carry the web edits the new contract needs to stay green (pick by `gameType`, Card narrowed by role, fixtures, a guarded `$code/justone.tsx` with no screens); the lobby card stays "Próximamente" until round 2 (om-reviewer, on the om-developer's question).
 
 Constraints:
 
@@ -127,3 +128,75 @@ Review beyond the Pipeline:
 clearance: repo
 
 ## om-developer notes
+
+### Round 1
+
+Did:
+
+- shared: `JustOneConfig`, `JustOnePublic`, `JustOneSecret`, `JustOneResult` and the request types; `justOneConfigSchema`; constants; `justone/rules.ts` (normalization, duplicate and word cancellation, word pick with restart, rotation, clue completion, review toggles, show, guess check, scoring with floor, host override, departures) with Vitest.
+- api: `services/justone` registered in the game registry; `close-clues`, `cancel-clue`, `show-clues`, `accept-guess`, `skip-guesser` routes; `justone-words.json` (210 words); `usedJustOneWordIds` through the room write path; `#ROUND#{nn}` (guesser, word) and `#CLUE#{nn}#{playerId}` items in MatchSecrets; integration tests for every acceptance criterion the api owns, including 19 simultaneous clues.
+- web, only to stay green (approved): `JUST_ONE` in `gamePaths`, `$code/justone.tsx` rendering nothing, lobby `pick` sends `configs[game]` for any game, Impostor `Card` narrowed by role, fixtures. The lobby card is still "Próximamente".
+
+Decisions not in the plan:
+
+- `PUT {match}/clue` and `PUT {match}/guess` are shared with Wavelength with different bodies, which Hono cannot hold twice; they moved to a platform router (`handlers/shared-match.ts`) that reads the match's `gameType` after the membership check and hands the request to that game's handler, which parses its own body; a game without the path answers `STALE_ROUND`. This is the revisit condition of platform ARD "A route several games share lives in the platform router".
+- `GameConfigRequest` is now a mapped type over `GameType`, so a new game needs no edit there.
+- `roundSchema` moved to `handlers/context.ts` to keep handler modules from importing each other.
+- MatchSecrets repo: put-once, prefix list and delete are private helpers shared by guesses and clues; `putRoundItem` takes either game's round item.
+- Plural matching compares candidate singular forms (`-s`, `-es`, `-ces` to `-z`) of both words, so `mes`/`meses` and `luz`/`luces` match; it can over-match rare short words, which the manual review covers.
+- New error `NOT_CLUE_GIVER` (403, "En esta ronda no te toca dar pista") for a clue, cancel or show from someone who is not a clue-giver (the host may still show); a cancel naming an author without a clue is `TARGET_NOT_MEMBER`; `accept-guess` on a pass, a correct guess or a second tap is `STALE_ROUND`.
+- `PUT guess` carries `{ round, guess: string | null }`, `null` being Pasar; the guess is 1 to 30 characters, spaces allowed.
+- `skipped` shows through CLUE and clears when the review opens.
+- `/me` gives clue-givers the word, their own clue, and from REVIEW on every reviewed clue (also in GUESS).
+- A clue left cancelled because of a duplicate stays cancelled if the other author leaves in REVIEW; a clue-giver can restore it.
+
+Pending: web screens, lobby card and panel, Testing Library tests, screenshots (round 2).
+
+Deferred: none.
+
+### Round 2
+
+Findings applied:
+
+1. The `ñ` guard in `normalizeWord` is written as ASCII escapes; the file is ASCII only. My first write carried escapes that reached disk as literal characters.
+2. `/me` takes the caller's `clue` from the stored items only in CLUE; from REVIEW on it comes from the reviewed clues, so a clue put after the clues closed reads as not given. New api case covers it and fails on the round 1 code.
+
+Web (planned for this round):
+
+- Lobby: the Just One card is playable and "Próximamente" is gone from `GamePicker`; the panel (Vueltas 1 to 3) is picked from a `gameType` map.
+- `$code/justone.tsx` with `games/justone/`: CLUE (word card and one-word form for clue-givers, waiting for the guesser, "Pistas listas: N de M", host "Cerrar pistas" with confirmation when clues are missing), REVIEW (clue-givers toggle each clue, crossed out when cancelled; "Mostrar pistas" for clue-givers and the host), GUESS (surviving clues, guess input with Adivinar and Pasar), REVEAL (word, verdict, team score, every clue with the cancelled ones crossed, host "Contar como acierto" on a wrong guess, "Siguiente ronda" or "Ver resultado"), FINISHED (team score, rounds won, host Jugar otra vez and Volver al lobby), Espectador, "Saltar turno" with confirmation while the guesser is offline in CLUE, REVIEW or GUESS, vibration on phase change.
+- Testing Library: navigation, clue input, refused clue, guesser waiting with early close, skip, review toggles and show, guesser view and host-guesser view of the review, guess, pass, others in guess, host override, member reveal, final, spectator; lobby picks Just One and starts with its config.
+- Screenshots: `{{workspace}}/screenshots/`, 174 files at 390, 768 and 1280, every listed Just One state plus the clue-giver after committing, the early close confirmation, Saltar turno with its confirmation; lobby and the other games refreshed.
+
+Decisions not in the plan:
+
+- `useMatchSecret` takes an optional phase as the last key part; Just One passes it, the other games pass nothing.
+- After a clue commit the CLUE secret is refetched, so the clue-giver sees their own clue; whether the form shows comes from the public `committedPlayerIds`.
+- The clue input drops whitespace as it is typed rather than refusing on submit.
+- `games/justone/MatchHeader.tsx` is the game's own header, as the games do not import each other.
+
+Pending: none.
+
+Deferred: none.
+
+### Round 3
+
+Findings applied:
+
+1. One `web/src/components/MatchHeader.tsx` (round or end title, subtitle, an optional badge, the host menu) and one `web/src/components/lobby/CyclesPanel.tsx` (Vueltas for any game whose config is `{ cycles }`, typed as `CyclesGame`, no cast); the lobby maps each `gameType` to its panel with its min players, max cycles and "Cada jugador ..." phrase. The Wavelength and Just One copies are deleted. Impostor's header was a third copy of the same markup, so it uses the shared header too, with its subtitle and "Eliminado" or "Espectador" badge computed in its route; its screens look the same.
+2. The Just One lobby test taps Vueltas 3 and asserts the config body and the start body carry `cycles: 3`.
+3. The reveal speaks to the guesser in the second person ("¡Acertaste!", "Dijiste «...». No era", "Pasaste", "Dijiste «...», cuenta como acierto"), names the guesser for everyone else, and shows "Esta ronda: +1, 0 or −1" from the outcome under the team score, adding "el puntaje no baja de 0" when the floor hid the −1. Testing Library cases for the guesser's wrong, pass and overridden verdicts and for the third person; screenshots refreshed (174).
+
+Decisions not in the plan: the round's points come from the outcome, not from the score difference, so a wrong guess at 0 still reads −1 with the floor note.
+
+Pending: none.
+
+Deferred: none.
+
+### Docs
+
+- Created `docs/modules/justone/` (README, prd, trd, ard, database, flows); nine ARD entries from the round notes, two of them with debt now in the `docs/ARD.md` Debt index.
+- Platform: trd (shared match router, `MatchHeader` and `CyclesPanel`, the Just One route), database (`usedJustOneWordIds`), prd ("Próximamente" gone, Just One card), README (code list), four ARD entries (shared clue and guess paths, secret key by phase, header and cycles panel, mapped config request).
+- Impostor database (Just One items in MatchSecrets); wavelength trd (lobby panel and header now in `platform`, clue and guess through the shared path).
+- `docs/TRD.md`, `docs/PRD.md` and the secret line of `CLAUDE.md`, as the task's Scope and Context ask, although document-task leaves those to setup and the om-manager.
+- No global decision in `docs/ARD.md` changed; no earlier debt was resolved.

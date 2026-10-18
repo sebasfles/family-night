@@ -9,10 +9,17 @@ import {
   guessCommand,
   skipGuessCommand,
 } from '../services/impostor/index.ts';
-import { matchIdParam, parseBody, roomCodeParam, type AppEnv } from './context.ts';
-import { roundSchema } from './matches.ts';
+import {
+  matchIdParam,
+  parseBody,
+  roomCodeParam,
+  roundNumber,
+  roundSchema,
+  type AppEnv,
+} from './context.ts';
+
 const voteSchema: z.ZodType<VoteRequest> = z.object({
-  round: z.int().min(1).max(99),
+  round: roundNumber,
   targetId: playerIdSchema,
 });
 const guessSchema: z.ZodType<GuessRequest> = z.object({ option: z.string().min(1).max(100) });

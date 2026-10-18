@@ -1,10 +1,4 @@
-import type {
-  ImpostorConfig,
-  MatchSecret,
-  Player,
-  RoomSnapshot,
-  WavelengthConfig,
-} from './domain.ts';
+import type { GameConfigs, GameType, MatchSecret, Player, RoomSnapshot } from './domain.ts';
 
 export interface HealthResponse {
   ok: true;
@@ -32,9 +26,9 @@ export interface TargetPlayerRequest {
 export type KickRequest = TargetPlayerRequest;
 export type HandOverHostRequest = TargetPlayerRequest;
 
-export type GameConfigRequest =
-  | { gameType: 'IMPOSTOR'; config: ImpostorConfig }
-  | { gameType: 'WAVELENGTH'; config: WavelengthConfig };
+export type GameConfigRequest = {
+  [G in GameType]: { gameType: G; config: GameConfigs[G] };
+}[GameType];
 
 export type StartMatchRequest = GameConfigRequest;
 export type UpdateConfigRequest = GameConfigRequest;
@@ -69,6 +63,24 @@ export interface DialGuessRequest extends RoundRequest {
 export type CloseGuessingRequest = RoundRequest;
 export type SkipPsychicRequest = RoundRequest;
 
+export interface JustOneClueRequest extends RoundRequest {
+  clue: string;
+}
+
+export interface CancelClueRequest extends RoundRequest {
+  authorId: string;
+  cancelled: boolean;
+}
+
+export interface JustOneGuessRequest extends RoundRequest {
+  guess: string | null;
+}
+
+export type CloseCluesRequest = RoundRequest;
+export type ShowCluesRequest = RoundRequest;
+export type AcceptGuessRequest = RoundRequest;
+export type SkipGuesserRequest = RoundRequest;
+
 export interface WordCategory {
   id: string;
   name: string;
@@ -90,6 +102,7 @@ export const API_ERRORS = {
   MATCH_NOT_FOUND: { status: 404, message: 'Esta partida no existe' },
   NOT_GUESSER: { status: 403, message: 'Solo el impostor atrapado puede adivinar' },
   NOT_PSYCHIC: { status: 403, message: 'Solo el psíquico puede dar la pista' },
+  NOT_CLUE_GIVER: { status: 403, message: 'En esta ronda no te toca dar pista' },
   MATCH_IN_PROGRESS: { status: 409, message: 'Ya hay una partida en curso' },
   STALE_ROUND: { status: 409, message: 'Esa ronda ya terminó' },
   NOT_ENOUGH_PLAYERS: { status: 422, message: 'Se necesitan al menos 3 jugadores en línea' },

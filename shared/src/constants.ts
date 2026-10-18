@@ -46,6 +46,13 @@ export const DIAL_BANDS = [
 ] as const;
 export const WAVELENGTH_DEFAULTS = { cycles: 1 } as const;
 
+export const MIN_JUST_ONE_PLAYERS = 3;
+export const MIN_JUST_ONE_ACTIVE = 2;
+export const JUST_ONE_MAX_CYCLES = 3;
+export const JUST_ONE_CLUE_MAX = 30;
+export const JUST_ONE_GUESS_MAX = 30;
+export const JUST_ONE_DEFAULTS = { cycles: 1 } as const;
+
 const roomCodePattern = new RegExp(`^[${ROOM_CODE_ALPHABET}]{${String(ROOM_CODE_LENGTH)}}$`);
 
 export function isRoomCode(value: string): boolean {

@@ -1,4 +1,10 @@
-import { isRoomCode, PLAYER_ID_HEADER, PLAYER_TOKEN_HEADER } from '@family-night/shared';
+import {
+  isRoomCode,
+  PLAYER_ID_HEADER,
+  PLAYER_TOKEN_HEADER,
+  type RoomSnapshot,
+  type RoundRequest,
+} from '@family-night/shared';
 import type { Context } from 'hono';
 import { createMiddleware } from 'hono/factory';
 import { z } from 'zod';
@@ -12,6 +18,15 @@ import { authenticate } from '../services/players.ts';
 export interface AppEnv {
   Variables: { player: PlayerItem };
 }
+
+export type MatchRequest = (
+  c: Context<AppEnv>,
+  roomCode: string,
+  matchId: string,
+) => Promise<RoomSnapshot>;
+
+export const roundNumber = z.int().min(1).max(99);
+export const roundSchema: z.ZodType<RoundRequest> = z.object({ round: roundNumber });
 
 export function requirePlayer(deps: Deps) {
   return createMiddleware<AppEnv>(async (c, next) => {

@@ -5,8 +5,11 @@ import {
   type ErrorCode,
   type ErrorResponse,
   type GameConfigRequest,
+  type CancelClueRequest,
   type ClueRequest,
   type DialGuessRequest,
+  type JustOneClueRequest,
+  type JustOneGuessRequest,
   type GuessRequest,
   type LeaveRoomResponse,
   type MatchSecretResponse,
@@ -143,4 +146,18 @@ export const api = {
     request<RoomResponse>('POST', match(code, matchId, 'close-guessing'), { body }),
   skipPsychic: (code: string, matchId: string, body: RoundRequest) =>
     request<RoomResponse>('POST', match(code, matchId, 'skip-psychic'), { body }),
+  writeClue: (code: string, matchId: string, body: JustOneClueRequest) =>
+    request<RoomResponse>('PUT', match(code, matchId, 'clue'), { body }),
+  closeClues: (code: string, matchId: string, body: RoundRequest) =>
+    request<RoomResponse>('POST', match(code, matchId, 'close-clues'), { body }),
+  cancelClue: (code: string, matchId: string, body: CancelClueRequest) =>
+    request<RoomResponse>('PUT', match(code, matchId, 'cancel-clue'), { body }),
+  showClues: (code: string, matchId: string, body: RoundRequest) =>
+    request<RoomResponse>('POST', match(code, matchId, 'show-clues'), { body }),
+  guessWord: (code: string, matchId: string, body: JustOneGuessRequest) =>
+    request<RoomResponse>('PUT', match(code, matchId, 'guess'), { body }),
+  acceptGuess: (code: string, matchId: string, body: RoundRequest) =>
+    request<RoomResponse>('POST', match(code, matchId, 'accept-guess'), { body }),
+  skipGuesser: (code: string, matchId: string, body: RoundRequest) =>
+    request<RoomResponse>('POST', match(code, matchId, 'skip-guesser'), { body }),
 };

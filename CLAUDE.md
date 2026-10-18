@@ -21,5 +21,5 @@ Mobile web app of party games for one family, each player on their own phone in 
 - Run tests one at a time, serially; see the Verification section of `docs/TRD.md`.
 - User-facing text is in Spanish; code and docs are in English.
 - Any payload change starts in `shared/`; `api` and `web` import the contract from there.
-- No secret (word, role, clue, Wavelength target or an unrevealed guess) ever enters a room snapshot, an event or a log; `playerToken` is never logged.
+- No secret (word, role, clue, Wavelength target, an unrevealed guess or a Just One clue not yet shown) ever enters a room snapshot, an event or a log; `playerToken` is never logged.
 - Terraform applies only from Sebastian's machine with `AWS_PROFILE=fless-family-night`, never from CI.

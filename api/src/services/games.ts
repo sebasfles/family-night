@@ -3,6 +3,7 @@ import type { Deps } from '../deps.ts';
 import type { MatchItem } from '../repos/matches.ts';
 import type { RoomItem } from '../repos/rooms.ts';
 import { impostorGame } from './impostor/index.ts';
+import { justOneGame } from './justone/index.ts';
 import type { MatchUpdate } from './matches/match-change.ts';
 import { wavelengthGame } from './wavelength/index.ts';
 
@@ -47,7 +48,7 @@ export interface GameModule<G extends GameType = GameType> {
 type Registry = { [G in GameType]: GameModule<G> };
 
 function registry(): Registry {
-  return { IMPOSTOR: impostorGame, WAVELENGTH: wavelengthGame };
+  return { IMPOSTOR: impostorGame, WAVELENGTH: wavelengthGame, JUST_ONE: justOneGame };
 }
 
 export function gameOf(gameType: GameType): GameModule {
@@ -59,5 +60,6 @@ export function resolveConfigs(stored: Partial<GameConfigs>): GameConfigs {
   return {
     IMPOSTOR: stored.IMPOSTOR ?? games.IMPOSTOR.defaultConfig(),
     WAVELENGTH: stored.WAVELENGTH ?? games.WAVELENGTH.defaultConfig(),
+    JUST_ONE: stored.JUST_ONE ?? games.JUST_ONE.defaultConfig(),
   };
 }

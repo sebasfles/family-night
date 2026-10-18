@@ -1,32 +1,24 @@
-import { AbortMatchMenu } from '../../components/AbortMatchMenu';
-import type { Seat } from './model';
+import { AbortMatchMenu } from './AbortMatchMenu';
 
 interface MatchHeaderProps {
   round: number;
   finished: boolean;
   subtitle: string;
-  seat: Seat;
+  badge: string | null;
   canAbort: boolean;
   aborting: boolean;
   onAbort: () => void;
 }
 
-const seatLabels: Record<Seat, string | null> = {
-  PSYCHIC: null,
-  GUESSER: null,
-  SPECTATOR: 'Espectador',
-};
-
 export function MatchHeader({
   round,
   finished,
   subtitle,
-  seat,
+  badge,
   canAbort,
   aborting,
   onAbort,
 }: MatchHeaderProps) {
-  const label = finished ? null : seatLabels[seat];
   return (
     <header className="flex items-center justify-between gap-3">
       <div className="flex min-w-0 flex-col">
@@ -36,9 +28,9 @@ export function MatchHeader({
         <p className="text-base break-words text-cream/70">{subtitle}</p>
       </div>
       <div className="flex shrink-0 items-center gap-2">
-        {label && (
+        {badge && (
           <span className="rounded-full bg-cream/15 px-3 py-1 text-base font-semibold">
-            {label}
+            {badge}
           </span>
         )}
         {canAbort && <AbortMatchMenu aborting={aborting} onAbort={onAbort} />}

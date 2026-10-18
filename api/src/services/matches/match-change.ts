@@ -22,6 +22,7 @@ export interface MatchUpdate {
   scores?: Record<string, number>;
   usedWordIds?: string[];
   usedSpectrumIds?: string[];
+  usedJustOneWordIds?: string[];
 }
 
 export type GameState<G extends GameType> = Extract<MatchPublic, { gameType: G }>;
@@ -80,6 +81,7 @@ export function applyMatchUpdate(
     writes: [...(change.writes ?? []), ...(update.writes ?? [])],
     ...(update.usedWordIds ? { usedWordIds: update.usedWordIds } : {}),
     ...(update.usedSpectrumIds ? { usedSpectrumIds: update.usedSpectrumIds } : {}),
+    ...(update.usedJustOneWordIds ? { usedJustOneWordIds: update.usedJustOneWordIds } : {}),
   };
 }
 

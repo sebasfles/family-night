@@ -50,7 +50,9 @@ export async function secretOf(
 ): Promise<ImpostorSecret | null> {
   const response = call(room.harness, player, 'GET', matchPath(room, matchId, 'me'));
   const { secret } = await json<MatchSecretResponse>(response);
-  if (secret?.role === 'PSYCHIC') throw new Error('not an Impostor secret');
+  if (secret && secret.role !== 'CIVILIAN' && secret.role !== 'IMPOSTOR') {
+    throw new Error('not an Impostor secret');
+  }
   return secret;
 }
 

@@ -1,6 +1,6 @@
 ---
 updated: 2026-10-18
-source: 0004_wavelength
+source: 0005_just_one
 ---
 
 # Wavelength: technical
@@ -13,15 +13,15 @@ Stack, conventions and verification commands are in [docs/TRD.md](../../TRD.md);
 - `shared/src/schemas.ts`: `wavelengthConfigSchema`, imported only by the api.
 - `api/src/services/wavelength/`: the game module registered in `platform`'s registry (prepare, next round, departure, secret) and the clue, guess, close-guessing and skip-psychic commands.
 - `api/src/data/wavelength-spectra.json`: about 150 Spanish pairs with stable `{left}.{right}` ids; Sebastian reviews them in PRs.
-- `web/src/games/wavelength/`: `Dial`, the lobby panel, the four phase screens, the scoreboard, `myGuess.ts` (the caller's committed value per match and round in `sessionStorage`).
-- `web/src/routes/$code/wavelength.tsx`: the screen; `platform` navigates here when the current match is Wavelength.
+- `web/src/games/wavelength/`: `Dial`, the four phase screens, the scoreboard, `myGuess.ts` (the caller's committed value per match and round in `sessionStorage`).
+- `web/src/routes/$code/wavelength.tsx`: the screen; `platform` navigates here when the current match is Wavelength; the lobby uses `platform`'s cycles panel and the screen its match header.
 
 ## Endpoints owned
 
 `{match}` is `/api/rooms/{code}/matches/{matchId}`; every body carries the round.
 
-- `PUT {match}/clue`: the psychic's clue, opens guessing.
-- `PUT {match}/guess`: a guesser commits a value, once per round.
+- `PUT {match}/clue`: the psychic's clue, opens guessing (reached through `platform`'s shared path).
+- `PUT {match}/guess`: a guesser commits a value, once per round (reached through `platform`'s shared path).
 - `POST {match}/close-guessing`: host reveals early.
 - `POST {match}/skip-psychic`: host cancels the round of an absent psychic.
 

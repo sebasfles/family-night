@@ -11,6 +11,7 @@ import { isWriteConflict, type TransactItem } from './db.ts';
 export const MATCH_KEY = '#MATCH';
 const GUESS_PREFIX = '#GUESS#';
 const ROUND_PREFIX = '#ROUND#';
+const CLUE_PREFIX = '#CLUE#';
 
 export interface PlayerSecretItem {
   matchId: string;
@@ -50,6 +51,26 @@ export interface DialGuessItem {
   ttl: number;
 }
 
+export interface JustOneRoundItem {
+  matchId: string;
+  playerId: string;
+  round: number;
+  guesserId: string;
+  wordId: string;
+  word: string;
+  ttl: number;
+}
+
+export interface ClueItem {
+  matchId: string;
+  playerId: string;
+  round: number;
+  authorId: string;
+  clue: string;
+  createdAt: string;
+  ttl: number;
+}
+
 function twoDigits(round: number): string {
   return String(round).padStart(2, '0');
 }
@@ -58,12 +79,20 @@ function guessPrefix(round: number): string {
   return `${GUESS_PREFIX}${twoDigits(round)}#`;
 }
 
+function cluePrefix(round: number): string {
+  return `${CLUE_PREFIX}${twoDigits(round)}#`;
+}
+
 export function roundKey(round: number): string {
   return ROUND_PREFIX + twoDigits(round);
 }
 
 export function guessKey(round: number, guesserId: string): string {
   return guessPrefix(round) + guesserId;
+}
+
+export function clueKey(round: number, authorId: string): string {
+  return cluePrefix(round) + authorId;
 }
 
 export class MatchSecretsRepo {
@@ -110,7 +139,9 @@ export class MatchSecretsRepo {
     };
   }
 
-  putRoundItem(item: Omit<WavelengthRoundItem, 'playerId'>): TransactItem {
+  putRoundItem(
+    item: Omit<WavelengthRoundItem, 'playerId'> | Omit<JustOneRoundItem, 'playerId'>,
+  ): TransactItem {
     return {
       Put: {
         TableName: this.table,
@@ -120,12 +151,12 @@ export class MatchSecretsRepo {
     };
   }
 
-  async putGuess(guess: Omit<DialGuessItem, 'playerId'>): Promise<boolean> {
+  private async putOnce(item: { matchId: string; playerId: string }): Promise<boolean> {
     try {
       await this.client.send(
         new PutCommand({
           TableName: this.table,
-          Item: { ...guess, playerId: guessKey(guess.round, guess.guesserId) },
+          Item: item,
           ConditionExpression: 'attribute_not_exists(playerId)',
         }),
       );
@@ -136,29 +167,61 @@ export class MatchSecretsRepo {
     }
   }
 
-  async listGuesses(matchId: string, round: number, nowMs: number): Promise<DialGuessItem[]> {
-    const guesses: DialGuessItem[] = [];
+  private async listByPrefix<T extends { ttl: number }>(
+    matchId: string,
+    prefix: string,
+    nowMs: number,
+  ): Promise<T[]> {
+    const items: T[] = [];
     let startKey: Record<string, unknown> | undefined;
     do {
       const page = await this.client.send(
         new QueryCommand({
           TableName: this.table,
           KeyConditionExpression: 'matchId = :matchId AND begins_with(playerId, :prefix)',
-          ExpressionAttributeValues: { ':matchId': matchId, ':prefix': guessPrefix(round) },
+          ExpressionAttributeValues: { ':matchId': matchId, ':prefix': prefix },
           ConsistentRead: true,
           ExclusiveStartKey: startKey,
         }),
       );
-      guesses.push(...((page.Items ?? []) as DialGuessItem[]));
+      items.push(...((page.Items ?? []) as T[]));
       startKey = page.LastEvaluatedKey;
     } while (startKey);
     const now = epochSeconds(nowMs);
-    return guesses.filter((guess) => guess.ttl > now);
+    return items.filter((item) => item.ttl > now);
+  }
+
+  private deleteItem(item: { matchId: string; playerId: string }): TransactItem {
+    return {
+      Delete: { TableName: this.table, Key: { matchId: item.matchId, playerId: item.playerId } },
+    };
+  }
+
+  putGuess(guess: Omit<DialGuessItem, 'playerId'>): Promise<boolean> {
+    return this.putOnce({ ...guess, playerId: guessKey(guess.round, guess.guesserId) });
+  }
+
+  listGuesses(matchId: string, round: number, nowMs: number): Promise<DialGuessItem[]> {
+    return this.listByPrefix<DialGuessItem>(matchId, guessPrefix(round), nowMs);
   }
 
   deleteGuessItem(guess: DialGuessItem): TransactItem {
-    return {
-      Delete: { TableName: this.table, Key: { matchId: guess.matchId, playerId: guess.playerId } },
-    };
+    return this.deleteItem(guess);
+  }
+
+  getJustOneRound(matchId: string, round: number, nowMs: number): Promise<JustOneRoundItem | null> {
+    return this.read<JustOneRoundItem>(matchId, roundKey(round), nowMs);
+  }
+
+  putClue(clue: Omit<ClueItem, 'playerId'>): Promise<boolean> {
+    return this.putOnce({ ...clue, playerId: clueKey(clue.round, clue.authorId) });
+  }
+
+  listClues(matchId: string, round: number, nowMs: number): Promise<ClueItem[]> {
+    return this.listByPrefix<ClueItem>(matchId, cluePrefix(round), nowMs);
+  }
+
+  deleteClueItem(clue: ClueItem): TransactItem {
+    return this.deleteItem(clue);
   }
 }

@@ -1,6 +1,6 @@
 ---
 updated: 2026-10-18
-source: 0004_wavelength
+source: 0005_just_one
 ---
 
 # Platform: database
@@ -38,7 +38,7 @@ Multiword names are kebab case (`player-names`, `room-members`, `match-secrets`)
 - `Matches` sorts by ULID `matchId`, so a query by room code returns the night in order.
 - A room has at most one current match; starting another while one runs is `MATCH_IN_PROGRESS`, and so is `/lobby` while it plays.
 - Aborting writes the match as `ABORTED` and sets `currentMatchId` to null in the same transaction; no points.
-- `Rooms.configs` holds each game's config as the host stored it; `selectedGame` defaults to `IMPOSTOR` and changes only in a version-conditional write; `usedWordIds` is a list owned by impostor, `usedSpectrumIds` one owned by wavelength.
+- `Rooms.configs` holds each game's config as the host stored it; `selectedGame` defaults to `IMPOSTOR` and changes only in a version-conditional write; `usedWordIds` is a list owned by impostor, `usedSpectrumIds` one owned by wavelength, `usedJustOneWordIds` one owned by justone; each restarts only its own.
 - The host is a member, except in an empty room, where `hostId` keeps the last host until the next joiner takes it.
 - `RoomMembers.lastActiveAt` is the real-activity time and only the member's own requests set it; away moves `lastSeenAt` back 60 s and never touches it. After 60 s without activity, any member request except away hands the role to the oldest online member by `joinedAt`.
 - Writes that change the snapshot are one transaction: the room update conditional on `version` plus the member puts and deletes. Presence-only writes update just `lastSeenAt`, `lastActiveAt` and `ttl` of the caller, never the whole item.
