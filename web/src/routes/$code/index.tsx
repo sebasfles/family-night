@@ -1,4 +1,9 @@
-import { PRESENCE_RECOMPUTE_MS, type GameType, type RoomMember } from '@family-night/shared';
+import {
+  PRESENCE_RECOMPUTE_MS,
+  type GameConfigRequest,
+  type GameType,
+  type RoomMember,
+} from '@family-night/shared';
 import { useMutation } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
@@ -39,12 +44,7 @@ function Lobby() {
   const pick = useRoomMutation((game: GameType) => {
     const configs = room?.snapshot.configs;
     if (!configs) throw new Error('no room');
-    return api.updateConfig(
-      code,
-      game === 'IMPOSTOR'
-        ? { gameType: game, config: configs.IMPOSTOR }
-        : { gameType: game, config: configs.WAVELENGTH },
-    );
+    return api.updateConfig(code, { gameType: game, config: configs[game] } as GameConfigRequest);
   });
   const leave = useMutation({
     mutationFn: session.leave,

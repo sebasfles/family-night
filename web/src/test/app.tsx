@@ -1,5 +1,6 @@
 import {
   IMPOSTOR_DEFAULTS,
+  JUST_ONE_DEFAULTS,
   WAVELENGTH_DEFAULTS,
   type RoomMember,
   type RoomSnapshot,
@@ -73,6 +74,7 @@ export function snapshot(overrides: Partial<RoomSnapshot> = {}): RoomSnapshot {
     configs: {
       IMPOSTOR: { ...IMPOSTOR_DEFAULTS, categories: ['animales'] },
       WAVELENGTH: { ...WAVELENGTH_DEFAULTS },
+      JUST_ONE: { ...JUST_ONE_DEFAULTS },
     },
     serverTime: new Date().toISOString(),
     ...overrides,

@@ -106,6 +106,7 @@ Decisions (om-reviewer, accepted by Sebastian):
 - The adivinador leaving in REVEAL changes nothing; a clue-giver leaving in CLUE or REVIEW takes only their own clue out; in GUESS or REVEAL the clues stay as they are.
 - One clue per clue-giver per round, not editable, second commit as Wavelength's guess; a clue is one word, no whitespace, 1 to 30 characters.
 - Round 1 delivers shared and api only; web follows from round 2.
+  Round 1 may carry the web edits the new contract needs to stay green (pick by `gameType`, Card narrowed by role, fixtures, a guarded `$code/justone.tsx` with no screens); the lobby card stays "Próximamente" until round 2 (om-reviewer, on the om-developer's question).
 
 Constraints:
 
@@ -127,3 +128,28 @@ Review beyond the Pipeline:
 clearance: repo
 
 ## om-developer notes
+
+### Round 1
+
+Did:
+
+- shared: `JustOneConfig`, `JustOnePublic`, `JustOneSecret`, `JustOneResult` and the request types; `justOneConfigSchema`; constants; `justone/rules.ts` (normalization, duplicate and word cancellation, word pick with restart, rotation, clue completion, review toggles, show, guess check, scoring with floor, host override, departures) with Vitest.
+- api: `services/justone` registered in the game registry; `close-clues`, `cancel-clue`, `show-clues`, `accept-guess`, `skip-guesser` routes; `justone-words.json` (210 words); `usedJustOneWordIds` through the room write path; `#ROUND#{nn}` (guesser, word) and `#CLUE#{nn}#{playerId}` items in MatchSecrets; integration tests for every acceptance criterion the api owns, including 19 simultaneous clues.
+- web, only to stay green (approved): `JUST_ONE` in `gamePaths`, `$code/justone.tsx` rendering nothing, lobby `pick` sends `configs[game]` for any game, Impostor `Card` narrowed by role, fixtures. The lobby card is still "Próximamente".
+
+Decisions not in the plan:
+
+- `PUT {match}/clue` and `PUT {match}/guess` are shared with Wavelength with different bodies, which Hono cannot hold twice; they moved to a platform router (`handlers/shared-match.ts`) that reads the match's `gameType` after the membership check and hands the request to that game's handler, which parses its own body; a game without the path answers `STALE_ROUND`. This is the revisit condition of platform ARD "A route several games share lives in the platform router".
+- `GameConfigRequest` is now a mapped type over `GameType`, so a new game needs no edit there.
+- `roundSchema` moved to `handlers/context.ts` to keep handler modules from importing each other.
+- MatchSecrets repo: put-once, prefix list and delete are private helpers shared by guesses and clues; `putRoundItem` takes either game's round item.
+- Plural matching compares candidate singular forms (`-s`, `-es`, `-ces` to `-z`) of both words, so `mes`/`meses` and `luz`/`luces` match; it can over-match rare short words, which the manual review covers.
+- New error `NOT_CLUE_GIVER` (403, "En esta ronda no te toca dar pista") for a clue, cancel or show from someone who is not a clue-giver (the host may still show); a cancel naming an author without a clue is `TARGET_NOT_MEMBER`; `accept-guess` on a pass, a correct guess or a second tap is `STALE_ROUND`.
+- `PUT guess` carries `{ round, guess: string | null }`, `null` being Pasar; the guess is 1 to 30 characters, spaces allowed.
+- `skipped` shows through CLUE and clears when the review opens.
+- `/me` gives clue-givers the word, their own clue, and from REVIEW on every reviewed clue (also in GUESS).
+- A clue left cancelled because of a duplicate stays cancelled if the other author leaves in REVIEW; a clue-giver can restore it.
+
+Pending: web screens, lobby card and panel, Testing Library tests, screenshots (round 2).
+
+Deferred: none.

@@ -26,6 +26,7 @@ import { useRoomChannel } from '../../realtime/useRoomChannel';
 const gamePaths = {
   IMPOSTOR: '/$code/impostor',
   WAVELENGTH: '/$code/wavelength',
+  JUST_ONE: '/$code/justone',
 } as const satisfies Record<GameType, string>;
 
 export const Route = createFileRoute('/$code')({

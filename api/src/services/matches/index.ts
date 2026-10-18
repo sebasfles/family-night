@@ -11,6 +11,7 @@ import { AppError } from '../../lib/errors.ts';
 import { iso, ttlFrom } from '../../lib/time.ts';
 import { ulid } from '../../lib/ulid.ts';
 import { byJoinOrder } from '../../realtime/snapshot.ts';
+import type { MatchItem } from '../../repos/matches.ts';
 import type { PlayerItem } from '../../repos/players.ts';
 import { gameOf, type DepartureReason } from '../games.ts';
 import { updateRoom, type RoomChange, type RoomState } from '../room-state.ts';
@@ -75,6 +76,7 @@ function createMatch(
     },
     ...(prepared.usedWordIds ? { usedWordIds: prepared.usedWordIds } : {}),
     ...(prepared.usedSpectrumIds ? { usedSpectrumIds: prepared.usedSpectrumIds } : {}),
+    ...(prepared.usedJustOneWordIds ? { usedJustOneWordIds: prepared.usedJustOneWordIds } : {}),
     writes: [...(change.writes ?? []), ...(prepared.writes ?? [])],
   };
 }
@@ -196,13 +198,13 @@ export async function departureChange(
   return update ? applyMatchUpdate(change, match, update, nowMs) : change;
 }
 
-export async function mySecret(
+async function memberMatch(
   deps: Deps,
   player: PlayerItem,
   roomCode: string,
   matchId: string,
-): Promise<MatchSecretResponse> {
-  const nowMs = deps.clock();
+  nowMs: number,
+): Promise<MatchItem> {
   const [member, match] = await Promise.all([
     deps.repos.roomMembers.get(roomCode, player.playerId, nowMs),
     deps.repos.matches.get(roomCode, matchId, nowMs),
@@ -212,6 +214,27 @@ export async function mySecret(
     throw new AppError('NOT_MEMBER');
   }
   if (!match) throw new AppError('MATCH_NOT_FOUND');
+  return match;
+}
+
+export async function matchGameType(
+  deps: Deps,
+  player: PlayerItem,
+  roomCode: string,
+  matchId: string,
+): Promise<GameType> {
+  const match = await memberMatch(deps, player, roomCode, matchId, deps.clock());
+  return match.publicState.gameType;
+}
+
+export async function mySecret(
+  deps: Deps,
+  player: PlayerItem,
+  roomCode: string,
+  matchId: string,
+): Promise<MatchSecretResponse> {
+  const nowMs = deps.clock();
+  const match = await memberMatch(deps, player, roomCode, matchId, nowMs);
   const game = gameOf(match.publicState.gameType);
   return { secret: await game.secret(deps, match, player.playerId, nowMs) };
 }

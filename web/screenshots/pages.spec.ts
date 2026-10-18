@@ -1,6 +1,7 @@
 import { join } from 'node:path';
 import {
   IMPOSTOR_DEFAULTS,
+  JUST_ONE_DEFAULTS,
   WAVELENGTH_DEFAULTS,
   type ImpostorPublic,
   type ImpostorSecret,
@@ -66,6 +67,7 @@ function room(overrides: Partial<RoomSnapshot> = {}): RoomSnapshot {
         categories: ['animales', 'comida', 'lugares', 'deportes', 'familia'],
       },
       WAVELENGTH: { ...WAVELENGTH_DEFAULTS },
+      JUST_ONE: { ...JUST_ONE_DEFAULTS },
     },
     serverTime: new Date().toISOString(),
     ...overrides,

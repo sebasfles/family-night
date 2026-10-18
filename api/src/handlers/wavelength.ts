@@ -14,35 +14,36 @@ import {
   commitGuess,
   skipPsychicCommand,
 } from '../services/wavelength/index.ts';
-import { matchIdParam, parseBody, roomCodeParam, type AppEnv } from './context.ts';
-import { roundSchema } from './matches.ts';
+import {
+  matchIdParam,
+  parseBody,
+  roomCodeParam,
+  roundNumber,
+  roundSchema,
+  type AppEnv,
+  type MatchRequest,
+} from './context.ts';
+import type { SharedMatchRequests } from './shared-match.ts';
 
-const round = z.int().min(1).max(99);
 const clueSchema: z.ZodType<ClueRequest> = z.object({
-  round,
+  round: roundNumber,
   clue: z.string().trim().min(1).max(WAVELENGTH_CLUE_MAX),
 });
 const guessSchema: z.ZodType<DialGuessRequest> = z.object({
-  round,
+  round: roundNumber,
   value: z.int().min(0).max(DIAL_MAX),
 });
 
+export function wavelengthRequests(deps: Deps): SharedMatchRequests {
+  const clue: MatchRequest = async (c, code, matchId) =>
+    clueCommand(deps, c.get('player'), code, matchId, await parseBody(c, clueSchema));
+  const guess: MatchRequest = async (c, code, matchId) =>
+    commitGuess(deps, c.get('player'), code, matchId, await parseBody(c, guessSchema));
+  return { clue, guess };
+}
+
 export function wavelengthRoutes(deps: Deps) {
   return new Hono<AppEnv>()
-    .put('/:code/matches/:matchId/clue', async (c) => {
-      const [code, matchId] = [roomCodeParam(c), matchIdParam(c)];
-      const body = await parseBody(c, clueSchema);
-      return c.json<RoomResponse>({
-        room: await clueCommand(deps, c.get('player'), code, matchId, body),
-      });
-    })
-    .put('/:code/matches/:matchId/guess', async (c) => {
-      const [code, matchId] = [roomCodeParam(c), matchIdParam(c)];
-      const body = await parseBody(c, guessSchema);
-      return c.json<RoomResponse>({
-        room: await commitGuess(deps, c.get('player'), code, matchId, body),
-      });
-    })
     .post('/:code/matches/:matchId/close-guessing', async (c) => {
       const [code, matchId] = [roomCodeParam(c), matchIdParam(c)];
       const body = await parseBody(c, roundSchema);

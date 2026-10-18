@@ -1,0 +1,844 @@
+{
+  "words": [
+    {
+      "id": "perro",
+      "word": "Perro"
+    },
+    {
+      "id": "gato",
+      "word": "Gato"
+    },
+    {
+      "id": "caballo",
+      "word": "Caballo"
+    },
+    {
+      "id": "vaca",
+      "word": "Vaca"
+    },
+    {
+      "id": "chancho",
+      "word": "Chancho"
+    },
+    {
+      "id": "gallina",
+      "word": "Gallina"
+    },
+    {
+      "id": "pato",
+      "word": "Pato"
+    },
+    {
+      "id": "conejo",
+      "word": "Conejo"
+    },
+    {
+      "id": "cuy",
+      "word": "Cuy"
+    },
+    {
+      "id": "llama",
+      "word": "Llama"
+    },
+    {
+      "id": "alpaca",
+      "word": "Alpaca"
+    },
+    {
+      "id": "vicunya",
+      "word": "Vicuña"
+    },
+    {
+      "id": "condor",
+      "word": "Cóndor"
+    },
+    {
+      "id": "loro",
+      "word": "Loro"
+    },
+    {
+      "id": "pinguino",
+      "word": "Pingüino"
+    },
+    {
+      "id": "leon",
+      "word": "León"
+    },
+    {
+      "id": "tigre",
+      "word": "Tigre"
+    },
+    {
+      "id": "elefante",
+      "word": "Elefante"
+    },
+    {
+      "id": "jirafa",
+      "word": "Jirafa"
+    },
+    {
+      "id": "mono",
+      "word": "Mono"
+    },
+    {
+      "id": "oso",
+      "word": "Oso"
+    },
+    {
+      "id": "lobo",
+      "word": "Lobo"
+    },
+    {
+      "id": "zorro",
+      "word": "Zorro"
+    },
+    {
+      "id": "burro",
+      "word": "Burro"
+    },
+    {
+      "id": "oveja",
+      "word": "Oveja"
+    },
+    {
+      "id": "tortuga",
+      "word": "Tortuga"
+    },
+    {
+      "id": "serpiente",
+      "word": "Serpiente"
+    },
+    {
+      "id": "cocodrilo",
+      "word": "Cocodrilo"
+    },
+    {
+      "id": "ballena",
+      "word": "Ballena"
+    },
+    {
+      "id": "delfin",
+      "word": "Delfín"
+    },
+    {
+      "id": "tiburon",
+      "word": "Tiburón"
+    },
+    {
+      "id": "pulpo",
+      "word": "Pulpo"
+    },
+    {
+      "id": "cangrejo",
+      "word": "Cangrejo"
+    },
+    {
+      "id": "mariposa",
+      "word": "Mariposa"
+    },
+    {
+      "id": "abeja",
+      "word": "Abeja"
+    },
+    {
+      "id": "aranya",
+      "word": "Araña"
+    },
+    {
+      "id": "buho",
+      "word": "Búho"
+    },
+    {
+      "id": "raton",
+      "word": "Ratón"
+    },
+    {
+      "id": "cebra",
+      "word": "Cebra"
+    },
+    {
+      "id": "canguro",
+      "word": "Canguro"
+    },
+    {
+      "id": "palta",
+      "word": "Palta"
+    },
+    {
+      "id": "choclo",
+      "word": "Choclo"
+    },
+    {
+      "id": "papa",
+      "word": "Papa"
+    },
+    {
+      "id": "camote",
+      "word": "Camote"
+    },
+    {
+      "id": "yuca",
+      "word": "Yuca"
+    },
+    {
+      "id": "arroz",
+      "word": "Arroz"
+    },
+    {
+      "id": "pan",
+      "word": "Pan"
+    },
+    {
+      "id": "queso",
+      "word": "Queso"
+    },
+    {
+      "id": "huevo",
+      "word": "Huevo"
+    },
+    {
+      "id": "leche",
+      "word": "Leche"
+    },
+    {
+      "id": "ceviche",
+      "word": "Ceviche"
+    },
+    {
+      "id": "anticucho",
+      "word": "Anticucho"
+    },
+    {
+      "id": "chicharron",
+      "word": "Chicharrón"
+    },
+    {
+      "id": "tamal",
+      "word": "Tamal"
+    },
+    {
+      "id": "alfajor",
+      "word": "Alfajor"
+    },
+    {
+      "id": "helado",
+      "word": "Helado"
+    },
+    {
+      "id": "torta",
+      "word": "Torta"
+    },
+    {
+      "id": "chocolate",
+      "word": "Chocolate"
+    },
+    {
+      "id": "caramelo",
+      "word": "Caramelo"
+    },
+    {
+      "id": "canchita",
+      "word": "Canchita"
+    },
+    {
+      "id": "sopa",
+      "word": "Sopa"
+    },
+    {
+      "id": "pollo",
+      "word": "Pollo"
+    },
+    {
+      "id": "pizza",
+      "word": "Pizza"
+    },
+    {
+      "id": "hamburguesa",
+      "word": "Hamburguesa"
+    },
+    {
+      "id": "salchipapa",
+      "word": "Salchipapa"
+    },
+    {
+      "id": "platano",
+      "word": "Plátano"
+    },
+    {
+      "id": "manzana",
+      "word": "Manzana"
+    },
+    {
+      "id": "naranja",
+      "word": "Naranja"
+    },
+    {
+      "id": "mandarina",
+      "word": "Mandarina"
+    },
+    {
+      "id": "limon",
+      "word": "Limón"
+    },
+    {
+      "id": "fresa",
+      "word": "Fresa"
+    },
+    {
+      "id": "pinya",
+      "word": "Piña"
+    },
+    {
+      "id": "sandia",
+      "word": "Sandía"
+    },
+    {
+      "id": "mango",
+      "word": "Mango"
+    },
+    {
+      "id": "lucuma",
+      "word": "Lúcuma"
+    },
+    {
+      "id": "chirimoya",
+      "word": "Chirimoya"
+    },
+    {
+      "id": "maracuya",
+      "word": "Maracuyá"
+    },
+    {
+      "id": "tomate",
+      "word": "Tomate"
+    },
+    {
+      "id": "zanahoria",
+      "word": "Zanahoria"
+    },
+    {
+      "id": "cafe",
+      "word": "Café"
+    },
+    {
+      "id": "miel",
+      "word": "Miel"
+    },
+    {
+      "id": "mesa",
+      "word": "Mesa"
+    },
+    {
+      "id": "silla",
+      "word": "Silla"
+    },
+    {
+      "id": "cama",
+      "word": "Cama"
+    },
+    {
+      "id": "almohada",
+      "word": "Almohada"
+    },
+    {
+      "id": "sofa",
+      "word": "Sofá"
+    },
+    {
+      "id": "lampara",
+      "word": "Lámpara"
+    },
+    {
+      "id": "ventana",
+      "word": "Ventana"
+    },
+    {
+      "id": "puerta",
+      "word": "Puerta"
+    },
+    {
+      "id": "llave",
+      "word": "Llave"
+    },
+    {
+      "id": "espejo",
+      "word": "Espejo"
+    },
+    {
+      "id": "reloj",
+      "word": "Reloj"
+    },
+    {
+      "id": "escoba",
+      "word": "Escoba"
+    },
+    {
+      "id": "canyo",
+      "word": "Caño"
+    },
+    {
+      "id": "ducha",
+      "word": "Ducha"
+    },
+    {
+      "id": "jabon",
+      "word": "Jabón"
+    },
+    {
+      "id": "toalla",
+      "word": "Toalla"
+    },
+    {
+      "id": "cepillo",
+      "word": "Cepillo"
+    },
+    {
+      "id": "tijeras",
+      "word": "Tijeras"
+    },
+    {
+      "id": "cuchillo",
+      "word": "Cuchillo"
+    },
+    {
+      "id": "tenedor",
+      "word": "Tenedor"
+    },
+    {
+      "id": "cuchara",
+      "word": "Cuchara"
+    },
+    {
+      "id": "plato",
+      "word": "Plato"
+    },
+    {
+      "id": "vaso",
+      "word": "Vaso"
+    },
+    {
+      "id": "olla",
+      "word": "Olla"
+    },
+    {
+      "id": "refrigeradora",
+      "word": "Refrigeradora"
+    },
+    {
+      "id": "licuadora",
+      "word": "Licuadora"
+    },
+    {
+      "id": "televisor",
+      "word": "Televisor"
+    },
+    {
+      "id": "celular",
+      "word": "Celular"
+    },
+    {
+      "id": "computadora",
+      "word": "Computadora"
+    },
+    {
+      "id": "audifonos",
+      "word": "Audífonos"
+    },
+    {
+      "id": "paraguas",
+      "word": "Paraguas"
+    },
+    {
+      "id": "mochila",
+      "word": "Mochila"
+    },
+    {
+      "id": "cartera",
+      "word": "Cartera"
+    },
+    {
+      "id": "polo",
+      "word": "Polo"
+    },
+    {
+      "id": "chompa",
+      "word": "Chompa"
+    },
+    {
+      "id": "casaca",
+      "word": "Casaca"
+    },
+    {
+      "id": "pantalon",
+      "word": "Pantalón"
+    },
+    {
+      "id": "zapatilla",
+      "word": "Zapatilla"
+    },
+    {
+      "id": "sombrero",
+      "word": "Sombrero"
+    },
+    {
+      "id": "bufanda",
+      "word": "Bufanda"
+    },
+    {
+      "id": "lentes",
+      "word": "Lentes"
+    },
+    {
+      "id": "anillo",
+      "word": "Anillo"
+    },
+    {
+      "id": "collar",
+      "word": "Collar"
+    },
+    {
+      "id": "pijama",
+      "word": "Pijama"
+    },
+    {
+      "id": "poncho",
+      "word": "Poncho"
+    },
+    {
+      "id": "carro",
+      "word": "Carro"
+    },
+    {
+      "id": "combi",
+      "word": "Combi"
+    },
+    {
+      "id": "micro",
+      "word": "Micro"
+    },
+    {
+      "id": "bicicleta",
+      "word": "Bicicleta"
+    },
+    {
+      "id": "moto",
+      "word": "Moto"
+    },
+    {
+      "id": "tren",
+      "word": "Tren"
+    },
+    {
+      "id": "avion",
+      "word": "Avión"
+    },
+    {
+      "id": "barco",
+      "word": "Barco"
+    },
+    {
+      "id": "helicoptero",
+      "word": "Helicóptero"
+    },
+    {
+      "id": "cohete",
+      "word": "Cohete"
+    },
+    {
+      "id": "mototaxi",
+      "word": "Mototaxi"
+    },
+    {
+      "id": "ambulancia",
+      "word": "Ambulancia"
+    },
+    {
+      "id": "puente",
+      "word": "Puente"
+    },
+    {
+      "id": "playa",
+      "word": "Playa"
+    },
+    {
+      "id": "montanya",
+      "word": "Montaña"
+    },
+    {
+      "id": "volcan",
+      "word": "Volcán"
+    },
+    {
+      "id": "rio",
+      "word": "Río"
+    },
+    {
+      "id": "lago",
+      "word": "Lago"
+    },
+    {
+      "id": "mar",
+      "word": "Mar"
+    },
+    {
+      "id": "desierto",
+      "word": "Desierto"
+    },
+    {
+      "id": "selva",
+      "word": "Selva"
+    },
+    {
+      "id": "isla",
+      "word": "Isla"
+    },
+    {
+      "id": "nevado",
+      "word": "Nevado"
+    },
+    {
+      "id": "cascada",
+      "word": "Cascada"
+    },
+    {
+      "id": "bosque",
+      "word": "Bosque"
+    },
+    {
+      "id": "cancha",
+      "word": "Cancha"
+    },
+    {
+      "id": "parque",
+      "word": "Parque"
+    },
+    {
+      "id": "colegio",
+      "word": "Colegio"
+    },
+    {
+      "id": "hospital",
+      "word": "Hospital"
+    },
+    {
+      "id": "iglesia",
+      "word": "Iglesia"
+    },
+    {
+      "id": "mercado",
+      "word": "Mercado"
+    },
+    {
+      "id": "biblioteca",
+      "word": "Biblioteca"
+    },
+    {
+      "id": "castillo",
+      "word": "Castillo"
+    },
+    {
+      "id": "estadio",
+      "word": "Estadio"
+    },
+    {
+      "id": "sol",
+      "word": "Sol"
+    },
+    {
+      "id": "luna",
+      "word": "Luna"
+    },
+    {
+      "id": "estrella",
+      "word": "Estrella"
+    },
+    {
+      "id": "nube",
+      "word": "Nube"
+    },
+    {
+      "id": "lluvia",
+      "word": "Lluvia"
+    },
+    {
+      "id": "arcoiris",
+      "word": "Arcoíris"
+    },
+    {
+      "id": "nieve",
+      "word": "Nieve"
+    },
+    {
+      "id": "fuego",
+      "word": "Fuego"
+    },
+    {
+      "id": "arbol",
+      "word": "Árbol"
+    },
+    {
+      "id": "flor",
+      "word": "Flor"
+    },
+    {
+      "id": "cactus",
+      "word": "Cactus"
+    },
+    {
+      "id": "guitarra",
+      "word": "Guitarra"
+    },
+    {
+      "id": "piano",
+      "word": "Piano"
+    },
+    {
+      "id": "tambor",
+      "word": "Tambor"
+    },
+    {
+      "id": "cajon",
+      "word": "Cajón"
+    },
+    {
+      "id": "charango",
+      "word": "Charango"
+    },
+    {
+      "id": "quena",
+      "word": "Quena"
+    },
+    {
+      "id": "pelota",
+      "word": "Pelota"
+    },
+    {
+      "id": "trompo",
+      "word": "Trompo"
+    },
+    {
+      "id": "cometa",
+      "word": "Cometa"
+    },
+    {
+      "id": "munyeca",
+      "word": "Muñeca"
+    },
+    {
+      "id": "globo",
+      "word": "Globo"
+    },
+    {
+      "id": "rompecabezas",
+      "word": "Rompecabezas"
+    },
+    {
+      "id": "pinyata",
+      "word": "Piñata"
+    },
+    {
+      "id": "regalo",
+      "word": "Regalo"
+    },
+    {
+      "id": "libro",
+      "word": "Libro"
+    },
+    {
+      "id": "lapiz",
+      "word": "Lápiz"
+    },
+    {
+      "id": "mapa",
+      "word": "Mapa"
+    },
+    {
+      "id": "martillo",
+      "word": "Martillo"
+    },
+    {
+      "id": "escalera",
+      "word": "Escalera"
+    },
+    {
+      "id": "linterna",
+      "word": "Linterna"
+    },
+    {
+      "id": "camara",
+      "word": "Cámara"
+    },
+    {
+      "id": "corona",
+      "word": "Corona"
+    },
+    {
+      "id": "espada",
+      "word": "Espada"
+    },
+    {
+      "id": "tesoro",
+      "word": "Tesoro"
+    },
+    {
+      "id": "fantasma",
+      "word": "Fantasma"
+    },
+    {
+      "id": "robot",
+      "word": "Robot"
+    },
+    {
+      "id": "dinosaurio",
+      "word": "Dinosaurio"
+    },
+    {
+      "id": "sirena",
+      "word": "Sirena"
+    },
+    {
+      "id": "dragon",
+      "word": "Dragón"
+    },
+    {
+      "id": "bombero",
+      "word": "Bombero"
+    },
+    {
+      "id": "doctor",
+      "word": "Doctor"
+    },
+    {
+      "id": "payaso",
+      "word": "Payaso"
+    },
+    {
+      "id": "pirata",
+      "word": "Pirata"
+    },
+    {
+      "id": "mago",
+      "word": "Mago"
+    },
+    {
+      "id": "astronauta",
+      "word": "Astronauta"
+    },
+    {
+      "id": "abuela",
+      "word": "Abuela"
+    },
+    {
+      "id": "bebe",
+      "word": "Bebé"
+    },
+    {
+      "id": "cumpleanyos",
+      "word": "Cumpleaños"
+    },
+    {
+      "id": "navidad",
+      "word": "Navidad"
+    }
+  ]
+}

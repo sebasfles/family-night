@@ -12,7 +12,7 @@ export interface RoomMember {
   joinedAt: string;
 }
 
-export type GameType = 'IMPOSTOR' | 'WAVELENGTH';
+export type GameType = 'IMPOSTOR' | 'WAVELENGTH' | 'JUST_ONE';
 
 export type TieRule = 'SKIP' | 'RANDOM';
 
@@ -29,9 +29,14 @@ export interface WavelengthConfig {
   cycles: number;
 }
 
+export interface JustOneConfig {
+  cycles: number;
+}
+
 export interface GameConfigs {
   IMPOSTOR: ImpostorConfig;
   WAVELENGTH: WavelengthConfig;
+  JUST_ONE: JustOneConfig;
 }
 
 export type MatchStatus = 'PLAYING' | 'FINISHED' | 'ABORTED';
@@ -141,7 +146,59 @@ export interface WavelengthPublic {
   totals: Record<string, number>;
 }
 
-export type MatchPublic = ImpostorPublic | WavelengthPublic;
+export type JustOnePhase = 'CLUE' | 'REVIEW' | 'GUESS' | 'REVEAL' | 'FINISHED';
+
+export type JustOneOutcome = 'CORRECT' | 'WRONG' | 'PASS';
+
+export interface JustOneClue {
+  authorId: string;
+  clue: string;
+}
+
+export interface JustOneRevealedClue extends JustOneClue {
+  cancelled: boolean;
+}
+
+export interface JustOneSkippedTurn {
+  round: number;
+  guesserId: string;
+  reason: SkipReason;
+}
+
+export interface JustOneResult {
+  round: number;
+  guesserId: string;
+  word: string;
+  guess: string | null;
+  outcome: JustOneOutcome;
+  accepted: boolean;
+  clues: JustOneRevealedClue[];
+  scoreBefore: number;
+  score: number;
+}
+
+export interface JustOnePublic {
+  gameType: 'JUST_ONE';
+  matchId: string;
+  status: MatchStatus;
+  phase: JustOnePhase;
+  config: JustOneConfig;
+  round: number;
+  turn: number;
+  participants: string[];
+  order: string[];
+  departedIds: string[];
+  guesserId: string;
+  committedPlayerIds: string[];
+  cancelledAuthorIds: string[];
+  clues: JustOneClue[] | null;
+  skipped: JustOneSkippedTurn | null;
+  lastResult: JustOneResult | null;
+  score: number;
+  roundsWon: number;
+}
+
+export type MatchPublic = ImpostorPublic | WavelengthPublic | JustOnePublic;
 
 export type ImpostorSecret =
   | { role: 'CIVILIAN'; word: string; category: string }
@@ -153,7 +210,15 @@ export interface WavelengthSecret {
   target: number;
 }
 
-export type MatchSecret = ImpostorSecret | WavelengthSecret;
+export interface JustOneSecret {
+  role: 'CLUE_GIVER';
+  round: number;
+  word: string;
+  clue: string | null;
+  clues: JustOneClue[];
+}
+
+export type MatchSecret = ImpostorSecret | WavelengthSecret | JustOneSecret;
 
 export interface RoomSnapshot {
   roomCode: string;

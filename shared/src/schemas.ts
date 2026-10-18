@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { WAVELENGTH_MAX_CYCLES } from './constants.ts';
-import type { ImpostorConfig, WavelengthConfig } from './domain.ts';
+import { JUST_ONE_MAX_CYCLES, WAVELENGTH_MAX_CYCLES } from './constants.ts';
+import type { ImpostorConfig, JustOneConfig, WavelengthConfig } from './domain.ts';
 
 export const impostorConfigSchema = z.strictObject({
   impostorCount: z.int().min(1).max(3),
@@ -18,3 +18,7 @@ export const impostorConfigSchema = z.strictObject({
 export const wavelengthConfigSchema = z.strictObject({
   cycles: z.int().min(1).max(WAVELENGTH_MAX_CYCLES),
 }) satisfies z.ZodType<WavelengthConfig>;
+
+export const justOneConfigSchema = z.strictObject({
+  cycles: z.int().min(1).max(JUST_ONE_MAX_CYCLES),
+}) satisfies z.ZodType<JustOneConfig>;
