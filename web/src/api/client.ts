@@ -5,6 +5,8 @@ import {
   type ErrorCode,
   type ErrorResponse,
   type GameConfigRequest,
+  type ClueRequest,
+  type DialGuessRequest,
   type GuessRequest,
   type LeaveRoomResponse,
   type MatchSecretResponse,
@@ -133,4 +135,12 @@ export const api = {
     request<RoomResponse>('POST', match(code, matchId, 'guess'), { body }),
   skipGuess: (code: string, matchId: string) =>
     request<RoomResponse>('POST', match(code, matchId, 'skip-guess')),
+  giveClue: (code: string, matchId: string, body: ClueRequest) =>
+    request<RoomResponse>('PUT', match(code, matchId, 'clue'), { body }),
+  commitGuess: (code: string, matchId: string, body: DialGuessRequest) =>
+    request<RoomResponse>('PUT', match(code, matchId, 'guess'), { body }),
+  closeGuessing: (code: string, matchId: string, body: RoundRequest) =>
+    request<RoomResponse>('POST', match(code, matchId, 'close-guessing'), { body }),
+  skipPsychic: (code: string, matchId: string, body: RoundRequest) =>
+    request<RoomResponse>('POST', match(code, matchId, 'skip-psychic'), { body }),
 };

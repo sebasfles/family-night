@@ -1,4 +1,4 @@
-import { PRESENCE_RECOMPUTE_MS, type RoomMember } from '@family-night/shared';
+import { PRESENCE_RECOMPUTE_MS, type GameType, type RoomMember } from '@family-night/shared';
 import { useMutation } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
@@ -13,7 +13,8 @@ import { MemberList } from '../../components/lobby/MemberList';
 import { useRoomSession } from '../../components/roomSession';
 import { useToast } from '../../components/useToast';
 import { useNow } from '../../components/useNow';
-import { LobbyPanel } from '../../games/impostor/LobbyPanel';
+import { LobbyPanel as ImpostorPanel } from '../../games/impostor/LobbyPanel';
+import { LobbyPanel as WavelengthPanel } from '../../games/wavelength/LobbyPanel';
 import { useIdentity } from '../../identity/identity';
 
 export const Route = createFileRoute('/$code/')({
@@ -35,6 +36,16 @@ function Lobby() {
   const kick = useRoomMutation((member: RoomMember) =>
     api.kick(code, { playerId: member.playerId }),
   );
+  const pick = useRoomMutation((game: GameType) => {
+    const configs = room?.snapshot.configs;
+    if (!configs) throw new Error('no room');
+    return api.updateConfig(
+      code,
+      game === 'IMPOSTOR'
+        ? { gameType: game, config: configs.IMPOSTOR }
+        : { gameType: game, config: configs.WAVELENGTH },
+    );
+  });
   const leave = useMutation({
     mutationFn: session.leave,
     onError: (error) => {
@@ -63,9 +74,30 @@ function Lobby() {
         }}
       />
 
-      <GamePicker />
+      <GamePicker
+        selected={snapshot.selectedGame}
+        editable={isHost}
+        busy={pick.isPending}
+        onSelect={(game) => {
+          pick.mutate(game);
+        }}
+      />
 
-      <LobbyPanel code={code} snapshot={snapshot} isHost={isHost} nowMs={now + clockOffsetMs} />
+      {snapshot.selectedGame === 'WAVELENGTH' ? (
+        <WavelengthPanel
+          code={code}
+          snapshot={snapshot}
+          isHost={isHost}
+          nowMs={now + clockOffsetMs}
+        />
+      ) : (
+        <ImpostorPanel
+          code={code}
+          snapshot={snapshot}
+          isHost={isHost}
+          nowMs={now + clockOffsetMs}
+        />
+      )}
 
       <Button
         variant="ghost"

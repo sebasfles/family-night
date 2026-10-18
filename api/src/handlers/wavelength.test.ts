@@ -1,4 +1,4 @@
-import { GetCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
+import { GetCommand, PutCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 import {
   MAX_ROOM_MEMBERS,
   ONLINE_WINDOW_MS,
@@ -7,7 +7,16 @@ import {
   type RoomSnapshot,
 } from '@family-night/shared';
 import { describe, expect, test } from 'vitest';
-import { call, expectError, getRoom, join, json, roomWith, updates } from '../test/harness.ts';
+import {
+  call,
+  expectError,
+  getRoom,
+  join,
+  json,
+  newPlayer,
+  roomWith,
+  updates,
+} from '../test/harness.ts';
 import { impostorConfig, matchPath, start as startImpostor, type Room } from '../test/impostor.ts';
 import {
   clueCall,
@@ -150,7 +159,8 @@ describe('the target stays secret', () => {
     const room = await roomWith(4, { secureRandomInt: fixedTarget(37) });
     const match = await start(room);
     const psychic = psychicOf(room, match);
-    const latecomer = room.member(3);
+    const latecomer = await newPlayer(room.harness);
+    await join(room.harness, latecomer, room.code);
 
     expect(await secretOf(room, psychic, match.matchId)).toEqual({
       role: 'PSYCHIC',
@@ -168,6 +178,31 @@ describe('the target stays secret', () => {
     const revealed = await host(room, guessing, 'close-guessing');
     expect(wavelength(revealed).lastResult?.target).toBe(37);
     expect(await secretOf(room, psychic, match.matchId)).toBeNull();
+  });
+
+  test('each round keeps its own target, so a later round stored does not change a reveal', async () => {
+    const room = await roomWith(3, { secureRandomInt: fixedTarget(37) });
+    const match = await giveClue(room, await start(room));
+    await room.harness.client.send(
+      new PutCommand({
+        TableName: room.harness.tables.matchSecrets,
+        Item: {
+          matchId: match.matchId,
+          playerId: '#ROUND#02',
+          round: 2,
+          psychicId: match.psychicId,
+          target: 90,
+          ttl: Math.floor(room.harness.now() / 1000) + 3600,
+        },
+      }),
+    );
+
+    expect(await secretOf(room, psychicOf(room, match), match.matchId)).toMatchObject({
+      round: 1,
+      target: 37,
+    });
+    const revealed = wavelength(await host(room, match, 'close-guessing'));
+    expect(revealed.lastResult?.target).toBe(37);
   });
 
   test('no snapshot or event carries the target or a guess before the reveal', async () => {
@@ -188,7 +223,7 @@ describe('the target stays secret', () => {
     expect(wire).not.toContain('"target"');
     expect(wire).not.toContain('"value"');
     expect(wire).not.toContain('PSYCHIC');
-    expect(wire).not.toContain('#MATCH');
+    expect(wire).not.toContain('#ROUND');
     expect(wire).not.toContain('#GUESS');
   });
 });

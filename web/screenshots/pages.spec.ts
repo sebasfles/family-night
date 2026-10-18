@@ -6,9 +6,12 @@ import {
   type ImpostorSecret,
   type RoomMember,
   type RoomSnapshot,
+  type WavelengthPublic,
+  type WavelengthSecret,
 } from '@family-night/shared';
 import { expect, type Page, test } from '@playwright/test';
 import { impostorMatch, MATCH_ID } from '../src/test/impostor-match';
+import { WAVELENGTH_MATCH_ID, wavelengthMatch } from '../src/test/wavelength-match';
 
 const me = {
   playerId: '11111111-1111-4111-8111-111111111111',
@@ -382,4 +385,218 @@ test('impostor host menu', async ({ page }) => {
   await page.getByRole('menuitem', { name: 'Terminar partida' }).click();
   await expect(page.getByRole('alertdialog')).toBeVisible();
   await capture(page, 'impostor-end-confirm', false);
+});
+
+const order = [zorro, me.playerId, oso, colibri, hipo];
+const target: WavelengthSecret = { role: 'PSYCHIC', round: 2, target: 68 };
+
+async function serveWavelength(
+  page: Page,
+  match: WavelengthPublic,
+  secret: WavelengthSecret | null = null,
+  overrides: Partial<RoomSnapshot> = {},
+) {
+  await signIn(page);
+  await serveRoom(
+    page,
+    room({ members: online, currentMatch: match, selectedGame: 'WAVELENGTH', ...overrides }),
+  );
+  await page.route(`**/api/rooms/KXPR/matches/${WAVELENGTH_MATCH_ID}/me`, (route) =>
+    route.fulfill({ json: { secret } }),
+  );
+  await page.goto('/KXPR');
+  await expect(page.getByRole('heading', { name: /^(Ronda|Fin de la partida)/ })).toBeVisible();
+}
+
+function wave(overrides: Partial<WavelengthPublic> = {}): WavelengthPublic {
+  return wavelengthMatch(order, {
+    round: 2,
+    turn: 1,
+    psychicId: me.playerId,
+    spectrum: {
+      id: 'mala-pelicula.buena-pelicula',
+      left: 'Mala película',
+      right: 'Buena película',
+    },
+    totals: { [zorro]: 3, [me.playerId]: 4, [oso]: 2, [colibri]: 1, [hipo]: 0 },
+    ...overrides,
+  });
+}
+
+const othersTurn = { psychicId: zorro, turn: 0, round: 1 };
+
+function wavelengthRevealed(overrides: Partial<WavelengthPublic> = {}): WavelengthPublic {
+  return wave({
+    ...othersTurn,
+    phase: 'REVEAL',
+    clue: 'Shrek 2',
+    committedPlayerIds: [me.playerId, oso, colibri],
+    lastResult: {
+      round: 1,
+      psychicId: zorro,
+      target: 68,
+      guesses: [
+        { playerId: me.playerId, value: 71, points: 4 },
+        { playerId: oso, value: 55, points: 2 },
+        { playerId: colibri, value: 30, points: 0 },
+        { playerId: hipo, value: null, points: 0 },
+      ],
+      psychicPoints: 2,
+    },
+    totals: { [zorro]: 2, [me.playerId]: 4, [oso]: 2, [colibri]: 0, [hipo]: 0 },
+    ...overrides,
+  });
+}
+
+test('lobby as host with the Wavelength config', async ({ page }) => {
+  await signIn(page);
+  await serveRoom(
+    page,
+    room({
+      members: online,
+      selectedGame: 'WAVELENGTH',
+      configs: { ...room().configs, WAVELENGTH: { cycles: 2 } },
+    }),
+  );
+  await page.goto('/KXPR');
+  await expect(page.getByRole('radio', { name: '2' })).toBeChecked();
+  await capture(page, 'lobby-host-wavelength');
+});
+
+test('lobby as member with Wavelength chosen', async ({ page }) => {
+  await signIn(page);
+  await serveRoom(page, room({ members: online, selectedGame: 'WAVELENGTH', hostId: zorro }));
+  await page.goto('/KXPR');
+  await expect(page.getByText('Esperando a que el host inicie…')).toBeVisible();
+  await capture(page, 'lobby-member-wavelength');
+});
+
+test('wavelength clue, psychic', async ({ page }) => {
+  await serveWavelength(page, wave(), target);
+  await expect(page.getByRole('img', { name: 'El objetivo' })).toBeVisible();
+  await page.getByLabel('Tu pista').fill('Shrek 2');
+  await capture(page, 'wavelength-clue-psychic');
+});
+
+test('wavelength clue, others', async ({ page }) => {
+  await serveWavelength(page, wave(othersTurn), null, { hostId: zorro });
+  await expect(page.getByText('Zorro Astuto está pensando la pista…')).toBeVisible();
+  await capture(page, 'wavelength-clue-others');
+});
+
+test('wavelength clue, host with the psychic offline after a skip', async ({ page }) => {
+  const members = online.map((player) =>
+    player.playerId === oso
+      ? { ...player, online: false, lastSeenAt: new Date(Date.now() - 120_000).toISOString() }
+      : player,
+  );
+  const match = wave({
+    psychicId: oso,
+    round: 3,
+    turn: 2,
+    skipped: { round: 2, psychicId: me.playerId, reason: 'LEFT' },
+  });
+  await serveWavelength(page, match, null, { members });
+  await expect(page.getByRole('button', { name: 'Saltar turno' })).toBeVisible();
+  await capture(page, 'wavelength-clue-skip');
+  await page.getByRole('button', { name: 'Saltar turno' }).click();
+  await expect(page.getByRole('alertdialog')).toBeVisible();
+  await capture(page, 'wavelength-clue-skip-confirm', false);
+});
+
+test('wavelength guess, before and after committing', async ({ page }) => {
+  const match = wave({ ...othersTurn, phase: 'GUESS', clue: 'Shrek 2', committedPlayerIds: [oso] });
+  await serveWavelength(page, match, null, { hostId: zorro });
+  await page.route(`**/api/rooms/KXPR/matches/${WAVELENGTH_MATCH_ID}/guess`, (route) =>
+    route.fulfill({
+      json: {
+        room: room({
+          members: online,
+          hostId: zorro,
+          version: 8,
+          selectedGame: 'WAVELENGTH',
+          currentMatch: { ...match, committedPlayerIds: [oso, me.playerId] },
+        }),
+      },
+    }),
+  );
+  const dial = page.getByRole('slider', { name: 'Tu respuesta' });
+  await dial.focus();
+  for (let i = 0; i < 2; i++) await page.keyboard.press('PageUp');
+  await capture(page, 'wavelength-guess');
+  await page.getByRole('button', { name: 'Confirmar' }).click();
+  await expect(page.getByText('Listo. Esperando a los demás…')).toBeVisible();
+  await capture(page, 'wavelength-guess-committed');
+});
+
+test('wavelength guess, host', async ({ page }) => {
+  const match = wave({ ...othersTurn, phase: 'GUESS', clue: 'Shrek 2', committedPlayerIds: [oso] });
+  await serveWavelength(page, match);
+  await expect(page.getByRole('button', { name: 'Cerrar' })).toBeVisible();
+  await capture(page, 'wavelength-guess-host');
+  await page.getByRole('button', { name: 'Cerrar' }).click();
+  await expect(page.getByRole('alertdialog')).toBeVisible();
+  await capture(page, 'wavelength-guess-close-confirm', false);
+});
+
+test('wavelength guess, psychic waiting', async ({ page }) => {
+  await serveWavelength(
+    page,
+    wave({ phase: 'GUESS', clue: 'Shrek 2', committedPlayerIds: [zorro, oso] }),
+    target,
+    { hostId: zorro },
+  );
+  await expect(page.getByRole('img', { name: 'El objetivo' })).toBeVisible();
+  await capture(page, 'wavelength-guess-psychic');
+});
+
+test('wavelength reveal', async ({ page }) => {
+  await serveWavelength(page, wavelengthRevealed());
+  await expect(page.getByRole('heading', { name: 'El objetivo era 68' })).toBeVisible();
+  await capture(page, 'wavelength-reveal');
+});
+
+test('wavelength reveal, member on the last turn', async ({ page }) => {
+  await serveWavelength(page, wavelengthRevealed({ turn: 4 }), null, { hostId: zorro });
+  await expect(page.getByText('Esperando al host…')).toBeVisible();
+  await capture(page, 'wavelength-reveal-member');
+});
+
+test('wavelength final', async ({ page }) => {
+  await serveWavelength(
+    page,
+    wavelengthRevealed({ status: 'FINISHED', phase: 'FINISHED', turn: 4, round: 5 }),
+  );
+  await expect(page.getByRole('heading', { name: 'Ganó Cóndor Veloz' })).toBeVisible();
+  await capture(page, 'wavelength-final');
+});
+
+test('wavelength final, member', async ({ page }) => {
+  await serveWavelength(
+    page,
+    wavelengthRevealed({ status: 'FINISHED', phase: 'FINISHED', turn: 4, round: 5 }),
+    null,
+    { hostId: zorro },
+  );
+  await expect(page.getByText('Esperando al host…')).toBeVisible();
+  await capture(page, 'wavelength-final-member');
+});
+
+test('wavelength spectator', async ({ page }) => {
+  await serveWavelength(
+    page,
+    wave({ ...othersTurn, phase: 'GUESS', clue: 'Shrek 2', departedIds: [me.playerId] }),
+    null,
+    { hostId: zorro },
+  );
+  await expect(page.getByText('Partida en curso, juegas en la siguiente')).toBeVisible();
+  await capture(page, 'wavelength-spectator');
+});
+
+test('wavelength host menu', async ({ page }) => {
+  await serveWavelength(page, wave(othersTurn));
+  await page.getByRole('button', { name: 'Opciones de la partida' }).click();
+  await page.getByRole('menuitem', { name: 'Terminar partida' }).click();
+  await expect(page.getByRole('alertdialog')).toBeVisible();
+  await capture(page, 'wavelength-end-confirm', false);
 });

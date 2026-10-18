@@ -1,5 +1,5 @@
 import type { RoomMember } from '@family-night/shared';
-import { nameOf } from './model';
+import { nameOf } from '../../components/match';
 
 export function TurnOrder({ order, members }: { order: string[]; members: RoomMember[] }) {
   const [first] = order;

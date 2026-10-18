@@ -4,9 +4,14 @@ import { useToast } from '../components/useToast';
 import { api } from './client';
 import { applyRoom } from './room';
 
-export function useMatchSecret(code: string, matchId: string, enabled: boolean) {
+export function useMatchSecret(
+  code: string,
+  matchId: string,
+  round: number | null,
+  enabled: boolean,
+) {
   return useQuery({
-    queryKey: ['match-secret', matchId],
+    queryKey: ['match-secret', matchId, round],
     queryFn: async () => (await api.matchSecret(code, matchId)).secret,
     staleTime: Infinity,
     enabled,

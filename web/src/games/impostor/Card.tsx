@@ -1,6 +1,6 @@
 import type { ImpostorSecret } from '@family-night/shared';
 import { useState } from 'react';
-import { vibrate } from './model';
+import { vibrate } from '../../components/match';
 
 export function Card({ secret }: { secret: ImpostorSecret | undefined }) {
   const [shown, setShown] = useState(false);

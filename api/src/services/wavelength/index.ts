@@ -30,7 +30,6 @@ import type { Deps } from '../../deps.ts';
 import { AppError } from '../../lib/errors.ts';
 import { iso, ttlFrom } from '../../lib/time.ts';
 import type { DialGuessItem } from '../../repos/match-secrets.ts';
-import { MATCH_KEY } from '../../repos/match-secrets.ts';
 import type { MatchItem } from '../../repos/matches.ts';
 import type { PlayerItem } from '../../repos/players.ts';
 import type { RoomItem } from '../../repos/rooms.ts';
@@ -65,7 +64,6 @@ function checkWavelengthStart(_config: WavelengthConfig, playerCount: number): v
 function roundSecret(deps: Deps, state: WavelengthPublic, nowMs: number) {
   return deps.repos.matchSecrets.putRoundItem({
     matchId: state.matchId,
-    playerId: MATCH_KEY,
     round: state.round,
     psychicId: state.psychicId,
     target: drawTarget(deps.secureRandomInt),
@@ -134,8 +132,8 @@ async function reveal(
   guesses: CommittedGuess[],
   nowMs: number,
 ): Promise<WavelengthPublic> {
-  const secret = await deps.repos.matchSecrets.getRound(state.matchId, nowMs);
-  if (secret?.round !== state.round) {
+  const secret = await deps.repos.matchSecrets.getRound(state.matchId, state.round, nowMs);
+  if (!secret) {
     throw new Error(`match ${state.matchId} has no target for round ${String(state.round)}`);
   }
   return revealRound(state, secret.target, guesses);
@@ -198,8 +196,8 @@ async function wavelengthSecret(
   const state = gameState(match, 'WAVELENGTH');
   const hidden = state.phase === 'CLUE' || state.phase === 'GUESS';
   if (state.status !== 'PLAYING' || !hidden || state.psychicId !== playerId) return null;
-  const secret = await deps.repos.matchSecrets.getRound(match.matchId, nowMs);
-  if (secret?.round !== state.round || secret.psychicId !== playerId) return null;
+  const secret = await deps.repos.matchSecrets.getRound(match.matchId, state.round, nowMs);
+  if (secret?.psychicId !== playerId) return null;
   return { role: 'PSYCHIC', round: secret.round, target: secret.target };
 }
 

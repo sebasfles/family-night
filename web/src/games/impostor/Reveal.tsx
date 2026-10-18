@@ -1,6 +1,6 @@
 import { outcome, type ImpostorPublic, type RoomMember } from '@family-night/shared';
 import { Button } from '../../components/Button';
-import { nameOf } from './model';
+import { nameOf } from '../../components/match';
 
 interface RevealProps {
   match: ImpostorPublic;

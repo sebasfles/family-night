@@ -141,3 +141,29 @@ Decisions not recorded in the plan:
 Pending: web (round 2): lobby card and panel, `$code/wavelength.tsx`, the dial, the screens, the match-and-round-keyed secret query, the generalized navigation, shared pieces into `web/src/components/`, screenshots.
 
 Deferred: none.
+
+### Round 2
+
+Finding applied:
+- Each round's target is its own MatchSecrets item, `#ROUND#{nn}`, put with `attribute_not_exists` in the version-conditional write that opens the round; reveal, close and `/me` read the key of the round they hold, so a decide that lost the race fails the version condition and retries instead of reading a newer round. `#MATCH` stays Impostor's. Test: a later round's item already stored leaves `/me` and the reveal of the earlier round untouched.
+
+Web done:
+- Lobby: `GamePicker` takes the selected game; the host taps a card (`Jugar {game}`, a stretched button over the card) and `PUT /config` sends that game's current config; members see the chosen card only. `StartSection` (players online plus Iniciar) is shared by both panels. Wavelength panel: Vueltas 1 to 3 as a radiogroup with the rounds it means.
+- `$code/route.tsx` navigates by a `gameType` to path map; `$code/wavelength.tsx` renders CLUE, GUESS, REVEAL and FINISHED, the Espectador variant, Saltar turno (host, psychic offline, with confirm), Cerrar (host, confirm when guesses are missing) and the Terminar partida menu.
+- `Dial`: SVG semicircle, pointer drag with capture, 1-point −/+ buttons, `role="slider"` with arrows, PageUp/PageDown by 10, Home and End; bands with their points around a target, name markers for the reveal; read-only it is an `img`.
+- Moved to `web/src/components/`: `AbortMatchMenu` (host menu plus confirm), `match.ts` (`nameOf`, `vibrate`, `usePhaseVibration`); Impostor imports them.
+- `useMatchSecret` is keyed by match and round (Impostor passes `null`); a test shows a psychic in a later round fetching again, and it fails with the old key.
+- `myGuess.ts` keeps the caller's committed value per match and round in `sessionStorage`, as `myVote` does.
+- Screenshots: `{{workspace}}/screenshots/`, 129 files at 390, 768 and 1280 (Impostor and lobby refreshed too), every listed Wavelength state including Saltar turno with confirm, Cerrar confirm, psychic waiting, member views, Espectador and Terminar partida.
+
+Decisions not recorded in the plan:
+- The clue form and Confirmar lock on the first tap and unlock only if the server refuses (the command's promise rejects), so a failed request is not a dead end.
+- On a locked dial the −/+ buttons are hidden, not disabled; the value stays shown.
+- The psychic sees no badge in the header (the screen already says "Eres el psíquico"), the subtitle reads "Psíquico: tú".
+- The final screen ranks the players still in the match by `totals`; ties are named together, nobody scoring says so.
+
+Fixed along the way: my round 1 api test used `room.member(3)` as a latecomer while it was a participant, so it failed whenever that player drew the psychic; it now uses a player who joins after the start.
+
+Pending: docs (after the clean signal).
+
+Deferred: in the lobby member list at 390 px the host's crown wraps under "(tú)" on its own line (`components/lobby/MemberList.tsx`, from 0002, untouched here).

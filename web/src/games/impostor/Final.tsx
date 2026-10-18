@@ -1,7 +1,8 @@
 import { matchScores, type ImpostorPublic, type RoomMember } from '@family-night/shared';
 import type { ReactNode } from 'react';
 import { Button } from '../../components/Button';
-import { nameOf, reasonLabels } from './model';
+import { nameOf } from '../../components/match';
+import { reasonLabels } from './model';
 
 interface FinalProps {
   match: ImpostorPublic;

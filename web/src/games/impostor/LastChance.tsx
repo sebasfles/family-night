@@ -1,7 +1,7 @@
 import type { ImpostorPublic, RoomMember } from '@family-night/shared';
 import { useState } from 'react';
 import { Button } from '../../components/Button';
-import { nameOf } from './model';
+import { nameOf } from '../../components/match';
 
 interface LastChanceProps {
   match: ImpostorPublic;

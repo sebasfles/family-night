@@ -10,6 +10,7 @@ import { isWriteConflict, type TransactItem } from './db.ts';
 
 export const MATCH_KEY = '#MATCH';
 const GUESS_PREFIX = '#GUESS#';
+const ROUND_PREFIX = '#ROUND#';
 
 export interface PlayerSecretItem {
   matchId: string;
@@ -32,7 +33,7 @@ export interface MatchSecretItem {
 
 export interface WavelengthRoundItem {
   matchId: string;
-  playerId: typeof MATCH_KEY;
+  playerId: string;
   round: number;
   psychicId: string;
   target: number;
@@ -49,8 +50,16 @@ export interface DialGuessItem {
   ttl: number;
 }
 
+function twoDigits(round: number): string {
+  return String(round).padStart(2, '0');
+}
+
 function guessPrefix(round: number): string {
-  return `${GUESS_PREFIX}${String(round).padStart(2, '0')}#`;
+  return `${GUESS_PREFIX}${twoDigits(round)}#`;
+}
+
+export function roundKey(round: number): string {
+  return ROUND_PREFIX + twoDigits(round);
 }
 
 export function guessKey(round: number, guesserId: string): string {
@@ -87,8 +96,8 @@ export class MatchSecretsRepo {
     return this.read<MatchSecretItem>(matchId, MATCH_KEY, nowMs);
   }
 
-  getRound(matchId: string, nowMs: number): Promise<WavelengthRoundItem | null> {
-    return this.read<WavelengthRoundItem>(matchId, MATCH_KEY, nowMs);
+  getRound(matchId: string, round: number, nowMs: number): Promise<WavelengthRoundItem | null> {
+    return this.read<WavelengthRoundItem>(matchId, roundKey(round), nowMs);
   }
 
   putItem(item: PlayerSecretItem | MatchSecretItem): TransactItem {
@@ -101,8 +110,14 @@ export class MatchSecretsRepo {
     };
   }
 
-  putRoundItem(item: WavelengthRoundItem): TransactItem {
-    return { Put: { TableName: this.table, Item: item } };
+  putRoundItem(item: Omit<WavelengthRoundItem, 'playerId'>): TransactItem {
+    return {
+      Put: {
+        TableName: this.table,
+        Item: { ...item, playerId: roundKey(item.round) },
+        ConditionExpression: 'attribute_not_exists(playerId)',
+      },
+    };
   }
 
   async putGuess(guess: Omit<DialGuessItem, 'playerId'>): Promise<boolean> {
