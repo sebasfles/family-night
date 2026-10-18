@@ -1,6 +1,6 @@
 ---
 updated: 2026-10-18
-source: 0004_wavelength
+source: 0005_just_one
 ---
 
 # Architecture and Debt Record
