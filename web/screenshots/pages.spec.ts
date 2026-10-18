@@ -1,5 +1,5 @@
 import { join } from 'node:path';
-import type { RoomMember, RoomSnapshot } from '@family-night/shared';
+import { IMPOSTOR_DEFAULTS, type RoomMember, type RoomSnapshot } from '@family-night/shared';
 import { expect, type Page, test } from '@playwright/test';
 
 const me = {
@@ -35,6 +35,7 @@ function room(overrides: Partial<RoomSnapshot> = {}): RoomSnapshot {
     hostId: me.playerId,
     members: [member(me.playerId, me.name)],
     currentMatch: null,
+    configs: { IMPOSTOR: { ...IMPOSTOR_DEFAULTS, categories: ['animales'] } },
     serverTime: new Date().toISOString(),
     ...overrides,
   };

@@ -16,6 +16,23 @@ export const PLAYER_TOKEN_HEADER = 'x-player-token';
 
 export const EVENTS_NAMESPACE = 'rooms';
 
+export const MIN_IMPOSTOR_PLAYERS = 3;
+export const IMPOSTOR_CAPS = [
+  { minPlayers: 9, maxImpostors: 3 },
+  { minPlayers: 6, maxImpostors: 2 },
+  { minPlayers: 3, maxImpostors: 1 },
+] as const;
+export const IMPOSTOR_GUESS_OPTIONS = 5;
+export const CIVILIAN_WIN_POINTS = 1;
+export const IMPOSTOR_WIN_POINTS = 2;
+export const IMPOSTOR_DEFAULTS = {
+  impostorCount: 1,
+  randomOrder: true,
+  tieRule: 'RANDOM',
+  showCategoryToImpostor: false,
+  impostorLastGuess: true,
+} as const;
+
 const roomCodePattern = new RegExp(`^[${ROOM_CODE_ALPHABET}]{${String(ROOM_CODE_LENGTH)}}$`);
 
 export function isRoomCode(value: string): boolean {

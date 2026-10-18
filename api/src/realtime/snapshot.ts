@@ -1,4 +1,10 @@
-import { isOnline, type RoomMember, type RoomSnapshot } from '@family-night/shared';
+import {
+  isOnline,
+  type GameConfigs,
+  type MatchPublic,
+  type RoomMember,
+  type RoomSnapshot,
+} from '@family-night/shared';
 import { iso } from '../lib/time.ts';
 import type { MemberItem } from '../repos/room-members.ts';
 
@@ -7,6 +13,8 @@ export interface SnapshotSource {
   version: number;
   hostId: string;
   members: MemberItem[];
+  currentMatch: MatchPublic | null;
+  configs: GameConfigs;
 }
 
 export function byJoinOrder(a: MemberItem, b: MemberItem): number {
@@ -30,7 +38,8 @@ export function buildSnapshot(source: SnapshotSource, nowMs: number): RoomSnapsh
     version: source.version,
     hostId: source.hostId,
     members: source.members.toSorted(byJoinOrder).map((member) => publicMember(member, nowMs)),
-    currentMatch: null,
+    currentMatch: source.currentMatch,
+    configs: source.configs,
     serverTime: iso(nowMs),
   };
 }

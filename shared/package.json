@@ -10,5 +10,8 @@
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --no-file-parallelism"
+  },
+  "dependencies": {
+    "zod": "^4.6.7"
   }
 }

@@ -12,6 +12,9 @@ export interface TableNames {
   playerNames: string;
   rooms: string;
   roomMembers: string;
+  matches: string;
+  matchSecrets: string;
+  votes: string;
 }
 
 export function requireEnv(name: string): string {

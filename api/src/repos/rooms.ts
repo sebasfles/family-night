@@ -1,4 +1,5 @@
 import { GetCommand, UpdateCommand, type DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
+import type { GameConfigs } from '@family-night/shared';
 import { epochSeconds } from '../lib/time.ts';
 import type { TransactItem } from './db.ts';
 
@@ -9,12 +10,18 @@ export interface RoomItem {
   createdAt: string;
   updatedAt: string;
   ttl: number;
+  currentMatchId: string | null;
+  usedWordIds: string[];
+  configs: Partial<GameConfigs>;
 }
 
 export interface RoomBump {
   roomCode: string;
   expectedVersion: number;
   hostId: string;
+  currentMatchId: string | null;
+  usedWordIds: string[];
+  configs: Partial<GameConfigs>;
   updatedAt: string;
   ttl: number;
 }
@@ -32,8 +39,14 @@ export class RoomsRepo {
     const { Item } = await this.client.send(
       new GetCommand({ TableName: this.table, Key: { roomCode }, ConsistentRead: true }),
     );
-    const room = Item as RoomItem | undefined;
-    return room && room.ttl > epochSeconds(nowMs) ? room : null;
+    const room = Item as Partial<RoomItem> | undefined;
+    if (!room || (room.ttl ?? 0) <= epochSeconds(nowMs)) return null;
+    return {
+      ...(room as RoomItem),
+      currentMatchId: room.currentMatchId ?? null,
+      usedWordIds: room.usedWordIds ?? [],
+      configs: room.configs ?? {},
+    };
   }
 
   createItem(room: RoomItem, nowMs: number): TransactItem {
@@ -54,13 +67,17 @@ export class RoomsRepo {
         TableName: this.table,
         Key: { roomCode: bump.roomCode },
         UpdateExpression:
-          'SET version = :next, hostId = :hostId, updatedAt = :updatedAt, #ttl = :ttl',
+          'SET version = :next, hostId = :hostId, currentMatchId = :currentMatchId, ' +
+          'usedWordIds = :usedWordIds, configs = :configs, updatedAt = :updatedAt, #ttl = :ttl',
         ConditionExpression: 'version = :expected',
         ExpressionAttributeNames: { '#ttl': 'ttl' },
         ExpressionAttributeValues: {
           ':expected': bump.expectedVersion,
           ':next': bump.expectedVersion + 1,
           ':hostId': bump.hostId,
+          ':currentMatchId': bump.currentMatchId,
+          ':usedWordIds': bump.usedWordIds,
+          ':configs': bump.configs,
           ':updatedAt': bump.updatedAt,
           ':ttl': bump.ttl,
         },

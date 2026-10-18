@@ -1,10 +1,11 @@
-import { ONLINE_WINDOW_MS } from '@family-night/shared';
+import { IMPOSTOR_DEFAULTS, ONLINE_WINDOW_MS, type GameConfigs } from '@family-night/shared';
 import { expect, test } from 'vitest';
 import { iso } from '../lib/time.ts';
 import type { MemberItem } from '../repos/room-members.ts';
 import { buildSnapshot } from './snapshot.ts';
 
 const now = Date.parse('2026-10-17T20:00:00.000Z');
+const configs: GameConfigs = { IMPOSTOR: { ...IMPOSTOR_DEFAULTS, categories: ['animales'] } };
 
 function member(playerId: string, joinedMsAgo: number, seenMsAgo: number): MemberItem {
   return {
@@ -26,6 +27,8 @@ test('the snapshot lists members by join order with online derived from the serv
       version: 7,
       hostId: 'b',
       members: [member('a', 1_000, ONLINE_WINDOW_MS), member('b', 5_000, ONLINE_WINDOW_MS - 1)],
+      currentMatch: null,
+      configs,
     },
     now,
   );
@@ -53,6 +56,7 @@ test('the snapshot lists members by join order with online derived from the serv
       },
     ],
     currentMatch: null,
+    configs,
     serverTime: iso(now),
   });
 });
@@ -61,7 +65,7 @@ test('the snapshot carries no internal field of the stored member', () => {
   const tokenHash = 'f'.repeat(64);
   const stored = { ...member('a', 0, 0), tokenHash } as MemberItem;
   const snapshot = buildSnapshot(
-    { roomCode: 'ABCD', version: 1, hostId: 'a', members: [stored] },
+    { roomCode: 'ABCD', version: 1, hostId: 'a', members: [stored], currentMatch: null, configs },
     now,
   );
 

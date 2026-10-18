@@ -131,3 +131,25 @@ Review beyond the Pipeline:
 clearance: repo
 
 ## om-developer notes
+
+### Round 1
+
+Did:
+- shared: `impostor/rules.ts` pure rules (cap table, start checks, crypto-injectable shuffle, word pick with per-active-categories reset, guess options, start, vote checks, tally and tie, elimination, outcome, next round, guess, skip, departure, scores) with Vitest cases; `ImpostorConfig` and its zod schema, `ImpostorPublic`, `ImpostorSecret`, `MatchPublic`, `RoomSnapshot.currentMatch` and `configs`; request and response types; new error codes; Impostor defaults and caps in `constants.ts`.
+- api: `Matches`, `MatchSecrets`, `Votes` repos; `room-state.ts` now loads the current match, takes an async decide, writes match, configs, `usedWordIds` and extra items in the version-conditional transaction, and renews the match `ttl` with the room; platform `services/matches` (start, config, lobby, abort, rematch, `/me`, departure hook from leave and kick); `services/impostor` (preparation, votes, close, next round, guess, skip, departure); routes under `/api/rooms/{code}/...` per Context, plus `GET /api/words/categories`; word bank of 10 categories by 25 words.
+- web: only the snapshot fixtures gained `configs`, so the build stays green; the UI is round 2.
+
+Decisions not in the plan:
+- A vote is two steps: a plain put of the ballot keyed by round and voter (no snapshot change), then the room-state write that recomputes `votedPlayerIds` from the round's ballots and closes when everyone voted. Retries that find their ballot already reflected are no-ops, so 20 simultaneous votes converge with at most two conflicts per request (measured) and never reach `CONFLICT`. A late vote whose round closed answers 200 if the voter is in the closed round's `votedPlayerIds`, `STALE_ROUND` otherwise.
+- `votedPlayerIds` keeps the closed round's voters during `REVEAL`, including the eliminated; it clears on the next round.
+- `RoomSnapshot.configs` always carries an Impostor config; the server fills the default (all categories) until the host stores one.
+- `usedWordIds` is a list, not a string set: no empty-set special case, uniqueness kept by the pick.
+- `MatchSecrets` and `Votes` `ttl` is set once at write (24 h); only the room, the writer and the current match renew.
+- New error code `NOT_GUESSER` (403) for a guess by someone else; `AppError` takes an optional Spanish message, used for the specific `INVALID_CONFIG` texts ("Con N jugadores puede haber como máximo M impostor(es)", "Elige al menos una categoría").
+- A match id that exists but is not current answers `STALE_ROUND`; an unknown one `MATCH_NOT_FOUND`; rematch while playing `MATCH_IN_PROGRESS`; abort of a non playing match `STALE_ROUND`.
+- Rematch answers 200 (the plan marks 201 only for the start); it leaves the room's remembered config untouched.
+- Leave or kick in `REVEAL`: the would-be guesser leaving gives civilians the win; another living player is eliminated and the match finishes at once only if the outcome is already a win.
+- Room test helpers moved from `rooms.test.ts` to `test/harness.ts` for reuse.
+
+Pending: web (round 2), screenshots, docs.
+Deferred: none.
