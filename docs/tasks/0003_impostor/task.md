@@ -188,3 +188,12 @@ Findings:
 Screenshots refreshed.
 Pending: docs (on the clean signal).
 Deferred: none.
+
+### Round 4
+
+Findings:
+- 1: removed the assertion on the test's own fixture from "my vote stays marked after a reload of the same round".
+
+Only `web` changed; shared and api stay verified at round 3.
+Pending: docs (on the clean signal).
+Deferred: none.

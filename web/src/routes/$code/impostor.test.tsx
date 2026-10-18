@@ -193,7 +193,6 @@ describe('voting', () => {
       'true',
     );
     expect(screen.getByText('tu voto')).toBeVisible();
-    expect(JSON.stringify(voted)).not.toContain('targetId');
   });
 
   test('a stored vote of an earlier round is not shown in the next one', async () => {
