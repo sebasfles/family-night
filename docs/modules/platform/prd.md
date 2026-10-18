@@ -1,6 +1,6 @@
 ---
 updated: 2026-10-18
-source: 0004_wavelength
+source: 0005_just_one
 ---
 
 # Platform: product
@@ -40,12 +40,12 @@ Errors and empty states: cancelling the share sheet does nothing.
 ### Lobby
 
 1. Everyone sees the members, a crown on the host, a green dot online or grey "ausente", the night's score, and "(tú)" on themselves.
-2. The host taps a game card (Impostor or Wavelength) and sets its settings; others see the chosen game and its settings read only and "Esperando a que el host inicie...". The room remembers the choice and each game's settings for the night.
+2. The host taps a game card (Impostor, Wavelength or Just One) and sets its settings; others see the chosen game and its settings read only and "Esperando a que el host inicie...". The room remembers the choice and each game's settings for the night.
 3. The host can make another member host or remove one, for example a phone that was closed; the removed phone goes home with "Te sacaron de la sala", and opening the link again lets it back in.
 4. Any member can leave after confirming; if the host leaves, the oldest online member takes the crown, and a room left empty waits for its next joiner, who becomes host.
 5. Starting a match moves every phone to the game screen; ending it or returning to the lobby moves every phone back, with nobody navigating by hand.
 
-Errors and empty states: Just One appears as "Próximamente".
+Errors and empty states: every game card is playable.
 
 ### Presence
 
@@ -65,7 +65,7 @@ Errors and empty states: Just One appears as "Próximamente".
 - At most 20 members per room.
 - Rooms and matches vanish after 24 h without activity; players and names stay.
 - Changes show on every phone in under a second.
-- Secrets of a match (words, roles, the Wavelength target) are never visible to other players, not even by inspecting the network.
+- Secrets of a match (words, roles, the Wavelength target, Just One clues before they are shown) are never visible to other players, not even by inspecting the network.
 - The UI is Spanish only, built for a vertical phone, buttons at least 48 px, base text 18 px, dark mode supported.
 
 ## Out of scope

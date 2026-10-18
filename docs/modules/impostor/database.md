@@ -1,6 +1,6 @@
 ---
 updated: 2026-10-18
-source: 0004_wavelength
+source: 0005_just_one
 ---
 
 # Impostor: database
@@ -13,7 +13,7 @@ Table names carry the prefix `family-night-prd-`; the kebab-case suffixes below 
 
 | Table | Purpose |
 |---|---|
-| `family-night-prd-match-secrets` | What each player alone may see (role, word or clue, category) and one `#MATCH` item with the real word, its id, the clue, the guess options and the impostor ids. Wavelength keeps its `#ROUND` and `#GUESS` items here too; every `#` key is server-only. |
+| `family-night-prd-match-secrets` | What each player alone may see (role, word or clue, category) and one `#MATCH` item with the real word, its id, the clue, the guess options and the impostor ids. Wavelength keeps its `#ROUND` and `#GUESS` items here, Just One its `#ROUND` and `#CLUE` items; every `#` key is server-only. |
 | `family-night-prd-votes` | One item per player per round: who voted for whom. |
 
 ## Tables referenced

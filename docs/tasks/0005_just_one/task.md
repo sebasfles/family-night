@@ -192,3 +192,11 @@ Decisions not in the plan: the round's points come from the outcome, not from th
 Pending: none.
 
 Deferred: none.
+
+### Docs
+
+- Created `docs/modules/justone/` (README, prd, trd, ard, database, flows); nine ARD entries from the round notes, two of them with debt now in the `docs/ARD.md` Debt index.
+- Platform: trd (shared match router, `MatchHeader` and `CyclesPanel`, the Just One route), database (`usedJustOneWordIds`), prd ("Próximamente" gone, Just One card), README (code list), four ARD entries (shared clue and guess paths, secret key by phase, header and cycles panel, mapped config request).
+- Impostor database (Just One items in MatchSecrets); wavelength trd (lobby panel and header now in `platform`, clue and guess through the shared path).
+- `docs/TRD.md`, `docs/PRD.md` and the secret line of `CLAUDE.md`, as the task's Scope and Context ask, although document-task leaves those to setup and the om-manager.
+- No global decision in `docs/ARD.md` changed; no earlier debt was resolved.

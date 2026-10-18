@@ -66,6 +66,8 @@ Rebuilt by `write-ard` on every run, kept current by `document-task` on every ta
 | impostor | 2026-10-17 | A vote changed in the instant of the close answers 200 but counts the earlier choice | A changed vote reported as not counted |
 | impostor | 2026-10-17 | Secrets and ballots expire 24 h after written, not renewed | A match runs past a day |
 | wavelength | 2026-10-18 | Right after the spectra restart, the spectrum just played can come up again | A family plays through the bank in one night |
+| justone | 2026-10-18 | Plural matching can over-match rare short words; the review restores them | A clue cancelled that was not a repeat |
+| justone | 2026-10-18 | Right after the word bank restarts, the word just played can come up again | A family plays through the bank in one night |
 | infra | 2026-10-17 | Requests with a body need `x-amz-content-sha256`; no per-route throttle beyond reserved concurrency | Abuse shows up in logs |
 | infra | 2026-10-17 | Authorizer cold start on the first realtime connect after a quiet period | Players notice the delay |
 | infra | 2026-10-17 | State bucket settings are not in code | Bucket needs a change or a second environment |
