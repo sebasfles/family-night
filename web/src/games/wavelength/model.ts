@@ -15,8 +15,14 @@ export function pointsLabel(points: number): string {
   return points === 1 ? '1 punto' : `${String(points)} puntos`;
 }
 
-export function ranking(match: WavelengthPublic): { playerId: string; points: number }[] {
-  return wavelengthPlayers(match)
+export function ranking(
+  match: WavelengthPublic,
+): { playerId: string; points: number; rank: number }[] {
+  const rows = wavelengthPlayers(match)
     .map((playerId) => ({ playerId, points: match.totals[playerId] ?? 0 }))
     .toSorted((a, b) => b.points - a.points);
+  return rows.map((row) => ({
+    ...row,
+    rank: 1 + rows.filter((other) => other.points > row.points).length,
+  }));
 }

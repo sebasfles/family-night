@@ -72,6 +72,9 @@ function MemberRow({
   onMakeHost,
   onKick,
 }: MemberRowProps) {
+  const cut = member.name.lastIndexOf(' ') + 1;
+  const leading = member.name.slice(0, cut);
+  const last = member.name.slice(cut);
   return (
     <li className="flex min-h-16 items-center gap-3 px-4 py-2">
       <span
@@ -79,17 +82,18 @@ function MemberRow({
         className={`size-3 shrink-0 rounded-full ${online ? 'bg-emerald-400' : 'bg-cream/30'}`}
       />
       <div className="flex min-w-0 flex-1 flex-col">
-        <p
-          className={`flex flex-wrap items-center gap-x-2 font-semibold ${online ? '' : 'text-cream/50'}`}
-        >
-          <span className="min-w-0 break-words">{member.name}</span>
-          {self && <span className="shrink-0 font-normal text-cream/60">(tú)</span>}
-          {host && (
-            <span className="shrink-0 text-moon" title="Host">
-              <CrownIcon className="size-5" />
-              <span className="sr-only">host</span>
-            </span>
-          )}
+        <p className={`font-semibold break-words ${online ? '' : 'text-cream/50'}`}>
+          {leading}
+          <span className="whitespace-nowrap">
+            {last}
+            {self && <span className="ml-2 font-normal text-cream/60">(tú)</span>}
+            {host && (
+              <span className="ml-2 inline-block align-[-0.2em] text-moon" title="Host">
+                <CrownIcon className="size-5" />
+                <span className="sr-only">host</span>
+              </span>
+            )}
+          </span>
         </p>
         <p className="text-sm text-cream/60">{online ? 'en línea' : 'ausente'}</p>
       </div>

@@ -22,12 +22,10 @@ export function Scoreboard({
         aria-label={title}
         className="flex flex-col divide-y divide-cream/10 rounded-2xl bg-night-soft ring-1 ring-cream/10"
       >
-        {rows.map(({ playerId, points }, index) => (
+        {rows.map(({ playerId, points, rank }) => (
           <li key={playerId} className="flex items-center justify-between gap-3 px-4 py-3">
             <span className="flex min-w-0 items-baseline gap-3">
-              <span className="w-6 shrink-0 text-right text-cream/60 tabular-nums">
-                {index + 1}
-              </span>
+              <span className="w-6 shrink-0 text-right text-cream/60 tabular-nums">{rank}</span>
               <span
                 className={`min-w-0 break-words ${points === best && best > 0 ? 'font-bold' : ''}`}
               >

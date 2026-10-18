@@ -166,4 +166,15 @@ Fixed along the way: my round 1 api test used `room.member(3)` as a latecomer wh
 
 Pending: docs (after the clean signal).
 
-Deferred: in the lobby member list at 390 px the host's crown wraps under "(tú)" on its own line (`components/lobby/MemberList.tsx`, from 0002, untouched here).
+Deferred: in the lobby member list at 390 px the host's crown wraps under "(tú)" on its own line (`components/lobby/MemberList.tsx`, from 0002, untouched here). Fixed in round 3.
+
+### Round 3
+
+Findings applied:
+- `MemberList`: "(tú)" and the crown sit in one no-wrap group with the last word of the name, so they never wrap alone; at 390 px a name that does not fit takes them to the next line with its last word, at 768 and 1280 they stay on the name's line.
+- Scoreboard ranks are shared on ties (competition ranking: 4, 2, 2, 0 reads 1, 2, 2, 4), computed in `ranking()` of `games/wavelength/model.ts`; a Testing Library case pins a tied table.
+- Screenshots regenerated, all 129.
+
+Pending: docs (after the clean signal).
+
+Deferred: none.

@@ -346,6 +346,28 @@ describe('the reveal and the end', () => {
     });
   });
 
+  test('players with equal points share a rank', async () => {
+    play(
+      room(
+        revealed({
+          totals: {
+            [me.playerId]: 4,
+            [zorro.playerId]: 2,
+            [oso.playerId]: 2,
+            [colibri.playerId]: 0,
+          },
+        }),
+      ),
+    );
+
+    const totals = await screen.findByRole('list', { name: 'Puntaje' });
+    expect(
+      within(totals)
+        .getAllByRole('listitem')
+        .map((row) => row.textContent),
+    ).toEqual(['1Cóndor Veloz(tú)4', '2Zorro Astuto2', '2Oso Sabio2', '4Colibrí Risueño0']);
+  });
+
   test('on the last turn the host sees Ver resultado', async () => {
     play(room(revealed({ turn: 3 })));
     expect(await screen.findByRole('button', { name: 'Ver resultado' })).toBeVisible();
