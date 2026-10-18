@@ -80,7 +80,8 @@ function ImpostorMatch({ code, snapshot, match, servedStep }: ImpostorMatchProps
   const abort = useRoomMutation(code, () => api.abortMatch(code, matchId));
   const rematch = useRoomMutation(code, () => api.rematch(code, matchId));
   const lobby = useRoomMutation(code, () => api.backToLobby(code));
-  const selection = confirm.variables ?? select.variables ?? myVote?.targetId ?? null;
+  const chosen = confirm.variables ?? select.variables ?? myVote?.targetId ?? null;
+  const selection = chosen !== null && match.order.includes(chosen) ? chosen : null;
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 py-6">
@@ -120,6 +121,7 @@ function ImpostorMatch({ code, snapshot, match, servedStep }: ImpostorMatchProps
             selfId={selfId}
             canVote={seat === 'PLAYER'}
             selection={selection}
+            selectionGone={chosen !== null && selection === null}
             isHost={isHost}
             closing={close.isPending}
             onSelect={(targetId) => {

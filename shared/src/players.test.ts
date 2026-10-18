@@ -19,6 +19,16 @@ describe('normalizePlayerName', () => {
     ['ñandú veloz y feliz', 'ñandú veloz y feliz'],
     ['Abu\u0007', null],
     ['🦊🦊', '🦊🦊'],
+    ['👨\u200D👩\u200D👧 Papá', '👨\u200D👩\u200D👧 Papá'],
+    ['\u200B\u200B', null],
+    ['Ana\u200B', null],
+    ['\u2060\u2060\u2060', null],
+    ['\u3164\u3164', null],
+    ['\u115F\u1160', null],
+    ['\u2800\u2800', null],
+    ['\uFFA0\uFFA0', null],
+    ['\u200D\u200D\u200D', null],
+    ['\u0301\u0301', null],
   ])('%j becomes %j', (raw, expected) => {
     expect(normalizePlayerName(raw)).toBe(expected);
   });

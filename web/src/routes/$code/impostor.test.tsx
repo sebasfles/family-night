@@ -1,5 +1,5 @@
 import { type ImpostorPublic, type ImpostorSecret, type RoomSnapshot } from '@family-night/shared';
-import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, test, vi } from 'vitest';
 import {
   apiError,
@@ -11,6 +11,7 @@ import {
   snapshot,
   type Handler,
 } from '../../test/app';
+import { applyRoom } from '../../api/room';
 import { impostorMatch, MATCH_ID } from '../../test/impostor-match';
 
 const zorro = member({ playerId: '22222222-2222-4222-8222-222222222222', name: 'Zorro Astuto' });
@@ -269,6 +270,43 @@ describe('voting', () => {
     );
     expect(screen.getByText('tu voto')).toBeVisible();
     expect(screen.queryByRole('button', { name: 'Confirmar voto' })).toBeNull();
+  });
+
+  test('when the player I voted for is kicked my vote is gone and I must choose again', async () => {
+    const match = impostorMatch(ids);
+    sessionStorage.setItem(
+      `family-night.vote.${MATCH_ID}`,
+      JSON.stringify({ round: 1, targetId: oso.playerId, confirmed: true }),
+    );
+    const { queryClient } = play(room({ ...match, votedPlayerIds: [me.playerId] }));
+    expect(await screen.findByRole('button', { name: /Oso Sabio tu voto/ })).toBeDisabled();
+
+    act(() => {
+      applyRoom(
+        queryClient,
+        room(
+          {
+            ...match,
+            order: ids.filter((id) => id !== oso.playerId),
+            eliminated: [
+              { playerId: oso.playerId, round: 1, wasImpostor: false, reason: 'KICKED' },
+            ],
+          },
+          { version: 9 },
+        ),
+      );
+    });
+
+    expect(
+      await screen.findByText('Quien elegiste ya no está en juego. Elige de nuevo.'),
+    ).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Confirmar voto' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: /Oso Sabio/ })).toBeNull();
+    expect(screen.getByText('Votaron 0 de 3')).toBeVisible();
+
+    fireEvent.click(screen.getByRole('button', { name: /Zorro Astuto/ }));
+    expect(await screen.findByRole('button', { name: /Zorro Astuto tu elección/ })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Confirmar voto' })).toBeEnabled();
   });
 
   test('a stored vote of an earlier round is not shown in the next one', async () => {

@@ -115,7 +115,7 @@ export const API_ERRORS = {
   INVALID_VOTE: { status: 422, message: 'Ese voto no es válido' },
   VOTE_CONFIRMED: { status: 409, message: 'Ya confirmaste tu voto' },
   NAME_TAKEN: { status: 409, message: 'Ese nombre ya lo tiene otra persona' },
-  INVALID_NAME: { status: 422, message: 'El nombre debe tener entre 2 y 20 caracteres' },
+  INVALID_NAME: { status: 422, message: 'El nombre debe tener entre 2 y 20 caracteres visibles' },
   INVALID_GUESS: { status: 422, message: 'En esta ronda no te toca adivinar' },
   CONFLICT: { status: 409, message: 'Hubo cambios al mismo tiempo, intenta de nuevo' },
   VALIDATION_ERROR: { status: 400, message: 'Los datos enviados no son válidos' },

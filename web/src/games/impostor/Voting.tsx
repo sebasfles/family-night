@@ -11,6 +11,7 @@ interface VotingProps {
   selfId: string;
   canVote: boolean;
   selection: string | null;
+  selectionGone: boolean;
   isHost: boolean;
   closing: boolean;
   onSelect: (targetId: string) => void;
@@ -24,6 +25,7 @@ export function Voting({
   selfId,
   canVote,
   selection,
+  selectionGone,
   isHost,
   closing,
   onSelect,
@@ -118,7 +120,11 @@ export function Voting({
               Confirmar voto
             </Button>
             <p className="text-center text-base text-cream/70">
-              {selection ? 'Puedes cambiarlo hasta que confirmes.' : 'Toca a quien quieras votar.'}
+              {selection
+                ? 'Puedes cambiarlo hasta que confirmes.'
+                : selectionGone
+                  ? 'Quien elegiste ya no está en juego. Elige de nuevo.'
+                  : 'Toca a quien quieras votar.'}
             </p>
           </>
         ))}

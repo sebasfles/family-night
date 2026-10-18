@@ -184,6 +184,7 @@ describe('PATCH /api/players/me', () => {
     ['only spaces', '      '],
     ['21 characters', 'a'.repeat(21)],
     ['a control character', 'Abu\u0007la'],
+    ['only invisible characters', '\u200B\u3164'],
   ])('refuses %s with INVALID_NAME', async (_, name) => {
     const room = await roomWith(1);
     const error = await expectError(
@@ -191,7 +192,7 @@ describe('PATCH /api/players/me', () => {
       422,
       'INVALID_NAME',
     );
-    expect(error.message).toBe('El nombre debe tener entre 2 y 20 caracteres');
+    expect(error.message).toBe('El nombre debe tener entre 2 y 20 caracteres visibles');
   });
 
   test('refuses a name another player holds anywhere', async () => {

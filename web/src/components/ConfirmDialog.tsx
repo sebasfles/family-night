@@ -19,16 +19,21 @@ export function ConfirmDialog({
   const titleId = useId();
   const cancelRef = useRef<HTMLButtonElement>(null);
 
+  const cancel = useRef(onCancel);
+  useEffect(() => {
+    cancel.current = onCancel;
+  }, [onCancel]);
+
   useEffect(() => {
     cancelRef.current?.focus();
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onCancel();
+      if (event.key === 'Escape') cancel.current();
     };
     document.addEventListener('keydown', onKey);
     return () => {
       document.removeEventListener('keydown', onKey);
     };
-  }, [onCancel]);
+  }, []);
 
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/60 p-4 sm:items-center">

@@ -652,7 +652,7 @@ describe('my name', () => {
 
     fireEvent.change(input, { target: { value: ' A ' } });
     expect(save).toBeDisabled();
-    expect(within(dialog).getByText('Entre 2 y 20 caracteres')).toBeVisible();
+    expect(within(dialog).getByText('Entre 2 y 20 caracteres visibles')).toBeVisible();
     fireEvent.change(input, { target: { value: 'a'.repeat(21) } });
     expect(save).toBeDisabled();
     fireEvent.change(input, { target: { value: 'zorro ástuto' } });

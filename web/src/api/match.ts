@@ -64,7 +64,6 @@ export function useRoomMutation<T = void>(
     mutate: (input: T) => {
       mutation.mutate(commandOf(input));
     },
-    mutateAsync: (input: T) => mutation.mutateAsync(commandOf(input)),
   };
 }
 

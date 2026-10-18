@@ -50,9 +50,19 @@ Decisions the plan did not record:
 
 Deferred:
 
-- `ConfirmDialog` refocuses Cancelar on every parent render because its effect depends on an inline `onCancel`; the new rename dialog avoids it, the old dialog is untouched.
 - A match left in `IMPOSTOR_GUESS` shows only the header and card until the host aborts it; no explanatory copy.
 
 Pending: none.
+
+### Round 2
+
+Applied the four findings, none disputed:
+
+1. `normalizePlayerName` refuses control characters, format characters other than U+200D, the blank fillers U+115F, U+1160, U+2800, U+3164 and U+FFA0, and any grapheme made only of marks or joiners; length counts the remaining graphemes. `INVALID_NAME` and the dialog hint now say "caracteres visibles".
+2. An Impostor selection whose target is no longer in `order` counts as none: Confirmar is disabled and the hint reads "Quien elegiste ya no está en juego. Elige de nuevo."
+3. `mutateAsync` removed from `useRoomMutation`.
+4. `ConfirmDialog` and `RenameDialog` focus once on mount and keep Escape bound to the latest `onCancel` through a ref.
+
+Screenshots refreshed in `screenshots/phase_1/`.
 
 ## Result

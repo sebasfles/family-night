@@ -1,10 +1,15 @@
 import { PLAYER_NAME_MAX, PLAYER_NAME_MIN } from './constants.ts';
 
+const HIDDEN = /\p{Cc}|(?!\u200D)\p{Cf}|[\u115F\u1160\u2800\u3164\uFFA0]/u;
+const BLANK_GRAPHEME = /^[\p{M}\u200D]+$/u;
+
 export function normalizePlayerName(raw: string): string | null {
   const name = raw.normalize('NFC').trim().replace(/\s+/gu, ' ');
-  const length = Array.from(new Intl.Segmenter('es').segment(name)).length;
-  if (length < PLAYER_NAME_MIN || length > PLAYER_NAME_MAX || /\p{Cc}/u.test(name)) return null;
-  return name;
+  if (HIDDEN.test(name)) return null;
+  const graphemes = Array.from(new Intl.Segmenter('es').segment(name), (part) => part.segment);
+  if (graphemes.some((grapheme) => BLANK_GRAPHEME.test(grapheme))) return null;
+  const length = graphemes.length;
+  return length < PLAYER_NAME_MIN || length > PLAYER_NAME_MAX ? null : name;
 }
 
 export function playerNameKey(name: string): string {

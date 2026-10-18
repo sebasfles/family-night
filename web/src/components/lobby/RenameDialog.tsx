@@ -23,21 +23,27 @@ export function RenameDialog({ current, others, onRename, onCancel }: RenameDial
   const taken =
     name !== null && others.some((member) => playerNameKey(member.name) === playerNameKey(name));
   const problem =
-    name === null ? 'Entre 2 y 20 caracteres' : taken ? 'Alguien de la sala ya se llama así' : null;
+    name === null
+      ? 'Entre 2 y 20 caracteres visibles'
+      : taken
+        ? 'Alguien de la sala ya se llama así'
+        : null;
+
+  const cancel = useRef(onCancel);
+  useEffect(() => {
+    cancel.current = onCancel;
+  }, [onCancel]);
 
   useEffect(() => {
     input.current?.select();
-  }, []);
-
-  useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onCancel();
+      if (event.key === 'Escape') cancel.current();
     };
     document.addEventListener('keydown', onKey);
     return () => {
       document.removeEventListener('keydown', onKey);
     };
-  }, [onCancel]);
+  }, []);
 
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/60 p-4 sm:items-center">
