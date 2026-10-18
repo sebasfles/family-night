@@ -802,7 +802,7 @@ test('just one guess, others', async ({ page }) => {
 
 test('just one reveal, correct', async ({ page }) => {
   await serveJustOne(page, joRevealed('CORRECT'), null, { hostId: zorro });
-  await expect(page.getByText('¡Cóndor Veloz acertó!')).toBeVisible();
+  await expect(page.getByText('¡Acertaste!')).toBeVisible();
   await capture(page, 'justone-reveal-correct');
 });
 

@@ -10,6 +10,7 @@ import { nameOf } from '../../components/match';
 interface RevealPhaseProps {
   match: JustOnePublic;
   members: RoomMember[];
+  selfId: string;
   isHost: boolean;
   accepting: boolean;
   advancing: boolean;
@@ -17,17 +18,20 @@ interface RevealPhaseProps {
   onNext: () => void;
 }
 
-function verdict(result: JustOneResult, guesser: string): string {
-  if (result.outcome === 'PASS') return `${guesser} pasó`;
-  if (result.accepted) return `${guesser} dijo «${result.guess ?? ''}» y cuenta como acierto`;
-  return result.outcome === 'CORRECT'
-    ? `¡${guesser} acertó!`
-    : `${guesser} dijo «${result.guess ?? ''}»`;
+const roundPoints = { CORRECT: '+1', PASS: '0', WRONG: '−1' } as const;
+
+function verdict(result: JustOneResult, guesser: string | null): string {
+  const said = `${guesser ? `${guesser} dijo` : 'Dijiste'} «${result.guess ?? ''}»`;
+  if (result.outcome === 'PASS') return guesser ? `${guesser} pasó` : 'Pasaste';
+  if (result.accepted) return `${said}, cuenta como acierto`;
+  if (result.outcome === 'WRONG') return `${said}. No era`;
+  return guesser ? `¡${guesser} acertó!` : '¡Acertaste!';
 }
 
 export function RevealPhase({
   match,
   members,
+  selfId,
   isHost,
   accepting,
   advancing,
@@ -36,7 +40,8 @@ export function RevealPhase({
 }: RevealPhaseProps) {
   const result = match.lastResult;
   if (!result) return null;
-  const guesser = nameOf(members, result.guesserId);
+  const guesser = result.guesserId === selfId ? null : nameOf(members, result.guesserId);
+  const floored = result.outcome === 'WRONG' && result.scoreBefore === 0;
   const won = result.outcome === 'CORRECT';
   const last = nextJustOneTurn(match) === null;
 
@@ -56,9 +61,15 @@ export function RevealPhase({
         <p className="text-xl font-semibold text-balance break-words">{verdict(result, guesser)}</p>
       </div>
 
-      <p role="status" className="text-center text-2xl font-bold">
-        Puntaje del equipo: <span className="text-moon tabular-nums">{result.score}</span>
-      </p>
+      <div role="status" className="flex flex-col items-center gap-1 text-center">
+        <p className="text-2xl font-bold">
+          Puntaje del equipo: <span className="text-moon tabular-nums">{result.score}</span>
+        </p>
+        <p className="text-lg text-cream/80">
+          Esta ronda: <span className="font-bold tabular-nums">{roundPoints[result.outcome]}</span>
+          {floored && ', el puntaje no baja de 0'}
+        </p>
+      </div>
 
       <div className="flex flex-col gap-2">
         <h3 className="text-lg font-bold">Pistas</h3>

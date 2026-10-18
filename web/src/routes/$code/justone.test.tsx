@@ -329,7 +329,10 @@ describe('guess and reveal', () => {
       expect(sent(mock, `PUT ${base}/guess`)).toEqual({ round: 1, guess: 'Aguacate' });
     });
     expect(await screen.findByRole('heading', { name: 'Palta' })).toBeVisible();
-    expect(screen.getByText('Cóndor Veloz dijo «Aguacate»')).toBeVisible();
+    expect(screen.getByText('Dijiste «Aguacate». No era')).toBeVisible();
+    expect(screen.getByText(/^Esta ronda:/)).toHaveTextContent(
+      'Esta ronda: −1, el puntaje no baja de 0',
+    );
     expect(screen.getByRole('button', { name: 'Contar como acierto' })).toBeVisible();
     expect(secretCalls(mock)).toBe(0);
   });
@@ -345,7 +348,8 @@ describe('guess and reveal', () => {
     await waitFor(() => {
       expect(sent(mock, `PUT ${base}/guess`)).toEqual({ round: 1, guess: null });
     });
-    expect(await screen.findByText('Cóndor Veloz pasó')).toBeVisible();
+    expect(await screen.findByText('Pasaste')).toBeVisible();
+    expect(screen.getByText(/^Esta ronda:/)).toHaveTextContent('Esta ronda: 0');
     expect(screen.queryByRole('button', { name: 'Contar como acierto' })).toBeNull();
   });
 
@@ -389,9 +393,8 @@ describe('guess and reveal', () => {
     await waitFor(() => {
       expect(sent(mock, `POST ${base}/accept-guess`)).toEqual({ round: 1 });
     });
-    expect(
-      await screen.findByText('Cóndor Veloz dijo «Aguacate» y cuenta como acierto'),
-    ).toBeVisible();
+    expect(await screen.findByText('Dijiste «Aguacate», cuenta como acierto')).toBeVisible();
+    expect(screen.getByText(/^Esta ronda:/)).toHaveTextContent('Esta ronda: +1');
     expect(screen.queryByRole('button', { name: 'Contar como acierto' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Siguiente ronda' })).toBeVisible();
   });
@@ -399,9 +402,27 @@ describe('guess and reveal', () => {
   test('members wait for the host, and the last round leads to the result', async () => {
     play(room({ ...revealed('CORRECT'), turn: 3 }, { hostId: zorro.playerId }));
 
-    expect(await screen.findByText('¡Cóndor Veloz acertó!')).toBeVisible();
+    expect(await screen.findByText('¡Acertaste!')).toBeVisible();
     expect(screen.getByText('Esperando al host…')).toBeVisible();
     expect(screen.queryByRole('button', { name: 'Contar como acierto' })).toBeNull();
+  });
+
+  test('others read the verdict about the guesser by name', async () => {
+    const wrong = revealed('WRONG');
+    const result = wrong.lastResult;
+    if (!result) throw new Error('missing result');
+    play(
+      room({
+        ...wrong,
+        guesserId: zorro.playerId,
+        score: 1,
+        lastResult: { ...result, guesserId: zorro.playerId, scoreBefore: 2, score: 1 },
+      }),
+    );
+
+    expect(await screen.findByText('Zorro Astuto dijo «Aguacate». No era')).toBeVisible();
+    expect(screen.getByText(/^Esta ronda:/)).toHaveTextContent('Esta ronda: −1');
+    expect(screen.getByText(/^Puntaje del equipo:/)).toHaveTextContent('Puntaje del equipo: 1');
   });
 
   test('the final screen shows the team score and the rounds won', async () => {

@@ -9,12 +9,12 @@ import { createFileRoute } from '@tanstack/react-router';
 import { api } from '../../api/client';
 import { useMatchSecret, useRoomMutation } from '../../api/match';
 import { useRoom } from '../../api/room';
+import { MatchHeader } from '../../components/MatchHeader';
 import { nameOf, usePhaseVibration } from '../../components/match';
 import { useNow } from '../../components/useNow';
 import { CluePhase } from '../../games/justone/CluePhase';
 import { Final } from '../../games/justone/Final';
 import { GuessPhase } from '../../games/justone/GuessPhase';
-import { MatchHeader } from '../../games/justone/MatchHeader';
 import { roundsLabel, seatOf } from '../../games/justone/model';
 import { RevealPhase } from '../../games/justone/RevealPhase';
 import { ReviewPhase } from '../../games/justone/ReviewPhase';
@@ -106,7 +106,7 @@ function JustOneMatch({ code, snapshot, match, clockOffsetMs }: JustOneMatchProp
               ? 'Adivinas tú'
               : `Adivina: ${guesserName}`
         }
-        spectator={seat === 'SPECTATOR'}
+        badge={seat === 'SPECTATOR' && phase !== 'FINISHED' ? 'Espectador' : null}
         canAbort={isHost && playing}
         aborting={abort.isPending}
         onAbort={() => {
@@ -187,6 +187,7 @@ function JustOneMatch({ code, snapshot, match, clockOffsetMs }: JustOneMatchProp
         <RevealPhase
           match={match}
           members={snapshot.members}
+          selfId={selfId}
           isHost={isHost}
           accepting={accept.isPending}
           advancing={next.isPending}

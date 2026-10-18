@@ -178,3 +178,17 @@ Decisions not in the plan:
 Pending: none.
 
 Deferred: none.
+
+### Round 3
+
+Findings applied:
+
+1. One `web/src/components/MatchHeader.tsx` (round or end title, subtitle, an optional badge, the host menu) and one `web/src/components/lobby/CyclesPanel.tsx` (Vueltas for any game whose config is `{ cycles }`, typed as `CyclesGame`, no cast); the lobby maps each `gameType` to its panel with its min players, max cycles and "Cada jugador ..." phrase. The Wavelength and Just One copies are deleted. Impostor's header was a third copy of the same markup, so it uses the shared header too, with its subtitle and "Eliminado" or "Espectador" badge computed in its route; its screens look the same.
+2. The Just One lobby test taps Vueltas 3 and asserts the config body and the start body carry `cycles: 3`.
+3. The reveal speaks to the guesser in the second person ("¡Acertaste!", "Dijiste «...». No era", "Pasaste", "Dijiste «...», cuenta como acierto"), names the guesser for everyone else, and shows "Esta ronda: +1, 0 or −1" from the outcome under the team score, adding "el puntaje no baja de 0" when the floor hid the −1. Testing Library cases for the guesser's wrong, pass and overridden verdicts and for the third person; screenshots refreshed (174).
+
+Decisions not in the plan: the round's points come from the outcome, not from the score difference, so a wrong guess at 0 still reads −1 with the floor note.
+
+Pending: none.
+
+Deferred: none.

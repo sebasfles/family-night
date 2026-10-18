@@ -483,6 +483,11 @@ describe('the Just One panel', () => {
   test('the host picks Just One, sets the cycles and starts with them', async () => {
     const served = room({ members: players(3) });
     const chosen = { ...served, version: 9, selectedGame: 'JUST_ONE' as const };
+    const three = {
+      ...chosen,
+      version: 10,
+      configs: { ...chosen.configs, JUST_ONE: { cycles: 3 } },
+    };
     const { mock } = enterRoom('/ABCD', served);
     mock.on('GET /api/words/categories', () => Response.json({ categories: [] }));
     mock.on('PUT /api/rooms/ABCD/config', () => Response.json({ room: chosen }));
@@ -491,7 +496,6 @@ describe('the Just One panel', () => {
     );
 
     fireEvent.click(await screen.findByRole('button', { name: 'Jugar Just One' }));
-
     await waitFor(() => {
       expect(body(mock, 'PUT /api/rooms/ABCD/config')).toEqual({
         gameType: 'JUST_ONE',
@@ -501,11 +505,23 @@ describe('the Just One panel', () => {
     expect(
       await screen.findByText(/Cada jugador adivina una vez: 3 rondas con 3 en línea/),
     ).toBeVisible();
+
+    mock.on('PUT /api/rooms/ABCD/config', () => Response.json({ room: three }));
+    fireEvent.click(screen.getByRole('radio', { name: '3' }));
+    await waitFor(() => {
+      expect(body(mock, 'PUT /api/rooms/ABCD/config')).toEqual({
+        gameType: 'JUST_ONE',
+        config: { cycles: 3 },
+      });
+    });
+    expect(await screen.findByText(/adivina 3 veces: 9 rondas/)).toBeVisible();
+    expect(screen.getByRole('radio', { name: '3' })).toBeChecked();
+
     fireEvent.click(screen.getByRole('button', { name: 'Iniciar' }));
     await waitFor(() => {
       expect(body(mock, 'POST /api/rooms/ABCD/matches')).toEqual({
         gameType: 'JUST_ONE',
-        config: { cycles: 1 },
+        config: { cycles: 3 },
       });
     });
   });

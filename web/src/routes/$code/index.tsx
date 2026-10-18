@@ -1,17 +1,23 @@
 import {
+  JUST_ONE_MAX_CYCLES,
+  MIN_JUST_ONE_PLAYERS,
+  MIN_WAVELENGTH_PLAYERS,
   PRESENCE_RECOMPUTE_MS,
+  WAVELENGTH_MAX_CYCLES,
   type GameConfigRequest,
   type GameType,
   type RoomMember,
+  type RoomSnapshot,
 } from '@family-night/shared';
 import { useMutation } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { api } from '../../api/client';
 import { useRoomMutation } from '../../api/match';
 import { useRoom } from '../../api/room';
 import { Button } from '../../components/Button';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { CyclesPanel } from '../../components/lobby/CyclesPanel';
 import { GamePicker } from '../../components/lobby/GamePicker';
 import { InviteCard } from '../../components/lobby/InviteCard';
 import { MemberList } from '../../components/lobby/MemberList';
@@ -19,19 +25,40 @@ import { useRoomSession } from '../../components/roomSession';
 import { useToast } from '../../components/useToast';
 import { useNow } from '../../components/useNow';
 import { LobbyPanel as ImpostorPanel } from '../../games/impostor/LobbyPanel';
-import { LobbyPanel as JustOnePanel } from '../../games/justone/LobbyPanel';
-import { LobbyPanel as WavelengthPanel } from '../../games/wavelength/LobbyPanel';
 import { useIdentity } from '../../identity/identity';
 
 export const Route = createFileRoute('/$code/')({
   component: Lobby,
 });
 
-const panels = {
+interface PanelProps {
+  code: string;
+  snapshot: RoomSnapshot;
+  isHost: boolean;
+  nowMs: number;
+}
+
+const panels: Record<GameType, (props: PanelProps) => ReactNode> = {
   IMPOSTOR: ImpostorPanel,
-  WAVELENGTH: WavelengthPanel,
-  JUST_ONE: JustOnePanel,
-} satisfies Record<GameType, unknown>;
+  WAVELENGTH: (props) => (
+    <CyclesPanel
+      {...props}
+      gameType="WAVELENGTH"
+      minPlayers={MIN_WAVELENGTH_PLAYERS}
+      maxCycles={WAVELENGTH_MAX_CYCLES}
+      turn="es psíquico"
+    />
+  ),
+  JUST_ONE: (props) => (
+    <CyclesPanel
+      {...props}
+      gameType="JUST_ONE"
+      minPlayers={MIN_JUST_ONE_PLAYERS}
+      maxCycles={JUST_ONE_MAX_CYCLES}
+      turn="adivina"
+    />
+  ),
+};
 
 function Lobby() {
   const { code } = Route.useParams();

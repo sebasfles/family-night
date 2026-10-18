@@ -8,12 +8,12 @@ import { createFileRoute } from '@tanstack/react-router';
 import { api } from '../../api/client';
 import { useMatchSecret, useRoomMutation } from '../../api/match';
 import { useRoom } from '../../api/room';
+import { MatchHeader } from '../../components/MatchHeader';
 import { nameOf, usePhaseVibration } from '../../components/match';
 import { useNow } from '../../components/useNow';
 import { CluePhase } from '../../games/wavelength/CluePhase';
 import { Final } from '../../games/wavelength/Final';
 import { GuessPhase } from '../../games/wavelength/GuessPhase';
-import { MatchHeader } from '../../games/wavelength/MatchHeader';
 import { seatOf } from '../../games/wavelength/model';
 import { useMyGuess } from '../../games/wavelength/myGuess';
 import { RevealPhase } from '../../games/wavelength/RevealPhase';
@@ -91,7 +91,7 @@ function WavelengthMatch({ code, snapshot, match, clockOffsetMs }: WavelengthMat
               ? 'Psíquico: tú'
               : `Psíquico: ${nameOf(snapshot.members, match.psychicId)}`
         }
-        seat={seat}
+        badge={seat === 'SPECTATOR' && phase !== 'FINISHED' ? 'Espectador' : null}
         canAbort={isHost && playing}
         aborting={abort.isPending}
         onAbort={() => {

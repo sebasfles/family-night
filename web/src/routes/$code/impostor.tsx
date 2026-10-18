@@ -13,8 +13,8 @@ import { useNow } from '../../components/useNow';
 import { Card } from '../../games/impostor/Card';
 import { Final } from '../../games/impostor/Final';
 import { LastChance } from '../../games/impostor/LastChance';
-import { MatchHeader } from '../../games/impostor/MatchHeader';
-import { seatOf } from '../../games/impostor/model';
+import { MatchHeader } from '../../components/MatchHeader';
+import { impostorCountLabel, seatOf, type Seat } from '../../games/impostor/model';
 import { useMyVote } from '../../games/impostor/myVote';
 import { Reveal } from '../../games/impostor/Reveal';
 import { TurnOrder } from '../../games/impostor/TurnOrder';
@@ -24,6 +24,12 @@ import { useIdentity } from '../../identity/identity';
 export const Route = createFileRoute('/$code/impostor')({
   component: ImpostorScreen,
 });
+
+const seatBadges: Record<Seat, string | null> = {
+  PLAYER: null,
+  ELIMINATED: 'Eliminado',
+  SPECTATOR: 'Espectador',
+};
 
 function ImpostorScreen() {
   const { code } = Route.useParams();
@@ -83,8 +89,12 @@ function ImpostorMatch({ code, snapshot, match, clockOffsetMs }: ImpostorMatchPr
       <MatchHeader
         round={match.round}
         finished={match.phase === 'FINISHED'}
-        impostorCount={match.config.impostorCount}
-        seat={seat}
+        subtitle={
+          match.phase === 'FINISHED'
+            ? `${String(match.round)} ${match.round === 1 ? 'ronda' : 'rondas'}, ${impostorCountLabel(match.config.impostorCount)}`
+            : `${impostorCountLabel(match.config.impostorCount)} en juego`
+        }
+        badge={seatBadges[seat]}
         canAbort={isHost && playing}
         aborting={abort.isPending}
         onAbort={() => {
