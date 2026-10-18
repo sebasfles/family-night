@@ -5,6 +5,7 @@ import type { Deps } from './deps.ts';
 import type { AppEnv } from './handlers/context.ts';
 import { playersRoutes } from './handlers/players.ts';
 import { roomsRoutes } from './handlers/rooms.ts';
+import { wordsRoutes } from './handlers/words.ts';
 import { AppError } from './lib/errors.ts';
 import { describeError, log } from './lib/log.ts';
 import type { PlayerItem } from './repos/players.ts';
@@ -29,6 +30,7 @@ export function createApp(deps: Deps) {
   app.get('/api/health', (c) => c.json<HealthResponse>({ ok: true, version }));
   app.route('/api/players', playersRoutes(deps));
   app.route('/api/rooms', roomsRoutes(deps));
+  app.route('/api/words', wordsRoutes(deps));
 
   app.notFound((c) => c.json(new AppError('NOT_FOUND').toBody(), 404));
 

@@ -13,6 +13,8 @@ import {
   leaveRoom,
 } from '../services/rooms.ts';
 import { parseBody, requirePlayer, roomCodeParam, type AppEnv } from './context.ts';
+import { impostorRoutes } from './impostor.ts';
+import { matchesRoutes } from './matches.ts';
 
 const targetSchema: z.ZodType<TargetPlayerRequest> = z.object({ playerId: playerIdSchema });
 
@@ -52,5 +54,7 @@ export function roomsRoutes(deps: Deps) {
       return c.json<RoomResponse>({
         room: await handOverHost(deps, c.get('player'), code, playerId),
       });
-    });
+    })
+    .route('/', matchesRoutes(deps))
+    .route('/', impostorRoutes(deps));
 }

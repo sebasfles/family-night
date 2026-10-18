@@ -1,6 +1,6 @@
 ---
 updated: 2026-10-17
-source: 0002_identity_and_rooms
+source: 0003_impostor
 ---
 
 # Platform: technical
@@ -19,7 +19,8 @@ Every payload change starts in `shared`, so an incompatible change breaks compil
 | `api/scripts/build.mjs` | esbuild bundles of both functions, zipped reproducibly into `dist/api.zip` and `dist/events-auth.zip`. |
 | `api/src/lib/` | Errors with their codes, zod validation, authentication by header. |
 | `api/src/repos/` | One class per table; the only code that touches DynamoDB. |
-| `api/src/services/{players,rooms,presence,matches}` | Identity and names, rooms and host rules, ping and away, match start, abort, lobby and rematch. |
+| `api/src/services/{players,rooms,presence,matches}` | Identity and names, rooms and host rules, ping and away, match start, config, abort, lobby, rematch and the departure hook that hands leave and kick to the game. |
+| `api/src/services/configs.ts` | Fills each game's default config into the snapshot until the host stores one. |
 | `api/src/services/room-state.ts` | The one write path of every room request: read room then members, decide, commit, publish. |
 | `api/src/deps.ts` | Repos, publisher, clock and random injected into `createApp`, so tests swap them. |
 | `api/src/realtime/publish.ts` | Builds the public snapshot and posts it, signed with SigV4, to the AppSync Events channel. |
@@ -50,10 +51,11 @@ Authentication, membership and host rules are in [the plan](../../implementation
 | POST | `/api/rooms/{code}/kick` | Host removes a member. | [plan](../../implementation-plan.md#salas) |
 | POST | `/api/rooms/{code}/host` | Host hands the role over. | [plan](../../implementation-plan.md#salas) |
 | POST | `/api/rooms/{code}/matches` | Host starts a match of a game. | [plan](../../implementation-plan.md#partidas-comunes-a-todos-los-juegos) |
-| GET | `/api/matches/{matchId}/me` | The caller's own secret, or null. | [plan](../../implementation-plan.md#partidas-comunes-a-todos-los-juegos) |
-| POST | `/api/matches/{matchId}/abort` | Host ends a match without score. | [plan](../../implementation-plan.md#partidas-comunes-a-todos-los-juegos) |
+| PUT | `/api/rooms/{code}/config` | Host stores a game's config; members see it live and the lobby opens with it. | `shared/src/api.ts` |
+| GET | `/api/rooms/{code}/matches/{matchId}/me` | The caller's own secret, or null. | [plan](../../implementation-plan.md#partidas-comunes-a-todos-los-juegos) |
+| POST | `/api/rooms/{code}/matches/{matchId}/abort` | Host ends a match without score. | [plan](../../implementation-plan.md#partidas-comunes-a-todos-los-juegos) |
 | POST | `/api/rooms/{code}/lobby` | Host sets `currentMatchId` to null. | [plan](../../implementation-plan.md#partidas-comunes-a-todos-los-juegos) |
-| POST | `/api/matches/{matchId}/rematch` | Host starts a new match with the same config. | [plan](../../implementation-plan.md#partidas-comunes-a-todos-los-juegos) |
+| POST | `/api/rooms/{code}/matches/{matchId}/rematch` | Host starts a new match with the finished match's config. | [plan](../../implementation-plan.md#partidas-comunes-a-todos-los-juegos) |
 
 Error codes and their HTTP status are in [the plan](../../implementation-plan.md#códigos-de-error); the Spanish `message` is shown to the user as is.
 There is no generated API spec; `shared` types are the contract.
@@ -72,6 +74,8 @@ Channel `/rooms/{ROOMCODE}` in namespace `rooms` carries `room.updated`, `member
 - The realtime connection authenticates with `playerId:playerToken` through the AppSync Lambda authorizer; subscribing to `/rooms/{code}` needs membership of that room.
 - Game endpoints are mounted in the same router by the game modules; the platform router dispatches by `gameType` when starting a match.
 - Leaving or being kicked mid-match calls the game's own handling of a player who left.
+- Match routes live under the room, which is also the membership check; a match id that exists but is no longer current answers `STALE_ROUND`.
+- The `$code/route.tsx` effect moves the phone to `/$code/impostor` while a match is current and back to the lobby when `currentMatch` is null; aborting clears it in the same write.
 
 ## Depends on
 
@@ -80,7 +84,7 @@ Channel `/rooms/{ROOMCODE}` in namespace `rooms` carries `room.updated`, `member
 
 ## Depended on by
 
-- impostor: auth, membership checks, version and optimistic locking, snapshot building, publishing, the `$code` shell and `GET /matches/{id}/me`.
+- impostor: auth, membership checks, version and optimistic locking, snapshot building, publishing, the `$code` shell and `GET /api/rooms/{code}/matches/{matchId}/me`.
 - deploy: builds and ships `shared`, `api` and `web`.
 
 ## Configuration

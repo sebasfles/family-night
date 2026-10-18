@@ -13,4 +13,5 @@ afterEach(() => {
   vi.useRealTimers();
   clearIdentity();
   localStorage.clear();
+  sessionStorage.clear();
 });

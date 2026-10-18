@@ -5,6 +5,7 @@ import { z } from 'zod';
 import type { Deps } from '../deps.ts';
 import { parseCredentials } from '../lib/auth.ts';
 import { AppError } from '../lib/errors.ts';
+import { ulidPattern } from '../lib/ulid.ts';
 import type { PlayerItem } from '../repos/players.ts';
 import { authenticate } from '../services/players.ts';
 
@@ -27,6 +28,14 @@ export function roomCodeParam(c: Context<AppEnv>): string {
   const code = c.req.param('code') ?? '';
   if (!isRoomCode(code)) throw new AppError('VALIDATION_ERROR', { code: 'invalid room code' });
   return code;
+}
+
+export function matchIdParam(c: Context<AppEnv>): string {
+  const matchId = c.req.param('matchId') ?? '';
+  if (!ulidPattern.test(matchId)) {
+    throw new AppError('VALIDATION_ERROR', { matchId: 'invalid match id' });
+  }
+  return matchId;
 }
 
 export async function parseBody<T>(c: Context<AppEnv>, schema: z.ZodType<T>): Promise<T> {

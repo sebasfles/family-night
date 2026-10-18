@@ -70,3 +70,22 @@ export function ShareIcon({ className }: IconProps) {
     </svg>
   );
 }
+
+export function CheckIcon({ className }: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      fill="none"
+      className={`shrink-0 ${className ?? ''}`}
+    >
+      <path
+        d="M5 12.5l4.5 4.5L19 7.5"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}

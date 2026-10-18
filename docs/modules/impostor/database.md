@@ -1,6 +1,6 @@
 ---
 updated: 2026-10-17
-source: setup
+source: 0003_impostor
 ---
 
 # Impostor: database
@@ -13,7 +13,7 @@ Table names carry the prefix `family-night-prd-`; the kebab-case suffixes below 
 
 | Table | Purpose |
 |---|---|
-| `family-night-prd-match-secrets` | What each player alone may see (role, word or clue, category) and one `#MATCH` item with the real word, its id, the clue and the guess options. |
+| `family-night-prd-match-secrets` | What each player alone may see (role, word or clue, category) and one `#MATCH` item with the real word, its id, the clue, the guess options and the impostor ids. |
 | `family-night-prd-votes` | One item per player per round: who voted for whom. |
 
 ## Tables referenced
@@ -26,17 +26,20 @@ Table names carry the prefix `family-night-prd-`; the kebab-case suffixes below 
 
 ## Invariants kept in code
 
-- Nothing from `MatchSecrets` reaches the room snapshot, an event or a log; only `GET /matches/{id}/me` (filtered to the caller) and server logic read it.
+- Nothing from `MatchSecrets` reaches the room snapshot, an event or a log; only `GET /api/rooms/{code}/matches/{matchId}/me` (filtered to the caller) and server logic read it.
 - A player has at most one vote per round, because the sort key is the round plus the voter; changing a vote overwrites it.
-- Voting is complete when the votes of the round equal the living players of the public state.
+- A ballot is a plain put; the snapshot write that follows recomputes `votedPlayerIds` from the round's ballots and closes the round when every living player has one, so concurrent voters converge instead of conflicting.
+- `votedPlayerIds` keeps the closed round's voters, eliminated included, until the next round opens.
+- When a living player leaves or is kicked in `VOTING`, their ballot and the ballots for them are deleted in the same transaction, each conditional on its target, so a vote changed meanwhile cancels and retries the write.
 - Closing a round is idempotent: only the write that wins the version condition computes the result and publishes it; any later close, vote or next-round for that round answers `STALE_ROUND`.
 - Every action body carries the round, and a vote or next-round on a closed round changes nothing.
 - A vote needs a living voter and a living target different from the voter.
-- Starting a match picks a word outside `usedWordIds`; when none is left in the active categories, those categories' ids are cleared first; the chosen id is then added.
+- Starting a match picks a word outside `usedWordIds` (a list); when none is left in the active categories, those categories' ids are cleared first; the chosen id is then added.
+- A start writes the room, the match and every `MatchSecrets` item in one transaction; a published match always has its secrets.
 - The five guess options are the real word plus four distinct words of its category, in random order.
 - The votes of the round are cleared when the next round opens.
-- `MatchSecrets` and `Votes` expire 24 hours after the room's last activity, like the match.
-- Scores are added once, when the match becomes finished.
+- `MatchSecrets` and `Votes` expire 24 hours after they are written; unlike the match, they are not renewed.
+- Scores are added once, in the write that makes the match finished, and only to winners still in the room.
 
 ## Migrations of note
 

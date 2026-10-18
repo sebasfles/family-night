@@ -131,3 +131,69 @@ Review beyond the Pipeline:
 clearance: repo
 
 ## om-developer notes
+
+### Round 1
+
+Did:
+- shared: `impostor/rules.ts` pure rules (cap table, start checks, crypto-injectable shuffle, word pick with per-active-categories reset, guess options, start, vote checks, tally and tie, elimination, outcome, next round, guess, skip, departure, scores) with Vitest cases; `ImpostorConfig` and its zod schema, `ImpostorPublic`, `ImpostorSecret`, `MatchPublic`, `RoomSnapshot.currentMatch` and `configs`; request and response types; new error codes; Impostor defaults and caps in `constants.ts`.
+- api: `Matches`, `MatchSecrets`, `Votes` repos; `room-state.ts` now loads the current match, takes an async decide, writes match, configs, `usedWordIds` and extra items in the version-conditional transaction, and renews the match `ttl` with the room; platform `services/matches` (start, config, lobby, abort, rematch, `/me`, departure hook from leave and kick); `services/impostor` (preparation, votes, close, next round, guess, skip, departure); routes under `/api/rooms/{code}/...` per Context, plus `GET /api/words/categories`; word bank of 10 categories by 25 words.
+- web: only the snapshot fixtures gained `configs`, so the build stays green; the UI is round 2.
+
+Decisions not in the plan:
+- A vote is two steps: a plain put of the ballot keyed by round and voter (no snapshot change), then the room-state write that recomputes `votedPlayerIds` from the round's ballots and closes when everyone voted. Retries that find their ballot already reflected are no-ops, so 20 simultaneous votes converge with at most two conflicts per request (measured) and never reach `CONFLICT`. A late vote whose round closed answers 200 if the voter is in the closed round's `votedPlayerIds`, `STALE_ROUND` otherwise.
+- `votedPlayerIds` keeps the closed round's voters during `REVEAL`, including the eliminated; it clears on the next round.
+- `RoomSnapshot.configs` always carries an Impostor config; the server fills the default (all categories) until the host stores one.
+- `usedWordIds` is a list, not a string set: no empty-set special case, uniqueness kept by the pick.
+- `MatchSecrets` and `Votes` `ttl` is set once at write (24 h); only the room, the writer and the current match renew.
+- New error code `NOT_GUESSER` (403) for a guess by someone else; `AppError` takes an optional Spanish message, used for the specific `INVALID_CONFIG` texts ("Con N jugadores puede haber como máximo M impostor(es)", "Elige al menos una categoría").
+- A match id that exists but is not current answers `STALE_ROUND`; an unknown one `MATCH_NOT_FOUND`; rematch while playing `MATCH_IN_PROGRESS`; abort of a non playing match `STALE_ROUND`.
+- Rematch answers 200 (the plan marks 201 only for the start); it leaves the room's remembered config untouched.
+- Leave or kick in `REVEAL`: the would-be guesser leaving gives civilians the win; another living player is eliminated and the match finishes at once only if the outcome is already a win.
+- Room test helpers moved from `rooms.test.ts` to `test/harness.ts` for reuse.
+
+Pending: web (round 2), screenshots, docs.
+Deferred: none.
+
+### Round 2
+
+Findings:
+- 1: every clue in `impostor-words.json` rewritten to a trait shared by several words of its category (for example Francia "Europa", Elefante "Grande", Frozen "Princesas"); ids, words and Peruvian vocabulary untouched, only `clue` lines changed.
+- 2: the test is now "no clue contains its word".
+
+Did:
+- web: client gains `PUT` and every match endpoint; `api/match.ts` with `['match-secret', matchId]` (`staleTime: Infinity`), the categories query and a shared room mutation (no optimistic updates; the lobby reuses it).
+- `$code/route.tsx` effect: a current Impostor match sends the phone to `/$code/impostor`, none sends it back to the lobby.
+- Lobby: Impostor marked "Elegido", config panel (host edits through `PUT /config`, members read only), who will play, Iniciar or "Faltan N jugadores", "Esperando a que el host inicie…" for members.
+- `games/impostor/` and `$code/impostor.tsx`: header with host menu Terminar partida, card toggled by tap with vibration, turn order, voting, reveal, last chance, final, Eliminado and Espectador variants; vibration on every phase or round change.
+- Tests: Testing Library on navigation, card, voting, reveal, last chance, final and the lobby panel; a client test that a PUT carries the body hash.
+- Screenshots: 26 screens at 390, 768 and 1280 in `.workspaces/0003_impostor/screenshots/`.
+
+Decisions not in the plan:
+- The zod schema moved to `@family-night/shared/schemas`, imported only by the api: as a module-level call in `domain.ts` it was kept by tree shaking and put zod in the web bundle (largest chunk 124 KB to 40 KB).
+- The lobby clamps the shown impostor count to the cap of the online players and starts with what it shows, so a stored count above the cap after someone left never reaches the server.
+- The host updates config on every tap; controls lock while a change is in flight so taps cannot overwrite each other.
+- The reveal button label comes from the shared `outcome()` on public data; the final header reads "Fin de la partida" with the rounds played.
+- Departed players show as "Alguien que salió" where their name is no longer in the room.
+
+Pending: docs (on the clean signal).
+Deferred: none.
+
+### Round 3
+
+Findings:
+- 1: the final screen lists points only for winners still in `members`, the ones the server credits; test with a departed winner.
+- 2: a tie broken by lot keeps "Empate: eliminado por sorteo" and the banner names the drawn player ("Oso Sabio no era impostor"); the test checks the name.
+- 3: the caller's own vote is kept per match and round in `sessionStorage` (`family-night.vote.{matchId}`), read on mount and ignored for another round; it never enters a request other than the vote itself, a snapshot or an event; tests remount the screen and check an earlier round is not shown.
+
+Screenshots refreshed.
+Pending: docs (on the clean signal).
+Deferred: none.
+
+### Round 4
+
+Findings:
+- 1: removed the assertion on the test's own fixture from "my vote stays marked after a reload of the same round".
+
+Only `web` changed; shared and api stay verified at round 3.
+Pending: docs (on the clean signal).
+Deferred: none.

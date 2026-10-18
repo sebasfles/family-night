@@ -1,0 +1,1314 @@
+{
+  "categories": [
+    {
+      "id": "animales",
+      "name": "Animales",
+      "words": [
+        {
+          "id": "animales.perro",
+          "word": "Perro",
+          "clue": "Mascota"
+        },
+        {
+          "id": "animales.gato",
+          "word": "Gato",
+          "clue": "Cuatro patas"
+        },
+        {
+          "id": "animales.caballo",
+          "word": "Caballo",
+          "clue": "Campo"
+        },
+        {
+          "id": "animales.vaca",
+          "word": "Vaca",
+          "clue": "Granja"
+        },
+        {
+          "id": "animales.llama",
+          "word": "Llama",
+          "clue": "Sierra"
+        },
+        {
+          "id": "animales.alpaca",
+          "word": "Alpaca",
+          "clue": "Andes"
+        },
+        {
+          "id": "animales.cuy",
+          "word": "Cuy",
+          "clue": "Pequeño"
+        },
+        {
+          "id": "animales.condor",
+          "word": "Cóndor",
+          "clue": "Vuela"
+        },
+        {
+          "id": "animales.pinguino",
+          "word": "Pingüino",
+          "clue": "Frío"
+        },
+        {
+          "id": "animales.delfin",
+          "word": "Delfín",
+          "clue": "Mar"
+        },
+        {
+          "id": "animales.tiburon",
+          "word": "Tiburón",
+          "clue": "Océano"
+        },
+        {
+          "id": "animales.leon",
+          "word": "León",
+          "clue": "Sabana"
+        },
+        {
+          "id": "animales.tigre",
+          "word": "Tigre",
+          "clue": "Felino"
+        },
+        {
+          "id": "animales.elefante",
+          "word": "Elefante",
+          "clue": "Grande"
+        },
+        {
+          "id": "animales.jirafa",
+          "word": "Jirafa",
+          "clue": "Zoológico"
+        },
+        {
+          "id": "animales.mono",
+          "word": "Mono",
+          "clue": "Árbol"
+        },
+        {
+          "id": "animales.oso",
+          "word": "Oso",
+          "clue": "Bosque"
+        },
+        {
+          "id": "animales.conejo",
+          "word": "Conejo",
+          "clue": "Salta"
+        },
+        {
+          "id": "animales.tortuga",
+          "word": "Tortuga",
+          "clue": "Lento"
+        },
+        {
+          "id": "animales.serpiente",
+          "word": "Serpiente",
+          "clue": "Peligroso"
+        },
+        {
+          "id": "animales.loro",
+          "word": "Loro",
+          "clue": "Colores"
+        },
+        {
+          "id": "animales.gallina",
+          "word": "Gallina",
+          "clue": "Corral"
+        },
+        {
+          "id": "animales.abeja",
+          "word": "Abeja",
+          "clue": "Insecto"
+        },
+        {
+          "id": "animales.buho",
+          "word": "Búho",
+          "clue": "Plumas"
+        },
+        {
+          "id": "animales.lobo",
+          "word": "Lobo",
+          "clue": "Manada"
+        }
+      ]
+    },
+    {
+      "id": "comida",
+      "name": "Comida",
+      "words": [
+        {
+          "id": "comida.ceviche",
+          "word": "Ceviche",
+          "clue": "Plato de verano"
+        },
+        {
+          "id": "comida.lomo-saltado",
+          "word": "Lomo saltado",
+          "clue": "Plato de fondo"
+        },
+        {
+          "id": "comida.aji-de-gallina",
+          "word": "Ají de gallina",
+          "clue": "Picante"
+        },
+        {
+          "id": "comida.causa",
+          "word": "Causa",
+          "clue": "Limeño"
+        },
+        {
+          "id": "comida.anticucho",
+          "word": "Anticucho",
+          "clue": "Parrilla"
+        },
+        {
+          "id": "comida.pollo-a-la-brasa",
+          "word": "Pollo a la brasa",
+          "clue": "Domingo"
+        },
+        {
+          "id": "comida.arroz-con-pollo",
+          "word": "Arroz con pollo",
+          "clue": "Almuerzo"
+        },
+        {
+          "id": "comida.palta",
+          "word": "Palta",
+          "clue": "Ensalada"
+        },
+        {
+          "id": "comida.fresa",
+          "word": "Fresa",
+          "clue": "Fruta"
+        },
+        {
+          "id": "comida.mango",
+          "word": "Mango",
+          "clue": "Dulce"
+        },
+        {
+          "id": "comida.choclo",
+          "word": "Choclo",
+          "clue": "Amarillo"
+        },
+        {
+          "id": "comida.pan",
+          "word": "Pan",
+          "clue": "Mañana"
+        },
+        {
+          "id": "comida.queso",
+          "word": "Queso",
+          "clue": "Lácteo"
+        },
+        {
+          "id": "comida.helado",
+          "word": "Helado",
+          "clue": "Postre"
+        },
+        {
+          "id": "comida.chocolate",
+          "word": "Chocolate",
+          "clue": "Golosina"
+        },
+        {
+          "id": "comida.pizza",
+          "word": "Pizza",
+          "clue": "Delivery"
+        },
+        {
+          "id": "comida.hamburguesa",
+          "word": "Hamburguesa",
+          "clue": "Rápido"
+        },
+        {
+          "id": "comida.sopa",
+          "word": "Sopa",
+          "clue": "Caliente"
+        },
+        {
+          "id": "comida.huevo-frito",
+          "word": "Huevo frito",
+          "clue": "Desayuno"
+        },
+        {
+          "id": "comida.picarones",
+          "word": "Picarones",
+          "clue": "Feria"
+        },
+        {
+          "id": "comida.tamal",
+          "word": "Tamal",
+          "clue": "Cocido"
+        },
+        {
+          "id": "comida.chicha-morada",
+          "word": "Chicha morada",
+          "clue": "Bebida"
+        },
+        {
+          "id": "comida.papa-a-la-huancaina",
+          "word": "Papa a la huancaína",
+          "clue": "Cremoso"
+        },
+        {
+          "id": "comida.sandia",
+          "word": "Sandía",
+          "clue": "Verano"
+        },
+        {
+          "id": "comida.tallarines",
+          "word": "Tallarines",
+          "clue": "Cena"
+        }
+      ]
+    },
+    {
+      "id": "lugares",
+      "name": "Lugares",
+      "words": [
+        {
+          "id": "lugares.playa",
+          "word": "Playa",
+          "clue": "Verano"
+        },
+        {
+          "id": "lugares.hospital",
+          "word": "Hospital",
+          "clue": "Blanco"
+        },
+        {
+          "id": "lugares.colegio",
+          "word": "Colegio",
+          "clue": "Lunes"
+        },
+        {
+          "id": "lugares.mercado",
+          "word": "Mercado",
+          "clue": "Compras"
+        },
+        {
+          "id": "lugares.cine",
+          "word": "Cine",
+          "clue": "Oscuro"
+        },
+        {
+          "id": "lugares.aeropuerto",
+          "word": "Aeropuerto",
+          "clue": "Viaje"
+        },
+        {
+          "id": "lugares.iglesia",
+          "word": "Iglesia",
+          "clue": "Domingo"
+        },
+        {
+          "id": "lugares.biblioteca",
+          "word": "Biblioteca",
+          "clue": "Estudiar"
+        },
+        {
+          "id": "lugares.parque",
+          "word": "Parque",
+          "clue": "Aire libre"
+        },
+        {
+          "id": "lugares.estadio",
+          "word": "Estadio",
+          "clue": "Grande"
+        },
+        {
+          "id": "lugares.restaurante",
+          "word": "Restaurante",
+          "clue": "Comer"
+        },
+        {
+          "id": "lugares.supermercado",
+          "word": "Supermercado",
+          "clue": "Fila"
+        },
+        {
+          "id": "lugares.banco",
+          "word": "Banco",
+          "clue": "Oficina"
+        },
+        {
+          "id": "lugares.museo",
+          "word": "Museo",
+          "clue": "Visita"
+        },
+        {
+          "id": "lugares.zoologico",
+          "word": "Zoológico",
+          "clue": "Animales"
+        },
+        {
+          "id": "lugares.piscina",
+          "word": "Piscina",
+          "clue": "Agua"
+        },
+        {
+          "id": "lugares.farmacia",
+          "word": "Farmacia",
+          "clue": "Esquina"
+        },
+        {
+          "id": "lugares.panaderia",
+          "word": "Panadería",
+          "clue": "Temprano"
+        },
+        {
+          "id": "lugares.peluqueria",
+          "word": "Peluquería",
+          "clue": "Espejo"
+        },
+        {
+          "id": "lugares.montana",
+          "word": "Montaña",
+          "clue": "Caminata"
+        },
+        {
+          "id": "lugares.desierto",
+          "word": "Desierto",
+          "clue": "Calor"
+        },
+        {
+          "id": "lugares.selva",
+          "word": "Selva",
+          "clue": "Verde"
+        },
+        {
+          "id": "lugares.circo",
+          "word": "Circo",
+          "clue": "Función"
+        },
+        {
+          "id": "lugares.paradero",
+          "word": "Paradero",
+          "clue": "Calle"
+        },
+        {
+          "id": "lugares.gimnasio",
+          "word": "Gimnasio",
+          "clue": "Sudor"
+        }
+      ]
+    },
+    {
+      "id": "objetos-casa",
+      "name": "Objetos de la casa",
+      "words": [
+        {
+          "id": "objetos-casa.sofa",
+          "word": "Sofá",
+          "clue": "Cómodo"
+        },
+        {
+          "id": "objetos-casa.cama",
+          "word": "Cama",
+          "clue": "Cuarto"
+        },
+        {
+          "id": "objetos-casa.refrigeradora",
+          "word": "Refrigeradora",
+          "clue": "Cocina"
+        },
+        {
+          "id": "objetos-casa.televisor",
+          "word": "Televisor",
+          "clue": "Pantalla"
+        },
+        {
+          "id": "objetos-casa.lavadora",
+          "word": "Lavadora",
+          "clue": "Electrodoméstico"
+        },
+        {
+          "id": "objetos-casa.microondas",
+          "word": "Microondas",
+          "clue": "Botones"
+        },
+        {
+          "id": "objetos-casa.escoba",
+          "word": "Escoba",
+          "clue": "Limpieza"
+        },
+        {
+          "id": "objetos-casa.espejo",
+          "word": "Espejo",
+          "clue": "Vidrio"
+        },
+        {
+          "id": "objetos-casa.lampara",
+          "word": "Lámpara",
+          "clue": "Luz"
+        },
+        {
+          "id": "objetos-casa.reloj",
+          "word": "Reloj",
+          "clue": "Pared"
+        },
+        {
+          "id": "objetos-casa.silla",
+          "word": "Silla",
+          "clue": "Madera"
+        },
+        {
+          "id": "objetos-casa.mesa",
+          "word": "Mesa",
+          "clue": "Cuatro patas"
+        },
+        {
+          "id": "objetos-casa.plancha",
+          "word": "Plancha",
+          "clue": "Caliente"
+        },
+        {
+          "id": "objetos-casa.ducha",
+          "word": "Ducha",
+          "clue": "Mañana"
+        },
+        {
+          "id": "objetos-casa.cepillo-de-dientes",
+          "word": "Cepillo de dientes",
+          "clue": "Baño"
+        },
+        {
+          "id": "objetos-casa.toalla",
+          "word": "Toalla",
+          "clue": "Suave"
+        },
+        {
+          "id": "objetos-casa.olla",
+          "word": "Olla",
+          "clue": "Metal"
+        },
+        {
+          "id": "objetos-casa.cuchillo",
+          "word": "Cuchillo",
+          "clue": "Cubiertos"
+        },
+        {
+          "id": "objetos-casa.tenedor",
+          "word": "Tenedor",
+          "clue": "Comer"
+        },
+        {
+          "id": "objetos-casa.licuadora",
+          "word": "Licuadora",
+          "clue": "Ruido"
+        },
+        {
+          "id": "objetos-casa.ventilador",
+          "word": "Ventilador",
+          "clue": "Verano"
+        },
+        {
+          "id": "objetos-casa.ropero",
+          "word": "Ropero",
+          "clue": "Puertas"
+        },
+        {
+          "id": "objetos-casa.cortina",
+          "word": "Cortina",
+          "clue": "Tela"
+        },
+        {
+          "id": "objetos-casa.almohada",
+          "word": "Almohada",
+          "clue": "Noche"
+        },
+        {
+          "id": "objetos-casa.inodoro",
+          "word": "Inodoro",
+          "clue": "Blanco"
+        }
+      ]
+    },
+    {
+      "id": "profesiones",
+      "name": "Profesiones",
+      "words": [
+        {
+          "id": "profesiones.doctor",
+          "word": "Doctor",
+          "clue": "Bata"
+        },
+        {
+          "id": "profesiones.profesor",
+          "word": "Profesor",
+          "clue": "Paciencia"
+        },
+        {
+          "id": "profesiones.bombero",
+          "word": "Bombero",
+          "clue": "Valiente"
+        },
+        {
+          "id": "profesiones.policia",
+          "word": "Policía",
+          "clue": "Uniforme"
+        },
+        {
+          "id": "profesiones.cocinero",
+          "word": "Cocinero",
+          "clue": "Restaurante"
+        },
+        {
+          "id": "profesiones.piloto",
+          "word": "Piloto",
+          "clue": "Viajes"
+        },
+        {
+          "id": "profesiones.carpintero",
+          "word": "Carpintero",
+          "clue": "Herramientas"
+        },
+        {
+          "id": "profesiones.albanil",
+          "word": "Albañil",
+          "clue": "Obra"
+        },
+        {
+          "id": "profesiones.dentista",
+          "word": "Dentista",
+          "clue": "Consultorio"
+        },
+        {
+          "id": "profesiones.veterinario",
+          "word": "Veterinario",
+          "clue": "Animales"
+        },
+        {
+          "id": "profesiones.abogado",
+          "word": "Abogado",
+          "clue": "Oficina"
+        },
+        {
+          "id": "profesiones.futbolista",
+          "word": "Futbolista",
+          "clue": "Famoso"
+        },
+        {
+          "id": "profesiones.peluquero",
+          "word": "Peluquero",
+          "clue": "Salón"
+        },
+        {
+          "id": "profesiones.panadero",
+          "word": "Panadero",
+          "clue": "Madrugar"
+        },
+        {
+          "id": "profesiones.jardinero",
+          "word": "Jardinero",
+          "clue": "Aire libre"
+        },
+        {
+          "id": "profesiones.taxista",
+          "word": "Taxista",
+          "clue": "Calle"
+        },
+        {
+          "id": "profesiones.mecanico",
+          "word": "Mecánico",
+          "clue": "Manos sucias"
+        },
+        {
+          "id": "profesiones.enfermera",
+          "word": "Enfermera",
+          "clue": "Turno de noche"
+        },
+        {
+          "id": "profesiones.astronauta",
+          "word": "Astronauta",
+          "clue": "Entrenamiento"
+        },
+        {
+          "id": "profesiones.cantante",
+          "word": "Cantante",
+          "clue": "Escenario"
+        },
+        {
+          "id": "profesiones.pintor",
+          "word": "Pintor",
+          "clue": "Colores"
+        },
+        {
+          "id": "profesiones.electricista",
+          "word": "Electricista",
+          "clue": "Casa"
+        },
+        {
+          "id": "profesiones.periodista",
+          "word": "Periodista",
+          "clue": "Preguntas"
+        },
+        {
+          "id": "profesiones.ingeniero",
+          "word": "Ingeniero",
+          "clue": "Universidad"
+        },
+        {
+          "id": "profesiones.gasfitero",
+          "word": "Gasfitero",
+          "clue": "Arreglos"
+        }
+      ]
+    },
+    {
+      "id": "deportes",
+      "name": "Deportes",
+      "words": [
+        {
+          "id": "deportes.futbol",
+          "word": "Fútbol",
+          "clue": "Equipo"
+        },
+        {
+          "id": "deportes.voley",
+          "word": "Vóley",
+          "clue": "Saque"
+        },
+        {
+          "id": "deportes.basquet",
+          "word": "Básquet",
+          "clue": "Pelota"
+        },
+        {
+          "id": "deportes.tenis",
+          "word": "Tenis",
+          "clue": "Cancha"
+        },
+        {
+          "id": "deportes.natacion",
+          "word": "Natación",
+          "clue": "Agua"
+        },
+        {
+          "id": "deportes.ciclismo",
+          "word": "Ciclismo",
+          "clue": "Piernas"
+        },
+        {
+          "id": "deportes.atletismo",
+          "word": "Atletismo",
+          "clue": "Velocidad"
+        },
+        {
+          "id": "deportes.boxeo",
+          "word": "Boxeo",
+          "clue": "Pelea"
+        },
+        {
+          "id": "deportes.surf",
+          "word": "Surf",
+          "clue": "Verano"
+        },
+        {
+          "id": "deportes.golf",
+          "word": "Golf",
+          "clue": "Paciencia"
+        },
+        {
+          "id": "deportes.ajedrez",
+          "word": "Ajedrez",
+          "clue": "Concentración"
+        },
+        {
+          "id": "deportes.karate",
+          "word": "Karate",
+          "clue": "Defensa"
+        },
+        {
+          "id": "deportes.beisbol",
+          "word": "Béisbol",
+          "clue": "Lanzar"
+        },
+        {
+          "id": "deportes.esqui",
+          "word": "Esquí",
+          "clue": "Invierno"
+        },
+        {
+          "id": "deportes.gimnasia",
+          "word": "Gimnasia",
+          "clue": "Flexible"
+        },
+        {
+          "id": "deportes.ping-pong",
+          "word": "Ping pong",
+          "clue": "Mesa"
+        },
+        {
+          "id": "deportes.patinaje",
+          "word": "Patinaje",
+          "clue": "Equilibrio"
+        },
+        {
+          "id": "deportes.rugby",
+          "word": "Rugby",
+          "clue": "Contacto"
+        },
+        {
+          "id": "deportes.paleta-fronton",
+          "word": "Paleta frontón",
+          "clue": "Playa"
+        },
+        {
+          "id": "deportes.badminton",
+          "word": "Bádminton",
+          "clue": "Red"
+        },
+        {
+          "id": "deportes.escalada",
+          "word": "Escalada",
+          "clue": "Altura"
+        },
+        {
+          "id": "deportes.pesca",
+          "word": "Pesca",
+          "clue": "Lago"
+        },
+        {
+          "id": "deportes.automovilismo",
+          "word": "Automovilismo",
+          "clue": "Rápido"
+        },
+        {
+          "id": "deportes.equitacion",
+          "word": "Equitación",
+          "clue": "Animal"
+        },
+        {
+          "id": "deportes.billar",
+          "word": "Billar",
+          "clue": "Puntería"
+        }
+      ]
+    },
+    {
+      "id": "peliculas-series",
+      "name": "Películas y series",
+      "words": [
+        {
+          "id": "peliculas-series.el-rey-leon",
+          "word": "El Rey León",
+          "clue": "Animales"
+        },
+        {
+          "id": "peliculas-series.toy-story",
+          "word": "Toy Story",
+          "clue": "Amistad"
+        },
+        {
+          "id": "peliculas-series.frozen",
+          "word": "Frozen",
+          "clue": "Princesas"
+        },
+        {
+          "id": "peliculas-series.harry-potter",
+          "word": "Harry Potter",
+          "clue": "Magia"
+        },
+        {
+          "id": "peliculas-series.shrek",
+          "word": "Shrek",
+          "clue": "Cuento"
+        },
+        {
+          "id": "peliculas-series.coco",
+          "word": "Coco",
+          "clue": "Música"
+        },
+        {
+          "id": "peliculas-series.buscando-a-nemo",
+          "word": "Buscando a Nemo",
+          "clue": "Océano"
+        },
+        {
+          "id": "peliculas-series.los-simpson",
+          "word": "Los Simpson",
+          "clue": "Familia"
+        },
+        {
+          "id": "peliculas-series.el-chavo-del-8",
+          "word": "El Chavo del 8",
+          "clue": "Clásico"
+        },
+        {
+          "id": "peliculas-series.star-wars",
+          "word": "Star Wars",
+          "clue": "Espacio"
+        },
+        {
+          "id": "peliculas-series.spider-man",
+          "word": "Spider-Man",
+          "clue": "Héroe"
+        },
+        {
+          "id": "peliculas-series.batman",
+          "word": "Batman",
+          "clue": "Noche"
+        },
+        {
+          "id": "peliculas-series.jurassic-park",
+          "word": "Jurassic Park",
+          "clue": "Aventura"
+        },
+        {
+          "id": "peliculas-series.titanic",
+          "word": "Titanic",
+          "clue": "Romance"
+        },
+        {
+          "id": "peliculas-series.los-increibles",
+          "word": "Los Increíbles",
+          "clue": "Poderes"
+        },
+        {
+          "id": "peliculas-series.encanto",
+          "word": "Encanto",
+          "clue": "Canciones"
+        },
+        {
+          "id": "peliculas-series.mi-villano-favorito",
+          "word": "Mi villano favorito",
+          "clue": "Amarillo"
+        },
+        {
+          "id": "peliculas-series.cars",
+          "word": "Cars",
+          "clue": "Carrera"
+        },
+        {
+          "id": "peliculas-series.intensamente",
+          "word": "Intensamente",
+          "clue": "Infancia"
+        },
+        {
+          "id": "peliculas-series.avengers",
+          "word": "Avengers",
+          "clue": "Equipo"
+        },
+        {
+          "id": "peliculas-series.stranger-things",
+          "word": "Stranger Things",
+          "clue": "Misterio"
+        },
+        {
+          "id": "peliculas-series.bob-esponja",
+          "word": "Bob Esponja",
+          "clue": "Dibujos"
+        },
+        {
+          "id": "peliculas-series.pokemon",
+          "word": "Pokémon",
+          "clue": "Criaturas"
+        },
+        {
+          "id": "peliculas-series.peppa-pig",
+          "word": "Peppa Pig",
+          "clue": "Niños"
+        },
+        {
+          "id": "peliculas-series.al-fondo-hay-sitio",
+          "word": "Al fondo hay sitio",
+          "clue": "Barrio"
+        }
+      ]
+    },
+    {
+      "id": "marcas",
+      "name": "Marcas",
+      "words": [
+        {
+          "id": "marcas.inca-kola",
+          "word": "Inca Kola",
+          "clue": "Gaseosa"
+        },
+        {
+          "id": "marcas.coca-cola",
+          "word": "Coca-Cola",
+          "clue": "Bebida"
+        },
+        {
+          "id": "marcas.gloria",
+          "word": "Gloria",
+          "clue": "Lácteos"
+        },
+        {
+          "id": "marcas.d-onofrio",
+          "word": "D'Onofrio",
+          "clue": "Verano"
+        },
+        {
+          "id": "marcas.sublime",
+          "word": "Sublime",
+          "clue": "Golosina"
+        },
+        {
+          "id": "marcas.dona-pepa",
+          "word": "Doña Pepa",
+          "clue": "Dulce"
+        },
+        {
+          "id": "marcas.mcdonald-s",
+          "word": "McDonald's",
+          "clue": "Comida rápida"
+        },
+        {
+          "id": "marcas.kfc",
+          "word": "KFC",
+          "clue": "Combo"
+        },
+        {
+          "id": "marcas.nike",
+          "word": "Nike",
+          "clue": "Deporte"
+        },
+        {
+          "id": "marcas.adidas",
+          "word": "Adidas",
+          "clue": "Zapatillas"
+        },
+        {
+          "id": "marcas.apple",
+          "word": "Apple",
+          "clue": "Tecnología"
+        },
+        {
+          "id": "marcas.samsung",
+          "word": "Samsung",
+          "clue": "Celular"
+        },
+        {
+          "id": "marcas.google",
+          "word": "Google",
+          "clue": "Internet"
+        },
+        {
+          "id": "marcas.whatsapp",
+          "word": "WhatsApp",
+          "clue": "Aplicación"
+        },
+        {
+          "id": "marcas.youtube",
+          "word": "YouTube",
+          "clue": "Pantalla"
+        },
+        {
+          "id": "marcas.netflix",
+          "word": "Netflix",
+          "clue": "Suscripción"
+        },
+        {
+          "id": "marcas.lego",
+          "word": "LEGO",
+          "clue": "Juguete"
+        },
+        {
+          "id": "marcas.disney",
+          "word": "Disney",
+          "clue": "Películas"
+        },
+        {
+          "id": "marcas.barbie",
+          "word": "Barbie",
+          "clue": "Rosado"
+        },
+        {
+          "id": "marcas.toyota",
+          "word": "Toyota",
+          "clue": "Carro"
+        },
+        {
+          "id": "marcas.sapolio",
+          "word": "Sapolio",
+          "clue": "Hogar"
+        },
+        {
+          "id": "marcas.bimbo",
+          "word": "Bimbo",
+          "clue": "Desayuno"
+        },
+        {
+          "id": "marcas.faber-castell",
+          "word": "Faber-Castell",
+          "clue": "Colegio"
+        },
+        {
+          "id": "marcas.plaza-vea",
+          "word": "Plaza Vea",
+          "clue": "Compras"
+        },
+        {
+          "id": "marcas.pringles",
+          "word": "Pringles",
+          "clue": "Snack"
+        }
+      ]
+    },
+    {
+      "id": "paises-ciudades",
+      "name": "Países y ciudades",
+      "words": [
+        {
+          "id": "paises-ciudades.peru",
+          "word": "Perú",
+          "clue": "Sudamérica"
+        },
+        {
+          "id": "paises-ciudades.lima",
+          "word": "Lima",
+          "clue": "Capital"
+        },
+        {
+          "id": "paises-ciudades.cusco",
+          "word": "Cusco",
+          "clue": "Sierra"
+        },
+        {
+          "id": "paises-ciudades.arequipa",
+          "word": "Arequipa",
+          "clue": "Sur"
+        },
+        {
+          "id": "paises-ciudades.trujillo",
+          "word": "Trujillo",
+          "clue": "Norte"
+        },
+        {
+          "id": "paises-ciudades.iquitos",
+          "word": "Iquitos",
+          "clue": "Calor"
+        },
+        {
+          "id": "paises-ciudades.puno",
+          "word": "Puno",
+          "clue": "Altura"
+        },
+        {
+          "id": "paises-ciudades.brasil",
+          "word": "Brasil",
+          "clue": "Carnaval"
+        },
+        {
+          "id": "paises-ciudades.argentina",
+          "word": "Argentina",
+          "clue": "Fútbol"
+        },
+        {
+          "id": "paises-ciudades.chile",
+          "word": "Chile",
+          "clue": "Vecino"
+        },
+        {
+          "id": "paises-ciudades.mexico",
+          "word": "México",
+          "clue": "Picante"
+        },
+        {
+          "id": "paises-ciudades.estados-unidos",
+          "word": "Estados Unidos",
+          "clue": "Grande"
+        },
+        {
+          "id": "paises-ciudades.espana",
+          "word": "España",
+          "clue": "Idioma"
+        },
+        {
+          "id": "paises-ciudades.francia",
+          "word": "Francia",
+          "clue": "Europa"
+        },
+        {
+          "id": "paises-ciudades.italia",
+          "word": "Italia",
+          "clue": "Comida"
+        },
+        {
+          "id": "paises-ciudades.japon",
+          "word": "Japón",
+          "clue": "Asia"
+        },
+        {
+          "id": "paises-ciudades.china",
+          "word": "China",
+          "clue": "Lejano"
+        },
+        {
+          "id": "paises-ciudades.egipto",
+          "word": "Egipto",
+          "clue": "Desierto"
+        },
+        {
+          "id": "paises-ciudades.inglaterra",
+          "word": "Inglaterra",
+          "clue": "Lluvia"
+        },
+        {
+          "id": "paises-ciudades.colombia",
+          "word": "Colombia",
+          "clue": "Montañas"
+        },
+        {
+          "id": "paises-ciudades.ecuador",
+          "word": "Ecuador",
+          "clue": "Playa"
+        },
+        {
+          "id": "paises-ciudades.australia",
+          "word": "Australia",
+          "clue": "Isla"
+        },
+        {
+          "id": "paises-ciudades.rusia",
+          "word": "Rusia",
+          "clue": "Frío"
+        },
+        {
+          "id": "paises-ciudades.alemania",
+          "word": "Alemania",
+          "clue": "Autos"
+        },
+        {
+          "id": "paises-ciudades.nueva-york",
+          "word": "Nueva York",
+          "clue": "Ciudad"
+        }
+      ]
+    },
+    {
+      "id": "familia",
+      "name": "Cosas de la familia",
+      "words": [
+        {
+          "id": "familia.cumpleanos",
+          "word": "Cumpleaños",
+          "clue": "Fiesta"
+        },
+        {
+          "id": "familia.navidad",
+          "word": "Navidad",
+          "clue": "Diciembre"
+        },
+        {
+          "id": "familia.ano-nuevo",
+          "word": "Año Nuevo",
+          "clue": "Celebración"
+        },
+        {
+          "id": "familia.abuela",
+          "word": "Abuela",
+          "clue": "Cariño"
+        },
+        {
+          "id": "familia.tio",
+          "word": "Tío",
+          "clue": "Pariente"
+        },
+        {
+          "id": "familia.primo",
+          "word": "Primo",
+          "clue": "Juegos"
+        },
+        {
+          "id": "familia.hermano",
+          "word": "Hermano",
+          "clue": "Casa"
+        },
+        {
+          "id": "familia.bebe",
+          "word": "Bebé",
+          "clue": "Pequeño"
+        },
+        {
+          "id": "familia.mascota",
+          "word": "Mascota",
+          "clue": "Compañía"
+        },
+        {
+          "id": "familia.almuerzo-del-domingo",
+          "word": "Almuerzo del domingo",
+          "clue": "Mesa"
+        },
+        {
+          "id": "familia.foto-familiar",
+          "word": "Foto familiar",
+          "clue": "Recuerdo"
+        },
+        {
+          "id": "familia.vacaciones",
+          "word": "Vacaciones",
+          "clue": "Descanso"
+        },
+        {
+          "id": "familia.boda",
+          "word": "Boda",
+          "clue": "Vestido"
+        },
+        {
+          "id": "familia.bautizo",
+          "word": "Bautizo",
+          "clue": "Iglesia"
+        },
+        {
+          "id": "familia.pijamada",
+          "word": "Pijamada",
+          "clue": "Noche"
+        },
+        {
+          "id": "familia.tareas",
+          "word": "Tareas",
+          "clue": "Tarde"
+        },
+        {
+          "id": "familia.lonchera",
+          "word": "Lonchera",
+          "clue": "Mañana"
+        },
+        {
+          "id": "familia.mudanza",
+          "word": "Mudanza",
+          "clue": "Cambio"
+        },
+        {
+          "id": "familia.parrillada",
+          "word": "Parrillada",
+          "clue": "Patio"
+        },
+        {
+          "id": "familia.juegos-de-mesa",
+          "word": "Juegos de mesa",
+          "clue": "Reunión"
+        },
+        {
+          "id": "familia.dia-de-la-madre",
+          "word": "Día de la Madre",
+          "clue": "Mayo"
+        },
+        {
+          "id": "familia.siesta",
+          "word": "Siesta",
+          "clue": "Sofá"
+        },
+        {
+          "id": "familia.chisme",
+          "word": "Chisme",
+          "clue": "Conversación"
+        },
+        {
+          "id": "familia.pollada",
+          "word": "Pollada",
+          "clue": "Vecinos"
+        },
+        {
+          "id": "familia.karaoke",
+          "word": "Karaoke",
+          "clue": "Canciones"
+        }
+      ]
+    }
+  ]
+}

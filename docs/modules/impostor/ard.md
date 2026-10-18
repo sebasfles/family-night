@@ -1,6 +1,6 @@
 ---
 updated: 2026-10-17
-source: setup
+source: 0003_impostor
 ---
 
 # Impostor: decisions
@@ -96,3 +96,75 @@ Decisions come from [the plan](../../implementation-plan.md); where the plan sta
 - Debt created: none
 - Revisit when: tests need seeds beyond the injected random source.
 - Source: setup
+
+## 2026-10-17: A vote is a plain ballot put followed by a snapshot sync
+
+- Decision: `PUT votes` checks the round, puts the ballot keyed by round and voter, then runs the room-state write that recomputes `votedPlayerIds` from the round's ballots and closes the round when every living player has one; a retry that finds its ballot already reflected changes nothing. A late vote whose round closed answers 200 if the voter is among the closed round's voters, `STALE_ROUND` otherwise.
+- Alternatives rejected: putting the ballot inside the version-conditional transaction.
+- Reason: with the ballot inside the transaction, 20 simultaneous voters each need their own winning write and exhaust the four attempts; as a sync, retries collapse and the test sees at most two conflicts per request.
+- Debt created: a voter who changes their vote in the instant between the closing read and the closing write gets 200 while the tally counted their earlier choice.
+- Revisit when: a player reports a changed vote that was not counted.
+- Source: 0003_impostor
+
+## 2026-10-17: `votedPlayerIds` keeps the closed round's voters during the reveal
+
+- Decision: elimination does not remove the voter; the list clears when the next round opens.
+- Alternatives rejected: dropping the eliminated from the list.
+- Reason: a late vote request needs to know whether its ballot was counted, and the eliminated player's ballot was.
+- Debt created: none
+- Revisit when: the reveal needs to show who voted.
+- Source: 0003_impostor
+
+## 2026-10-17: A guess by anyone but the caught impostor is `NOT_GUESSER`, and config errors carry their own message
+
+- Decision: a new 403 `NOT_GUESSER`; `AppError` takes an optional Spanish message, used for "Con N jugadores puede haber como máximo M impostor(es)" and "Elige al menos una categoría".
+- Alternatives rejected: reusing `INVALID_VOTE`; one generic `INVALID_CONFIG` text.
+- Reason: the UI shows the server message as is, so it must say what to fix.
+- Debt created: none
+- Revisit when: a client needs to tell config problems apart by code.
+- Source: 0003_impostor
+
+## 2026-10-17: Secrets and ballots expire 24 h after they are written
+
+- Decision: `MatchSecrets` and `Votes` get their `ttl` once; only the room, the writing member and the current match are renewed on activity.
+- Alternatives rejected: renewing every secret on each ping.
+- Reason: a match lasts minutes, and renewing up to 21 items per ping costs writes for nothing.
+- Debt created: a match left open for more than a day loses its secrets and ballots.
+- Revisit when: a match is seen running past a day.
+- Source: 0003_impostor
+
+## 2026-10-17: A departure during the reveal finishes the match only on a win
+
+- Decision: a living player leaving in `REVEAL` is eliminated with the role shown, and the match finishes at once only if the outcome is already a win; the would-be guesser leaving gives civilians the win.
+- Alternatives rejected: always waiting for the host's button.
+- Reason: the host's button would otherwise lead to a last chance with nobody to guess or a round with a decided result.
+- Debt created: none
+- Revisit when: players find the jump to the final screen abrupt.
+- Source: 0003_impostor
+
+## 2026-10-17: The config schema lives on its own shared entry point
+
+- Decision: `impostorConfigSchema` is in `shared/src/schemas.ts`, exported as `@family-night/shared/schemas` and imported only by the api; the lobby enforces the same limits through its controls.
+- Alternatives rejected: keeping it in `domain.ts`.
+- Reason: a module-level zod call is kept by tree shaking and put zod in the web bundle (largest chunk 124 KB to 40 KB without it).
+- Debt created: none
+- Revisit when: the web needs to validate a config itself.
+- Source: 0003_impostor
+
+## 2026-10-17: The caller's own vote is kept on the device per match and round
+
+- Decision: after the server accepts a vote the web stores `{ round, targetId }` in `sessionStorage` under the match id and marks it again after a reload of the same round.
+- Alternatives rejected: returning the caller's vote from the server.
+- Reason: targets must never travel in a snapshot or event, and only the voter's own phone needs it.
+- Debt created: none
+- Revisit when: a player switches phone mid-round and expects the mark.
+- Source: 0003_impostor
+
+## 2026-10-17: The lobby starts with the impostor count it shows
+
+- Decision: the shown count is the stored one capped by the online players, and the start sends that.
+- Alternatives rejected: sending the stored count and letting the server refuse it.
+- Reason: someone leaving after the host chose 2 impostors should not make the start fail.
+- Debt created: none
+- Revisit when: the host is surprised by a lower count.
+- Source: 0003_impostor

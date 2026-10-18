@@ -1,6 +1,6 @@
 ---
 updated: 2026-10-17
-source: 0002_identity_and_rooms
+source: 0003_impostor
 ---
 
 # Platform: decisions
@@ -148,3 +148,30 @@ source: 0002_identity_and_rooms
 - Debt created: no light theme for players whose system is in light mode.
 - Revisit when: a player asks for it or a game needs it.
 - Source: 0002_identity_and_rooms
+
+## 2026-10-17: The version bump also sees the current match and the game configs
+
+- Decision: `changesSnapshot` compares the current match's public state and the stored configs too; `updateRoom` takes an async decide, writes the match, `usedWordIds`, `configs` and any extra items in the same version-conditional transaction, bumps whenever extra items are written, and renews the current match's `ttl` with the room. Extends the 0002 entry on the version bump.
+- Alternatives rejected: a separate write path for games.
+- Reason: one rule keeps every visible change published and every match change conditional on the room version.
+- Debt created: none
+- Revisit when: a game needs a snapshot field outside the match and configs.
+- Source: 0003_impostor
+
+## 2026-10-17: The snapshot always carries a config for every game
+
+- Decision: `RoomSnapshot.configs` is filled with the game's default (Impostor: every category) until the host stores one with `PUT /config`.
+- Alternatives rejected: a nullable config the web fills in.
+- Reason: server and lobby must agree on what Iniciar sends.
+- Debt created: none
+- Revisit when: defaults need to differ per room.
+- Source: 0003_impostor
+
+## 2026-10-17: Error and status choices for match routes
+
+- Decision: a match id that exists but is not current answers `STALE_ROUND`, an unknown one `MATCH_NOT_FOUND`; abort of a match not playing is `STALE_ROUND`; rematch while playing is `MATCH_IN_PROGRESS`, answers 200 and leaves the room's stored config untouched; `usedWordIds` is a list.
+- Alternatives rejected: `MATCH_NOT_FOUND` for an old match; 201 for rematch; a string set.
+- Reason: a double tap on an old match is stale, not missing; the plan marks 201 only for the start; a list round-trips without an empty-set case.
+- Debt created: none
+- Revisit when: a client needs to tell these apart.
+- Source: 0003_impostor

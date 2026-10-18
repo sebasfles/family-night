@@ -7,6 +7,8 @@ import { isWriteConflict, transactWrite } from '../repos/db.ts';
 import type { PlayerItem } from '../repos/players.ts';
 import type { MemberItem } from '../repos/room-members.ts';
 import type { RoomItem } from '../repos/rooms.ts';
+import { resolveConfigs } from './configs.ts';
+import { departureChange } from './matches/index.ts';
 import { randomRoomCode, ROOM_CODE_ATTEMPTS } from './room-code.ts';
 import {
   findMember,
@@ -56,6 +58,9 @@ export async function createRoom(deps: Deps, player: PlayerItem): Promise<RoomSn
       createdAt: iso(nowMs),
       updatedAt: iso(nowMs),
       ttl: ttlFrom(nowMs),
+      currentMatchId: null,
+      usedWordIds: [],
+      configs: {},
     };
     const member = newMember(roomCode, player, nowMs);
     try {
@@ -64,7 +69,10 @@ export async function createRoom(deps: Deps, player: PlayerItem): Promise<RoomSn
       if (isWriteConflict(error)) continue;
       throw error;
     }
-    return buildSnapshot({ ...room, members: [member] }, nowMs);
+    return buildSnapshot(
+      { ...room, members: [member], currentMatch: null, configs: resolveConfigs(room.configs) },
+      nowMs,
+    );
   }
   throw new Error('no free room code');
 }
@@ -97,7 +105,8 @@ export async function leaveRoom(deps: Deps, player: PlayerItem, roomCode: string
   await updateRoom(deps, roomCode, (state, nowMs) => {
     requireMember(state, player.playerId);
     const members = state.members.filter((member) => member.playerId !== player.playerId);
-    return { hostId: resolveHost(state.room.hostId, members, nowMs), members };
+    const change = { hostId: resolveHost(state.room.hostId, members, nowMs), members };
+    return departureChange(deps, state, change, player.playerId, 'LEFT', nowMs);
   });
 }
 
@@ -111,11 +120,12 @@ export function kickMember(
     const { hostId, members } = hostAction(state, player.playerId, nowMs);
     if (targetId === player.playerId) throw new AppError('VALIDATION_ERROR');
     if (!findMember(members, targetId)) throw new AppError('TARGET_NOT_MEMBER');
-    return {
+    const change: RoomChange = {
       hostId,
       members: members.filter((member) => member.playerId !== targetId),
       events: [{ type: 'member.kicked', playerId: targetId }],
     };
+    return departureChange(deps, state, change, targetId, 'KICKED', nowMs);
   });
 }
 

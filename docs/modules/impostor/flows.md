@@ -1,6 +1,6 @@
 ---
 updated: 2026-10-17
-source: setup
+source: 0003_impostor
 ---
 
 # Impostor: flows
@@ -19,7 +19,7 @@ stateDiagram-v2
   REVEAL --> IMPOSTOR_GUESS: last impostor voted out and last guess on
   REVEAL --> FINISHED: win evaluated, no guess
   IMPOSTOR_GUESS --> FINISHED: guess right (impostors win) or wrong (civilians win)
-  IMPOSTOR_GUESS --> FINISHED: host skips guess (civilians win)
+  IMPOSTOR_GUESS --> FINISHED: host skips guess, or the guesser leaves (civilians win)
   VOTING --> FINISHED: a living player leaves or is kicked and the win condition is met
   REVEAL --> FINISHED: a living player leaves or is kicked and the win condition is met
   VOTING --> VOTING: a living player leaves or is kicked, match goes on
@@ -31,5 +31,6 @@ stateDiagram-v2
 ```
 
 - A vote that ends the match passes through `REVEAL`; the host moves everyone to `FINISHED` with "Ver resultado".
+- In `REVEAL` a departure finishes the match at once only when the outcome is already a win; the would-be guesser leaving gives the civilians the win.
 - A leaving or kicked living player is recorded as eliminated with reason `LEFT` or `KICKED` and the win is evaluated; a last impostor who leaves gives the civilians the win without a last guess.
 - After `FINISHED` or `ABORTED` the host goes back to the lobby or starts a rematch; both belong to `platform`.

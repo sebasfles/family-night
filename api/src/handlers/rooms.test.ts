@@ -2,64 +2,23 @@ import {
   HOST_SILENCE_MS,
   MAX_ROOM_MEMBERS,
   ONLINE_WINDOW_MS,
-  type CreatePlayerResponse,
-  type ErrorResponse,
   type RoomEvent,
   type RoomResponse,
-  type RoomSnapshot,
 } from '@family-night/shared';
 import { GetCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import { describe, expect, test, vi } from 'vitest';
-import { call, createHarness, newPlayer, type Harness } from '../test/harness.ts';
-
-async function json<T>(response: Response | Promise<Response>, status = 200): Promise<T> {
-  const resolved = await response;
-  const body = (await resolved.json()) as T;
-  expect(resolved.status, JSON.stringify(body)).toBe(status);
-  return body;
-}
-
-async function createRoom(harness: Harness, player: CreatePlayerResponse): Promise<RoomSnapshot> {
-  return (await json<RoomResponse>(call(harness, player, 'POST', '/api/rooms'), 201)).room;
-}
-
-async function join(harness: Harness, player: CreatePlayerResponse, code: string) {
-  return (await json<RoomResponse>(call(harness, player, 'POST', `/api/rooms/${code}/join`))).room;
-}
-
-async function getRoom(harness: Harness, player: CreatePlayerResponse, code: string) {
-  return (await json<RoomResponse>(call(harness, player, 'GET', `/api/rooms/${code}`))).room;
-}
-
-async function expectError(response: Promise<Response>, status: number, code: string) {
-  const body = await json<ErrorResponse>(response, status);
-  expect(body.error.code).toBe(code);
-  return body.error;
-}
-
-function updates(harness: Harness): RoomSnapshot[] {
-  return harness.published.flatMap(({ events }) =>
-    events.flatMap((event) => (event.type === 'room.updated' ? [event.room] : [])),
-  );
-}
-
-async function roomWith(count: number) {
-  const harness = await createHarness();
-  const players: CreatePlayerResponse[] = [];
-  for (let i = 0; i < count; i++) players.push(await newPlayer(harness));
-  const member = (index: number): CreatePlayerResponse => {
-    const player = players[index];
-    if (!player) throw new Error(`no player ${String(index)}`);
-    return player;
-  };
-  const host = member(0);
-  const room = await createRoom(harness, host);
-  for (const player of players.slice(1)) {
-    harness.advance(10);
-    await join(harness, player, room.roomCode);
-  }
-  return { harness, players, member, host, code: room.roomCode };
-}
+import {
+  call,
+  createHarness,
+  createRoom,
+  expectError,
+  getRoom,
+  join,
+  json,
+  newPlayer,
+  roomWith,
+  updates,
+} from '../test/harness.ts';
 
 describe('create and join', () => {
   test('the creator is host and only member of a new room', async () => {

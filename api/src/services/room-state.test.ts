@@ -1,6 +1,12 @@
-import { AWAY_SETBACK_MS, HOST_SILENCE_MS } from '@family-night/shared';
+import {
+  AWAY_SETBACK_MS,
+  HOST_SILENCE_MS,
+  IMPOSTOR_DEFAULTS,
+  startMatch,
+} from '@family-night/shared';
 import { describe, expect, test } from 'vitest';
 import { iso } from '../lib/time.ts';
+import type { MatchItem } from '../repos/matches.ts';
 import type { MemberItem } from '../repos/room-members.ts';
 import type { RoomItem } from '../repos/rooms.ts';
 import { changesSnapshot, resolveHost, touchMember } from './room-state.ts';
@@ -69,25 +75,53 @@ describe('changesSnapshot', () => {
   const offline = member('a', 9_000, 50_000);
 
   test('a plain ping of an online member changes nothing public', () => {
-    const before = { room, members: [online] };
+    const before = { room, members: [online], match: null };
     expect(changesSnapshot(before, { hostId: 'a', members: [touchMember(online, now)] }, now)).toBe(
       false,
     );
   });
 
   test('a ping that brings a member back online changes the snapshot', () => {
-    const before = { room, members: [offline] };
+    const before = { room, members: [offline], match: null };
     expect(
       changesSnapshot(before, { hostId: 'a', members: [touchMember(offline, now)] }, now),
     ).toBe(true);
   });
 
   test('a new member, a removed member or a new host change the snapshot', () => {
-    const before = { room, members: [online] };
+    const before = { room, members: [online], match: null };
     expect(
       changesSnapshot(before, { hostId: 'a', members: [online, member('b', 0, 0)] }, now),
     ).toBe(true);
     expect(changesSnapshot(before, { hostId: 'a', members: [] }, now)).toBe(true);
     expect(changesSnapshot(before, { hostId: 'b', members: [online] }, now)).toBe(true);
+  });
+
+  test('a change of the current match or of a game config changes the snapshot', () => {
+    const config = { ...IMPOSTOR_DEFAULTS, categories: ['animales'] };
+    const { state: publicState } = startMatch({
+      matchId: 'M1',
+      config,
+      participants: ['a', 'b', 'c'],
+      randomInt: () => 0,
+    });
+    const match = { roomCode: 'ABCD', matchId: 'M1', publicState } as MatchItem;
+    const before = { room: { ...room, configs: {} }, members: [online], match };
+    const same = { hostId: 'a', members: [online] };
+
+    expect(changesSnapshot(before, same, now)).toBe(false);
+    expect(changesSnapshot(before, { ...same, currentMatch: match }, now)).toBe(false);
+    expect(changesSnapshot(before, { ...same, currentMatch: null }, now)).toBe(true);
+    expect(
+      changesSnapshot(
+        before,
+        {
+          ...same,
+          currentMatch: { ...match, publicState: { ...publicState, votedPlayerIds: ['a'] } },
+        },
+        now,
+      ),
+    ).toBe(true);
+    expect(changesSnapshot(before, { ...same, configs: { IMPOSTOR: config } }, now)).toBe(true);
   });
 });
