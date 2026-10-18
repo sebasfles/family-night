@@ -1,20 +1,16 @@
 import {
   closeVoting,
-  everyoneVoted,
-  guessOptions,
+  everyoneConfirmed,
   matchScores,
   maxImpostors,
   nextRound,
   pickWord,
   recordBallots,
   removePlayer,
-  skipGuess,
   startMatch,
   startProblem,
-  submitGuess,
   voteProblem,
   type Ballot,
-  type GuessRequest,
   type ImpostorConfig,
   type ImpostorPublic,
   type MatchFacts,
@@ -46,7 +42,7 @@ import {
   type MatchUpdate,
 } from '../matches/match-change.ts';
 import { updateRoom } from '../room-state.ts';
-import { bankEntries, categoryWords, defaultImpostorConfig, isKnownCategory } from './words.ts';
+import { bankEntries, defaultImpostorConfig, isKnownCategory } from './words.ts';
 
 export function parseImpostorConfig(raw: unknown): ImpostorConfig {
   const parsed = impostorConfigSchema.safeParse(raw);
@@ -109,7 +105,6 @@ export function prepareImpostor(deps: Deps, input: PrepareInput<ImpostorConfig>)
     word: entry.word,
     category: entry.categoryName,
     clue: entry.clue,
-    options: guessOptions(entry.word, categoryWords(entry.category), randomInt),
     impostorIds,
     ttl,
   };
@@ -126,13 +121,12 @@ async function loadFacts(deps: Deps, matchId: string, nowMs: number): Promise<Ma
   return {
     word: item.word,
     category: item.category,
-    options: item.options,
     impostorIds: item.impostorIds,
   };
 }
 
 function toBallot(vote: VoteItem): Ballot {
-  return { voterId: vote.voterId, targetId: vote.targetId };
+  return { voterId: vote.voterId, targetId: vote.targetId, confirmed: vote.confirmed === true };
 }
 
 function withScores(
@@ -189,7 +183,7 @@ export async function castVote(
   player: PlayerItem,
   roomCode: string,
   matchId: string,
-  { round, targetId }: VoteRequest,
+  { round, targetId, confirmed }: VoteRequest,
 ): Promise<RoomSnapshot> {
   const nowMs = deps.clock();
   const [room, member] = await Promise.all([
@@ -203,14 +197,20 @@ export async function castVote(
   if (room.currentMatchId !== matchId) throw new AppError('STALE_ROUND');
   const problem = voteProblem(gameState(match, 'IMPOSTOR'), player.playerId, targetId, round);
   if (problem) throw new AppError(problem);
-  await deps.repos.votes.put({
+  const written = await deps.repos.votes.putUnlessConfirmed({
     matchId,
     round,
     voterId: player.playerId,
     targetId,
+    confirmed,
     createdAt: iso(nowMs),
     ttl: ttlFrom(nowMs),
   });
+  if (!written) {
+    const locked = await deps.repos.votes.get(matchId, round, player.playerId, nowMs);
+    if (!locked) throw new AppError('CONFLICT');
+    if (!confirmed || locked.targetId !== targetId) throw new AppError('VOTE_CONFIRMED');
+  }
 
   return updateRoom(deps, roomCode, async (state, now) => {
     const change = callerChange(state, player.playerId, now, 'member');
@@ -222,7 +222,7 @@ export async function castVote(
     }
     const ballots = await roundBallots(deps, current, now);
     const recorded = recordBallots(before, ballots);
-    if (!everyoneVoted(recorded))
+    if (!everyoneConfirmed(recorded))
       return applyMatchUpdate(change, current, { publicState: recorded }, now);
     const facts = await loadFacts(deps, matchId, now);
     const closed = closeVoting(recorded, ballots, facts.impostorIds, deps.secureRandomInt);
@@ -274,41 +274,6 @@ async function impostorNextRound(
         )
       : [];
   return withScores(before, after, facts, cleared);
-}
-
-export function guessCommand(
-  deps: Deps,
-  player: PlayerItem,
-  roomCode: string,
-  matchId: string,
-  { option }: GuessRequest,
-): Promise<RoomSnapshot> {
-  return matchCommand(deps, player, roomCode, matchId, 'member', async (match, nowMs) => {
-    const before = gameState(match, 'IMPOSTOR');
-    if (before.status !== 'PLAYING' || before.phase !== 'IMPOSTOR_GUESS' || !before.guess) {
-      throw new AppError('STALE_ROUND');
-    }
-    if (before.guess.guesserId !== player.playerId) throw new AppError('NOT_GUESSER');
-    if (!before.guess.options.includes(option)) throw new AppError('VALIDATION_ERROR');
-    const facts = await loadFacts(deps, match.matchId, nowMs);
-    return withScores(before, submitGuess(before, option, facts), facts);
-  });
-}
-
-export function skipGuessCommand(
-  deps: Deps,
-  player: PlayerItem,
-  roomCode: string,
-  matchId: string,
-): Promise<RoomSnapshot> {
-  return matchCommand(deps, player, roomCode, matchId, 'host', async (match, nowMs) => {
-    const before = gameState(match, 'IMPOSTOR');
-    if (before.status !== 'PLAYING' || before.phase !== 'IMPOSTOR_GUESS') {
-      throw new AppError('STALE_ROUND');
-    }
-    const facts = await loadFacts(deps, match.matchId, nowMs);
-    return withScores(before, skipGuess(before, facts), facts);
-  });
 }
 
 async function impostorSecret(

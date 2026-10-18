@@ -45,14 +45,29 @@ describe('the api client', () => {
       'PUT /api/rooms/ABCD/matches/M1/votes': () => Response.json({ room: snapshot() }),
     });
 
-    await api.vote('ABCD', 'M1', { round: 2, targetId: 'p2' });
+    await api.vote('ABCD', 'M1', { round: 2, targetId: 'p2', confirmed: false });
 
     const { method, body, headers } = mock.calls[0]?.init ?? {};
+    const sent = '{"round":2,"targetId":"p2","confirmed":false}';
     expect(method).toBe('PUT');
-    expect(body).toBe('{"round":2,"targetId":"p2"}');
-    expect(headers).toMatchObject({
-      'x-amz-content-sha256': sha256('{"round":2,"targetId":"p2"}'),
+    expect(body).toBe(sent);
+    expect(headers).toMatchObject({ 'x-amz-content-sha256': sha256(sent) });
+  });
+
+  test('a PATCH rename hashes its body like a POST', async () => {
+    signIn();
+    const mock = mockApi({
+      'PATCH /api/players/me': () =>
+        Response.json({ player: { playerId: 'p1', name: 'Tía Marta' }, room: snapshot() }),
     });
+
+    await api.rename({ name: 'Tía Marta', roomCode: 'ABCD' });
+
+    const { method, body, headers } = mock.calls[0]?.init ?? {};
+    const sent = '{"name":"Tía Marta","roomCode":"ABCD"}';
+    expect(method).toBe('PATCH');
+    expect(body).toBe(sent);
+    expect(headers).toMatchObject({ 'x-amz-content-sha256': sha256(sent) });
   });
 
   test('a GET carries no body hash', async () => {

@@ -90,12 +90,21 @@ describe('clues', () => {
     const match = justOneMatch(guesserFirst(zorro.playerId));
     let mine = secret();
     const { mock } = play(room(match), () => mine);
-    mock.on(`PUT ${base}/clue`, () => {
-      mine = secret({ clue: 'Verde' });
-      return Response.json({
-        room: room({ ...match, committedPlayerIds: [me.playerId] }, { version: 4 }),
-      });
-    });
+    let answer: () => void = () => undefined;
+    mock.on(
+      `PUT ${base}/clue`,
+      () =>
+        new Promise<Response>((resolve) => {
+          answer = () => {
+            mine = secret({ clue: 'Verde' });
+            resolve(
+              Response.json({
+                room: room({ ...match, committedPlayerIds: [me.playerId] }, { version: 4 }),
+              }),
+            );
+          };
+        }),
+    );
 
     expect(await screen.findByText('Palta')).toBeVisible();
     const input = screen.getByLabelText('Tu pista');
@@ -107,15 +116,20 @@ describe('clues', () => {
     expect(screen.getByText('5/30')).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Dar pista' }));
 
-    await waitFor(() => {
-      expect(sent(mock, `PUT ${base}/clue`)).toEqual({ round: 1, clue: 'Verde' });
-    });
     expect(await screen.findByText('Listo. Esperando a los demás…')).toBeVisible();
-    expect(await screen.findByText('Verde')).toBeVisible();
+    expect(screen.getByText('Verde')).toBeVisible();
+    expect(screen.getByText('Pistas listas: 1 de 3')).toBeVisible();
+    expect(sent(mock, `PUT ${base}/clue`)).toEqual({ round: 1, clue: 'Verde' });
+
+    answer();
+    await waitFor(() => {
+      expect(secretCalls(mock)).toBe(2);
+    });
+    expect(screen.getByText('Verde')).toBeVisible();
     expect(screen.getByText('Pistas listas: 1 de 3')).toBeVisible();
   });
 
-  test('a refused clue unlocks the form and shows the message', async () => {
+  test('a refused clue brings the form back with the clue typed and shows the message', async () => {
     const { mock } = play(room(justOneMatch(guesserFirst(zorro.playerId))), () => secret());
     mock.on(`PUT ${base}/clue`, () => apiError(409, 'STALE_ROUND', 'Esa ronda ya terminó'));
 
@@ -123,9 +137,9 @@ describe('clues', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Dar pista' }));
 
     expect(await screen.findByText('Esa ronda ya terminó')).toBeVisible();
-    await waitFor(() => {
-      expect(screen.getByLabelText('Tu pista')).toBeEnabled();
-    });
+    expect(screen.getByLabelText('Tu pista')).toHaveValue('Verde');
+    expect(screen.getByText('Pistas listas: 0 de 3')).toBeVisible();
+    expect(screen.queryByText('Listo. Esperando a los demás…')).toBeNull();
   });
 
   test('the guesser waits without asking for the word; the host closes the clues early', async () => {
@@ -255,6 +269,38 @@ describe('review', () => {
     expect(await screen.findByRole('heading', { name: 'Pistas para Zorro Astuto' })).toBeVisible();
   });
 
+  test('a crossed clue flips at once and a refusal flips it back with the message', async () => {
+    const { mock } = play(room(reviewing, { hostId: oso.playerId }), () =>
+      secret({ clue: 'Verde', clues: reviewClues }),
+    );
+    let refuse: () => void = () => undefined;
+    mock.on(
+      `PUT ${base}/cancel-clue`,
+      () =>
+        new Promise<Response>((resolve) => {
+          refuse = () => {
+            resolve(apiError(409, 'STALE_ROUND', 'Esa ronda ya terminó'));
+          };
+        }),
+    );
+
+    const list = await screen.findByRole('list', { name: 'Pistas' });
+    fireEvent.click(within(list).getByRole('button', { name: 'Guacamole, de Oso Sabio' }));
+
+    expect(
+      await within(list).findByRole('button', { name: 'Guacamole, de Oso Sabio, tachada' }),
+    ).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByText('Quedan 0 pistas')).toBeVisible();
+
+    refuse();
+    expect(await screen.findByText('Esa ronda ya terminó')).toBeVisible();
+    expect(within(list).getByRole('button', { name: 'Guacamole, de Oso Sabio' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+    expect(screen.getByText('Queda 1 pista')).toBeVisible();
+  });
+
   test('the guesser sees no clue and cannot show them unless they are the host', async () => {
     const asGuesser = { ...reviewing, guesserId: me.playerId };
     const { mock } = play(room(asGuesser, { hostId: zorro.playerId }));
@@ -335,6 +381,32 @@ describe('guess and reveal', () => {
     );
     expect(screen.getByRole('button', { name: 'Contar como acierto' })).toBeVisible();
     expect(secretCalls(mock)).toBe(0);
+  });
+
+  test('a guess shows at once what I said, and a refusal brings the form back with it', async () => {
+    const { mock } = play(room(guessing));
+    let refuse: () => void = () => undefined;
+    mock.on(
+      `PUT ${base}/guess`,
+      () =>
+        new Promise<Response>((resolve) => {
+          refuse = () => {
+            resolve(apiError(409, 'STALE_ROUND', 'Esa ronda ya terminó'));
+          };
+        }),
+    );
+
+    fireEvent.change(await screen.findByLabelText('¿Cuál es la palabra?'), {
+      target: { value: 'Aguacate' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Adivinar' }));
+
+    expect(await screen.findByText('Dijiste «Aguacate». Viendo el resultado…')).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Pasar' })).toBeNull();
+
+    refuse();
+    expect(await screen.findByText('Esa ronda ya terminó')).toBeVisible();
+    expect(screen.getByLabelText('¿Cuál es la palabra?')).toHaveValue('Aguacate');
   });
 
   test('the guesser can pass', async () => {

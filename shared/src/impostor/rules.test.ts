@@ -4,8 +4,7 @@ import type { ImpostorConfig, ImpostorPublic } from '../domain.ts';
 import { impostorConfigSchema } from '../schemas.ts';
 import {
   closeVoting,
-  everyoneVoted,
-  guessOptions,
+  everyoneConfirmed,
   maxImpostors,
   nextRound,
   outcome,
@@ -13,10 +12,8 @@ import {
   recordBallots,
   removePlayer,
   matchScores,
-  skipGuess,
   startMatch,
   startProblem,
-  submitGuess,
   voteProblem,
   type Ballot,
   type MatchFacts,
@@ -57,14 +54,13 @@ function match(
     facts: {
       word: 'Perro',
       category: 'Animales',
-      options: ['Gato', 'Perro', 'Loro', 'Vaca', 'Pato'],
       impostorIds,
     },
   };
 }
 
-function votes(pairs: Record<string, string>): Ballot[] {
-  return Object.entries(pairs).map(([voterId, targetId]) => ({ voterId, targetId }));
+function votes(pairs: Record<string, string>, confirmed = true): Ballot[] {
+  return Object.entries(pairs).map(([voterId, targetId]) => ({ voterId, targetId, confirmed }));
 }
 
 function vote(
@@ -101,6 +97,13 @@ describe('impostor table', () => {
     expect(impostorConfigSchema.safeParse(config({ categories: ['a', 'a'] })).success).toBe(false);
     expect(impostorConfigSchema.safeParse(config({ impostorCount: 0 })).success).toBe(false);
     expect(impostorConfigSchema.safeParse(config({ impostorCount: 1.5 })).success).toBe(false);
+    expect(impostorConfigSchema.safeParse({ ...config(), unknown: true }).success).toBe(false);
+  });
+
+  test('a config stored before the last chance was removed parses without it', () => {
+    const parsed = impostorConfigSchema.parse({ ...config(), impostorLastGuess: true });
+    expect(parsed).toEqual(config());
+    expect(parsed).not.toHaveProperty('impostorLastGuess');
   });
 });
 
@@ -174,17 +177,6 @@ describe('preparation', () => {
     expect(picked.word.id).toBe('animales.gato');
     expect(picked.usedWordIds).toEqual(['comida.palta', 'animales.gato']);
   });
-
-  test('the guess options are the word and four distinct words of its category', () => {
-    const category = ['Perro', 'Gato', 'Loro', 'Vaca', 'Pato', 'Puma', 'Oso'];
-    for (const seed of [1, 2, 3, 4, 5]) {
-      const options = guessOptions('Perro', category, seeded(seed));
-      expect(options).toHaveLength(5);
-      expect(new Set(options).size).toBe(5);
-      expect(options).toContain('Perro');
-      expect(options.every((option) => category.includes(option))).toBe(true);
-    }
-  });
 });
 
 describe('voting', () => {
@@ -202,12 +194,29 @@ describe('voting', () => {
     expect(voteProblem(round2, 'a', 'b', 2)).toBe('INVALID_VOTE');
   });
 
-  test('voters are listed in turn order and the round is complete when all living voted', () => {
+  test('confirmed voters are listed in turn order and the round is complete when all living confirmed', () => {
     const { state } = match(['a', 'b', 'c'], ['a']);
     const partial = recordBallots(state, votes({ c: 'a', a: 'b' }));
     expect(partial.votedPlayerIds).toEqual(['a', 'c']);
-    expect(everyoneVoted(partial)).toBe(false);
-    expect(everyoneVoted(recordBallots(state, votes({ c: 'a', a: 'b', b: 'a' })))).toBe(true);
+    expect(everyoneConfirmed(partial)).toBe(false);
+    expect(everyoneConfirmed(recordBallots(state, votes({ c: 'a', a: 'b', b: 'a' })))).toBe(true);
+  });
+
+  test('a provisional selection is not listed and does not complete the round', () => {
+    const { state } = match(['a', 'b', 'c'], ['a']);
+    const ballots = [...votes({ c: 'a', a: 'b' }), ...votes({ b: 'a' }, false)];
+    const recorded = recordBallots(state, ballots);
+    expect(recorded.votedPlayerIds).toEqual(['a', 'c']);
+    expect(everyoneConfirmed(recorded)).toBe(false);
+  });
+
+  test('an early close counts provisional selections like confirmed ones', () => {
+    const { state, facts } = match(['a', 'b', 'c', 'd'], ['a']);
+    const ballots = [...votes({ b: 'a' }), ...votes({ c: 'a', d: 'b' }, false)];
+    const closed = closeVoting(recordBallots(state, ballots), ballots, facts.impostorIds, first);
+    expect(closed.lastResult?.tally[0]).toEqual({ playerId: 'a', votes: 2 });
+    expect(closed.lastResult?.eliminatedId).toBe('a');
+    expect(closed.votedPlayerIds).toEqual(['b', 'c', 'd']);
   });
 
   test('a single most voted player is out and the tally ranks everyone', () => {
@@ -270,8 +279,8 @@ describe('voting', () => {
 });
 
 describe('end of the match', () => {
-  test('civilians win when the only impostor is voted out without last guess', () => {
-    const { state, facts } = match(['a', 'b', 'c', 'd'], ['a'], { impostorLastGuess: false });
+  test('civilians win when the only impostor is voted out', () => {
+    const { state, facts } = match(['a', 'b', 'c', 'd'], ['a']);
     const after = vote(state, facts, { b: 'a', c: 'a', d: 'a' });
 
     expect(after.eliminated[0]).toMatchObject({ playerId: 'a', wasImpostor: true });
@@ -298,44 +307,7 @@ describe('end of the match', () => {
     expect(matchScores(finished, facts.impostorIds)).toEqual({ a: 2 });
   });
 
-  test('a right last guess steals the win', () => {
-    const { state, facts } = match(['a', 'b', 'c', 'd'], ['a']);
-    const caught = vote(state, facts, { b: 'a', c: 'a', d: 'a' });
-    expect(outcome(caught)).toBe('GUESS');
-
-    const guessing = nextRound(caught, facts);
-    expect(guessing.phase).toBe('IMPOSTOR_GUESS');
-    expect(guessing.guess).toEqual({
-      guesserId: 'a',
-      options: facts.options,
-      chosen: null,
-      correct: null,
-    });
-    expect(guessing.reveal).toBeNull();
-
-    const finished = submitGuess(guessing, 'Perro', facts);
-    expect(finished).toMatchObject({
-      winner: 'IMPOSTORS',
-      guess: { chosen: 'Perro', correct: true },
-    });
-    expect(matchScores(finished, facts.impostorIds)).toEqual({ a: 2 });
-  });
-
-  test('a wrong last guess or a skipped one gives the win to civilians', () => {
-    const { state, facts } = match(['a', 'b', 'c', 'd'], ['a']);
-    const guessing = nextRound(vote(state, facts, { b: 'a', c: 'a', d: 'a' }), facts);
-
-    expect(submitGuess(guessing, 'Gato', facts)).toMatchObject({
-      winner: 'CIVILIANS',
-      guess: { chosen: 'Gato', correct: false },
-    });
-    expect(skipGuess(guessing, facts)).toMatchObject({
-      winner: 'CIVILIANS',
-      guess: { chosen: null, correct: null },
-    });
-  });
-
-  test('several impostors caught in different rounds, the last one gets the guess', () => {
+  test('several impostors caught in different rounds, civilians win with the last one', () => {
     const players = ['a', 'b', 'c', 'd', 'e', 'f'];
     const { state, facts } = match(players, ['a', 'b']);
 
@@ -354,16 +326,16 @@ describe('end of the match', () => {
 
     const round3 = vote(nextRound(round2, facts), facts, { c: 'b', e: 'b', f: 'b' });
     expect(round3.eliminated[2]).toMatchObject({ playerId: 'b', round: 3, wasImpostor: true });
-    expect(outcome(round3)).toBe('GUESS');
-    expect(nextRound(round3, facts).guess?.guesserId).toBe('b');
+    expect(outcome(round3)).toBe('CIVILIANS');
 
-    const civiliansWin = skipGuess(nextRound(round3, facts), facts);
+    const civiliansWin = nextRound(round3, facts);
+    expect(civiliansWin).toMatchObject({ phase: 'FINISHED', winner: 'CIVILIANS' });
     expect(matchScores(civiliansWin, facts.impostorIds)).toEqual({ c: 1, d: 1, e: 1, f: 1 });
   });
 });
 
 describe('a living player leaves or is kicked', () => {
-  test('a living last impostor who leaves gives civilians the win with no guess', () => {
+  test('a living last impostor who leaves gives civilians the win', () => {
     const { state, facts } = match(['a', 'b', 'c', 'd'], ['a']);
     const { state: after } = removePlayer({
       state,
@@ -376,7 +348,7 @@ describe('a living player leaves or is kicked', () => {
     expect(after.eliminated).toEqual([
       { playerId: 'a', round: 1, wasImpostor: true, reason: 'LEFT' },
     ]);
-    expect(after).toMatchObject({ phase: 'FINISHED', winner: 'CIVILIANS', guess: null });
+    expect(after).toMatchObject({ phase: 'FINISHED', winner: 'CIVILIANS' });
   });
 
   test('a civilian kicked to parity gives impostors the win', () => {
@@ -421,28 +393,38 @@ describe('a living player leaves or is kicked', () => {
     expect(closed.lastResult?.eliminatedId).toBe('e');
   });
 
-  test('the caught impostor leaving before or during the guess gives civilians the win', () => {
+  test('a confirmed ballot for a player who leaves is dropped too, so its voter votes again', () => {
+    const { state, facts } = match(['a', 'b', 'c', 'd', 'e'], ['a']);
+    const ballots = [...votes({ a: 'e', b: 'c' }), ...votes({ c: 'e' }, false)];
+    const { state: after, dropped } = removePlayer({
+      state: recordBallots(state, ballots),
+      playerId: 'e',
+      reason: 'LEFT',
+      facts,
+      ballots,
+      randomInt: first,
+    });
+    expect(dropped.map((ballot) => ballot.voterId).toSorted()).toEqual(['a', 'c']);
+    expect(after).toMatchObject({ phase: 'VOTING', votedPlayerIds: ['b'] });
+  });
+
+  test('the caught impostor leaving during the reveal changes nothing', () => {
     const { state, facts } = match(['a', 'b', 'c', 'd'], ['a']);
     const caught = vote(state, facts, { b: 'a', c: 'a', d: 'a' });
-    const leave = (from: ImpostorPublic) =>
-      removePlayer({
-        state: from,
-        playerId: 'a',
-        reason: 'LEFT',
-        facts,
-        ballots: [],
-        randomInt: first,
-      }).state;
-
-    expect(leave(caught)).toMatchObject({ phase: 'FINISHED', winner: 'CIVILIANS' });
-    expect(leave(nextRound(caught, facts))).toMatchObject({
-      phase: 'FINISHED',
-      winner: 'CIVILIANS',
+    const { state: after } = removePlayer({
+      state: caught,
+      playerId: 'a',
+      reason: 'LEFT',
+      facts,
+      ballots: [],
+      randomInt: first,
     });
+    expect(after).toBe(caught);
+    expect(nextRound(after, facts)).toMatchObject({ phase: 'FINISHED', winner: 'CIVILIANS' });
   });
 
   test('a spectator, an eliminated player or anyone after the end changes nothing', () => {
-    const { state, facts } = match(['a', 'b', 'c', 'd'], ['a'], { impostorLastGuess: false });
+    const { state, facts } = match(['a', 'b', 'c', 'd'], ['a']);
     const leave = (from: ImpostorPublic, playerId: string) =>
       removePlayer({ state: from, playerId, reason: 'LEFT', facts, ballots: [], randomInt: first })
         .state;

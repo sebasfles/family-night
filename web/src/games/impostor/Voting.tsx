@@ -10,11 +10,11 @@ interface VotingProps {
   members: RoomMember[];
   selfId: string;
   canVote: boolean;
-  myVote: string | null;
-  pendingTarget: string | null;
+  selection: string | null;
   isHost: boolean;
   closing: boolean;
-  onVote: (targetId: string) => void;
+  onSelect: (targetId: string) => void;
+  onConfirm: (targetId: string) => void;
   onClose: () => void;
 }
 
@@ -23,17 +23,18 @@ export function Voting({
   members,
   selfId,
   canVote,
-  myVote,
-  pendingTarget,
+  selection,
   isHost,
   closing,
-  onVote,
+  onSelect,
+  onConfirm,
   onClose,
 }: VotingProps) {
   const [confirm, setConfirm] = useState(false);
   const voted = match.votedPlayerIds.length;
   const total = match.order.length;
   const missing = total - voted;
+  const confirmed = match.votedPlayerIds.includes(selfId);
 
   return (
     <section aria-labelledby="voting-title" className="flex flex-col gap-3">
@@ -49,7 +50,7 @@ export function Voting({
         {match.order.map((playerId) => {
           const name = nameOf(members, playerId);
           const hasVoted = match.votedPlayerIds.includes(playerId);
-          const selected = canVote && myVote === playerId;
+          const selected = canVote && selection === playerId;
           const check = hasVoted && (
             <span className={`flex items-center ${selected ? 'text-night' : 'text-emerald-400'}`}>
               <CheckIcon className="size-6" />
@@ -62,18 +63,24 @@ export function Voting({
                 <button
                   type="button"
                   aria-pressed={selected}
-                  aria-busy={pendingTarget === playerId || undefined}
-                  disabled={pendingTarget !== null}
+                  disabled={confirmed}
                   onClick={() => {
-                    onVote(playerId);
+                    if (!selected) onSelect(playerId);
                   }}
-                  className={`flex min-h-14 w-full items-center justify-between gap-3 rounded-2xl px-4 text-left text-lg font-semibold focus-visible:ring-2 focus-visible:ring-moon focus-visible:outline-none disabled:cursor-wait ${
-                    selected ? 'bg-moon text-night' : 'bg-night-soft ring-1 ring-cream/15'
+                  className={`flex min-h-14 w-full items-center justify-between gap-3 rounded-2xl px-4 text-left text-lg font-semibold focus-visible:ring-2 focus-visible:ring-moon focus-visible:outline-none disabled:cursor-default ${
+                    selected
+                      ? 'bg-moon text-night'
+                      : `bg-night-soft ring-1 ring-cream/15 ${confirmed ? 'text-cream/60' : ''}`
                   }`}
                 >
                   <span className="min-w-0 break-words">
                     {name}
-                    {selected && <span className="ml-2 text-base font-normal">tu voto</span>}
+                    {selected && ' '}
+                    {selected && (
+                      <span className="ml-1 text-base font-normal">
+                        {confirmed ? 'tu voto' : 'tu elección'}
+                      </span>
+                    )}
                   </span>
                   {check}
                 </button>
@@ -95,6 +102,27 @@ export function Voting({
         })}
       </ul>
 
+      {canVote &&
+        (confirmed ? (
+          <p className="text-center text-lg font-semibold">
+            {selection ? `Votaste por ${nameOf(members, selection)}. ` : ''}Esperando a los demás…
+          </p>
+        ) : (
+          <>
+            <Button
+              disabled={selection === null}
+              onClick={() => {
+                if (selection) onConfirm(selection);
+              }}
+            >
+              Confirmar voto
+            </Button>
+            <p className="text-center text-base text-cream/70">
+              {selection ? 'Puedes cambiarlo hasta que confirmes.' : 'Toca a quien quieras votar.'}
+            </p>
+          </>
+        ))}
+
       {isHost && (
         <Button
           variant="secondary"
@@ -110,7 +138,7 @@ export function Voting({
 
       {confirm && (
         <ConfirmDialog
-          title={`Faltan ${String(missing)} ${missing === 1 ? 'voto' : 'votos'}. ¿Cerrar la votación igual?`}
+          title={`${missing === 1 ? 'Falta 1 por confirmar' : `Faltan ${String(missing)} por confirmar`}. Si ya eligieron, su elección cuenta. ¿Cerrar la votación?`}
           confirmLabel="Sí, cerrar"
           busy={closing}
           onConfirm={() => {

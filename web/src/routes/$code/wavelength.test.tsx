@@ -4,8 +4,8 @@ import {
   type WavelengthPublic,
   type WavelengthSecret,
 } from '@family-night/shared';
-import { fireEvent, screen, waitFor, within } from '@testing-library/react';
-import { describe, expect, test } from 'vitest';
+import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { describe, expect, test, vi } from 'vitest';
 import {
   apiError,
   me,
@@ -27,6 +27,41 @@ const colibri = member({
 const self = member({ playerId: me.playerId, name: me.name });
 const everyone = [self, zorro, oso, colibri];
 const base = `/api/rooms/ABCD/matches/${WAVELENGTH_MATCH_ID}`;
+
+function installFakeAudio() {
+  const ticks = { played: 0, resumed: false };
+  class FakeAudioContext {
+    state: AudioContextState = 'suspended';
+    currentTime = 0;
+    destination = {};
+    resume() {
+      return Promise.resolve().then(() => {
+        this.state = 'running';
+        ticks.resumed = true;
+      });
+    }
+    createOscillator() {
+      const node = {
+        type: 'sine',
+        frequency: { setValueAtTime: () => undefined },
+        connect: (next: unknown) => next,
+        start: () => {
+          ticks.played += 1;
+        },
+        stop: () => undefined,
+      };
+      return node;
+    }
+    createGain() {
+      return {
+        gain: { setValueAtTime: () => undefined, exponentialRampToValueAtTime: () => undefined },
+        connect: (next: unknown) => next,
+      };
+    }
+  }
+  vi.stubGlobal('AudioContext', FakeAudioContext);
+  return ticks;
+}
 
 function room(match: WavelengthPublic | null, overrides: Partial<RoomSnapshot> = {}) {
   return snapshot({ members: everyone, currentMatch: match, ...overrides });
@@ -83,8 +118,13 @@ describe('the clue', () => {
   test('the psychic sees the target zone, types a clue of up to 40 characters and sends it', async () => {
     const match = wavelengthMatch(psychicFirst(me.playerId));
     const { mock } = play(room(match), { role: 'PSYCHIC', round: 1, target: 62 });
-    mock.on(`PUT ${base}/clue`, () =>
-      Response.json({ room: room({ ...match, phase: 'GUESS', clue: 'Sopa' }, { version: 4 }) }),
+    let answer: (response: Response) => void = () => undefined;
+    mock.on(
+      `PUT ${base}/clue`,
+      () =>
+        new Promise<Response>((resolve) => {
+          answer = resolve;
+        }),
     );
 
     expect(await screen.findByRole('heading', { name: 'Eres el psíquico' })).toBeVisible();
@@ -97,14 +137,20 @@ describe('the clue', () => {
     expect(screen.getByText('8/40')).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Dar pista' }));
 
+    expect(await screen.findByRole('heading', { name: 'Tu pista' })).toBeVisible();
+    expect(screen.getByText('Sopa')).toBeVisible();
+    expect(sent(mock, `PUT ${base}/clue`)).toEqual({ round: 1, clue: 'Sopa' });
+
+    answer(
+      Response.json({ room: room({ ...match, phase: 'GUESS', clue: 'Sopa' }, { version: 4 }) }),
+    );
     await waitFor(() => {
-      expect(sent(mock, `PUT ${base}/clue`)).toEqual({ round: 1, clue: 'Sopa' });
+      expect(screen.getByText('Adivinaron 0 de 3')).toBeVisible();
     });
-    expect(await screen.findByText('Sopa')).toBeVisible();
-    expect(screen.getByRole('heading', { name: 'Tu pista' })).toBeVisible();
+    expect(screen.getByText('Sopa')).toBeVisible();
   });
 
-  test('a refused clue unlocks the form and shows the message', async () => {
+  test('a refused clue brings the form back with the clue typed and shows the message', async () => {
     const match = wavelengthMatch(psychicFirst(me.playerId));
     const { mock } = play(room(match), { role: 'PSYCHIC', round: 1, target: 62 });
     mock.on(`PUT ${base}/clue`, () => apiError(409, 'STALE_ROUND', 'Esa ronda ya terminó'));
@@ -113,9 +159,9 @@ describe('the clue', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Dar pista' }));
 
     expect(await screen.findByText('Esa ronda ya terminó')).toBeVisible();
-    await waitFor(() => {
-      expect(screen.getByLabelText('Tu pista')).toBeEnabled();
-    });
+    expect(screen.getByRole('heading', { name: 'Eres el psíquico' })).toBeVisible();
+    expect(screen.getByLabelText('Tu pista')).toHaveValue('Sopa');
+    expect(screen.getByRole('button', { name: 'Dar pista' })).toBeEnabled();
   });
 
   test('others wait without asking for a secret; the host skips an offline psychic', async () => {
@@ -168,13 +214,13 @@ describe('guessing', () => {
   test('the dial moves by drag keys and 1-point buttons, and Confirmar commits it once', async () => {
     const match = guessing();
     const { mock } = play(room(match, { hostId: zorro.playerId }));
-    mock.on(`PUT ${base}/guess`, () =>
-      Response.json({
-        room: room(
-          { ...match, committedPlayerIds: [me.playerId] },
-          { version: 4, hostId: zorro.playerId },
-        ),
-      }),
+    let answer: (response: Response) => void = () => undefined;
+    mock.on(
+      `PUT ${base}/guess`,
+      () =>
+        new Promise<Response>((resolve) => {
+          answer = resolve;
+        }),
     );
 
     const dial = await screen.findByRole('slider', { name: 'Tu respuesta' });
@@ -194,15 +240,73 @@ describe('guessing', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Un punto hacia la derecha' }));
 
     fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
-    expect(screen.getByRole('button', { name: 'Confirmar' })).toBeDisabled();
 
     expect(await screen.findByText('Listo. Esperando a los demás…')).toBeVisible();
+    expect(screen.getByText('Adivinaron 1 de 3')).toBeVisible();
     expect(sent(mock, `PUT ${base}/guess`)).toEqual({ round: 1, value: 1 });
+    answer(
+      Response.json({
+        room: room(
+          { ...match, committedPlayerIds: [me.playerId] },
+          { version: 4, hostId: zorro.playerId },
+        ),
+      }),
+    );
     expect(mock.calls.filter((call) => call.route === `PUT ${base}/guess`)).toHaveLength(1);
     fireEvent.keyDown(dial, { key: 'ArrowRight' });
     expect(dial).toHaveAttribute('aria-valuenow', '1');
     expect(screen.getByText('Adivinaron 1 de 3')).toBeVisible();
     expect(screen.queryByRole('button', { name: 'Cerrar' })).toBeNull();
+  });
+
+  test('a refused guess unlocks the dial at the same value with the server message', async () => {
+    const match = guessing();
+    const { mock } = play(room(match, { hostId: zorro.playerId }));
+    mock.on(`PUT ${base}/guess`, () => apiError(409, 'STALE_ROUND', 'Esa ronda ya terminó'));
+
+    const dial = await screen.findByRole('slider', { name: 'Tu respuesta' });
+    fireEvent.keyDown(dial, { key: 'PageUp' });
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
+
+    expect(await screen.findByText('Esa ronda ya terminó')).toBeVisible();
+    expect(screen.getByText('Adivinaron 0 de 3')).toBeVisible();
+    expect(screen.queryByText('Listo. Esperando a los demás…')).toBeNull();
+    expect(dial).toHaveAttribute('aria-valuenow', '60');
+    expect(dial).not.toHaveAttribute('aria-disabled');
+    expect(screen.getByRole('button', { name: 'Confirmar' })).toBeEnabled();
+  });
+
+  test('the dial ticks on each step of my own dial, and muting it holds across reloads', async () => {
+    const ticks = installFakeAudio();
+    play(room(guessing(), { hostId: zorro.playerId }));
+
+    const dial = await screen.findByRole('slider', { name: 'Tu respuesta' });
+    const toggle = screen.getByRole('button', { name: 'Sonido del dial' });
+    expect(toggle).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.keyDown(dial, { key: 'ArrowRight' });
+    await waitFor(() => {
+      expect(ticks.resumed).toBe(true);
+    });
+    fireEvent.keyDown(dial, { key: 'ArrowRight' });
+    fireEvent.click(screen.getByRole('button', { name: 'Un punto hacia la izquierda' }));
+    fireEvent.keyDown(dial, { key: 'Home' });
+    fireEvent.keyDown(dial, { key: 'Home' });
+    expect(ticks.played).toBe(3);
+
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-pressed', 'false');
+    fireEvent.keyDown(dial, { key: 'End' });
+    expect(ticks.played).toBe(3);
+
+    cleanup();
+    play(room(guessing(), { hostId: zorro.playerId }));
+    const again = await screen.findByRole('slider', { name: 'Tu respuesta' });
+    expect(screen.getByRole('button', { name: 'Sonido del dial' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+    fireEvent.keyDown(again, { key: 'ArrowRight' });
+    expect(ticks.played).toBe(3);
   });
 
   test('the host closes early after confirming who is missing', async () => {

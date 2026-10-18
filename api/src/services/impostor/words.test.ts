@@ -24,14 +24,10 @@ describe('impostor-words.json', () => {
     ]);
   });
 
-  test.each(bank.categories)(
-    '$name has enough distinct words for five guess options',
-    (category) => {
-      const words = category.words.map((entry) => normalized(entry.word));
-      expect(words.length).toBeGreaterThanOrEqual(5);
-      expect(new Set(words).size).toBe(words.length);
-    },
-  );
+  test.each(bank.categories)('$name has no repeated word', (category) => {
+    const words = category.words.map((entry) => normalized(entry.word));
+    expect(new Set(words).size).toBe(words.length);
+  });
 
   test('word ids are unique, stable and prefixed by their category', () => {
     const ids = bank.categories.flatMap((category) => category.words.map((entry) => entry.id));

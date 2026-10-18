@@ -13,9 +13,10 @@ interface CluePhaseProps {
   target: number | undefined;
   isHost: boolean;
   psychicOnline: boolean;
-  sending: boolean;
+  draft: string;
   skipping: boolean;
-  onClue: (clue: string) => Promise<unknown>;
+  onDraft: (draft: string) => void;
+  onClue: (clue: string) => void;
   onSkip: () => void;
 }
 
@@ -32,8 +33,9 @@ export function CluePhase({
   target,
   isHost,
   psychicOnline,
-  sending,
+  draft,
   skipping,
+  onDraft,
   onClue,
   onSkip,
 }: CluePhaseProps) {
@@ -70,7 +72,7 @@ export function CluePhase({
           ) : (
             <Dial label="El objetivo" left={left} right={right} target={target} />
           )}
-          <ClueForm sending={sending} onClue={onClue} />
+          <ClueForm clue={draft} onDraft={onDraft} onClue={onClue} />
         </>
       ) : (
         <>
@@ -114,28 +116,23 @@ export function CluePhase({
 }
 
 function ClueForm({
-  sending,
+  clue,
+  onDraft,
   onClue,
 }: {
-  sending: boolean;
-  onClue: (clue: string) => Promise<unknown>;
+  clue: string;
+  onDraft: (draft: string) => void;
+  onClue: (clue: string) => void;
 }) {
   const inputId = useId();
-  const [clue, setClue] = useState('');
-  const [sent, setSent] = useState(false);
   const trimmed = clue.trim();
-  const locked = sending || sent;
 
   return (
     <form
       className="flex flex-col gap-3"
       onSubmit={(event) => {
         event.preventDefault();
-        if (!trimmed || locked) return;
-        setSent(true);
-        onClue(trimmed).catch(() => {
-          setSent(false);
-        });
+        if (trimmed) onClue(trimmed);
       }}
     >
       <div className="flex items-baseline justify-between gap-3">
@@ -150,16 +147,15 @@ function ClueForm({
         id={inputId}
         value={clue}
         maxLength={WAVELENGTH_CLUE_MAX}
-        disabled={locked}
         autoComplete="off"
         enterKeyHint="send"
         onChange={(event) => {
-          setClue(event.target.value);
+          onDraft(event.target.value);
         }}
         className="min-h-14 rounded-2xl bg-cream px-4 text-xl text-night placeholder:text-night/50 focus-visible:ring-2 focus-visible:ring-moon focus-visible:outline-none disabled:opacity-70"
         placeholder="Por ejemplo: sopa de la abuela"
       />
-      <Button type="submit" disabled={!trimmed} busy={locked}>
+      <Button type="submit" disabled={!trimmed}>
         Dar pista
       </Button>
     </form>

@@ -19,9 +19,10 @@ interface CluePhaseProps {
   committed: boolean;
   myClue: string | null;
   isHost: boolean;
-  sending: boolean;
+  draft: string;
   closing: boolean;
-  onClue: (clue: string) => Promise<unknown>;
+  onDraft: (draft: string) => void;
+  onClue: (clue: string) => void;
   onClose: () => void;
 }
 
@@ -39,8 +40,9 @@ export function CluePhase({
   committed,
   myClue,
   isHost,
-  sending,
+  draft,
   closing,
+  onDraft,
   onClue,
   onClose,
 }: CluePhaseProps) {
@@ -79,7 +81,7 @@ export function CluePhase({
               <p className="text-lg text-cream/80">Listo. Esperando a los demás…</p>
             </div>
           ) : (
-            <ClueForm guesser={guesser} sending={sending} onClue={onClue} />
+            <ClueForm guesser={guesser} clue={draft} onDraft={onDraft} onClue={onClue} />
           )}
         </>
       ) : (
@@ -128,29 +130,24 @@ export function CluePhase({
 
 function ClueForm({
   guesser,
-  sending,
+  clue,
+  onDraft,
   onClue,
 }: {
   guesser: string;
-  sending: boolean;
-  onClue: (clue: string) => Promise<unknown>;
+  clue: string;
+  onDraft: (draft: string) => void;
+  onClue: (clue: string) => void;
 }) {
   const inputId = useId();
   const hintId = useId();
-  const [clue, setClue] = useState('');
-  const [sent, setSent] = useState(false);
-  const locked = sending || sent;
 
   return (
     <form
       className="flex flex-col gap-3"
       onSubmit={(event) => {
         event.preventDefault();
-        if (!clue || locked) return;
-        setSent(true);
-        onClue(clue).catch(() => {
-          setSent(false);
-        });
+        if (clue) onClue(clue);
       }}
     >
       <div className="flex items-baseline justify-between gap-3">
@@ -168,19 +165,18 @@ function ClueForm({
         id={inputId}
         value={clue}
         maxLength={JUST_ONE_CLUE_MAX}
-        disabled={locked}
         autoComplete="off"
         autoCapitalize="off"
         spellCheck={false}
         enterKeyHint="send"
         aria-describedby={hintId}
         onChange={(event) => {
-          setClue(event.target.value.replace(/\s/gu, ''));
+          onDraft(event.target.value.replace(/\s/gu, ''));
         }}
         className="min-h-14 rounded-2xl bg-cream px-4 text-xl text-night placeholder:text-night/50 focus-visible:ring-2 focus-visible:ring-moon focus-visible:outline-none disabled:opacity-70"
         placeholder="Una palabra"
       />
-      <Button type="submit" disabled={!clue} busy={locked}>
+      <Button type="submit" disabled={!clue}>
         Dar pista
       </Button>
     </form>

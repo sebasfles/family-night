@@ -95,7 +95,10 @@ export function joinRoom(deps: Deps, player: PlayerItem, roomCode: string): Prom
     const existing = findMember(state.members, player.playerId);
     let members: MemberItem[];
     if (existing) {
-      members = replaceMember(state.members, touchMember(existing, nowMs));
+      members = replaceMember(
+        state.members,
+        touchMember({ ...existing, name: player.name }, nowMs),
+      );
     } else {
       if (state.members.length >= MAX_ROOM_MEMBERS) throw new AppError('ROOM_FULL');
       members = [...state.members, newMember(roomCode, player, nowMs)];

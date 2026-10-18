@@ -1,7 +1,6 @@
 import {
   CIVILIAN_WIN_POINTS,
   IMPOSTOR_CAPS,
-  IMPOSTOR_GUESS_OPTIONS,
   IMPOSTOR_WIN_POINTS,
   MIN_IMPOSTOR_PLAYERS,
 } from '../constants.ts';
@@ -18,16 +17,16 @@ import { shuffle, type RandomInt } from '../random.ts';
 export interface Ballot {
   voterId: string;
   targetId: string;
+  confirmed: boolean;
 }
 
 export interface MatchFacts {
   word: string;
   category: string;
-  options: string[];
   impostorIds: string[];
 }
 
-export type Outcome = 'CONTINUE' | 'GUESS' | ImpostorWinner;
+export type Outcome = 'CONTINUE' | ImpostorWinner;
 
 export type StartProblem = 'NOT_ENOUGH_PLAYERS' | 'TOO_MANY_IMPOSTORS';
 
@@ -66,18 +65,6 @@ export function pickWord<W extends BankWord>(
   return { word, usedWordIds: [...kept, word.id] };
 }
 
-export function guessOptions(
-  word: string,
-  categoryWords: readonly string[],
-  randomInt: RandomInt,
-): string[] {
-  const others = shuffle(
-    categoryWords.filter((other) => other !== word),
-    randomInt,
-  ).slice(0, IMPOSTOR_GUESS_OPTIONS - 1);
-  return shuffle([word, ...others], randomInt);
-}
-
 export function startMatch(input: {
   matchId: string;
   config: ImpostorConfig;
@@ -100,7 +87,6 @@ export function startMatch(input: {
       eliminated: [],
       votedPlayerIds: [],
       lastResult: null,
-      guess: null,
       winner: null,
       reveal: null,
     },
@@ -135,12 +121,17 @@ function countedBallots(state: ImpostorPublic, ballots: readonly Ballot[]): Ball
   );
 }
 
-export function recordBallots(state: ImpostorPublic, ballots: readonly Ballot[]): ImpostorPublic {
+function votersOf(state: ImpostorPublic, ballots: readonly Ballot[]): string[] {
   const voters = new Set(countedBallots(state, ballots).map((ballot) => ballot.voterId));
-  return { ...state, votedPlayerIds: state.order.filter((id) => voters.has(id)) };
+  return state.order.filter((id) => voters.has(id));
 }
 
-export function everyoneVoted(state: ImpostorPublic): boolean {
+export function recordBallots(state: ImpostorPublic, ballots: readonly Ballot[]): ImpostorPublic {
+  const confirmed = ballots.filter((ballot) => ballot.confirmed);
+  return { ...state, votedPlayerIds: votersOf(state, confirmed) };
+}
+
+export function everyoneConfirmed(state: ImpostorPublic): boolean {
   return state.order.every((id) => state.votedPlayerIds.includes(id));
 }
 
@@ -195,7 +186,8 @@ export function closeVoting(
   const tally = tallyVotes(state, ballots);
   const result = resolveTally(tally, state.config.tieRule, randomInt);
   const revealed: ImpostorPublic = {
-    ...recordBallots(state, ballots),
+    ...state,
+    votedPlayerIds: votersOf(state, ballots),
     phase: 'REVEAL',
     lastResult: { round: state.round, tally, tie: result.tie, eliminatedId: result.eliminatedId },
   };
@@ -203,31 +195,17 @@ export function closeVoting(
   return eliminate(revealed, result.eliminatedId, result.reason, impostorIds);
 }
 
-function lastImpostorOut(state: ImpostorPublic): Elimination | undefined {
-  return state.eliminated.findLast((elimination) => elimination.wasImpostor);
-}
-
 export function outcome(state: ImpostorPublic): Outcome {
   const impostorsOut = state.eliminated.filter((elimination) => elimination.wasImpostor).length;
   const livingImpostors = state.config.impostorCount - impostorsOut;
   const livingCivilians = state.order.length - livingImpostors;
-  if (livingImpostors <= 0) {
-    const last = lastImpostorOut(state);
-    const votedOut = last?.reason === 'VOTE' || last?.reason === 'TIE_RANDOM';
-    return state.config.impostorLastGuess && votedOut ? 'GUESS' : 'CIVILIANS';
-  }
+  if (livingImpostors <= 0) return 'CIVILIANS';
   if (livingImpostors >= livingCivilians) return 'IMPOSTORS';
   return 'CONTINUE';
 }
 
 function isWinner(result: Outcome): result is ImpostorWinner {
   return result === 'CIVILIANS' || result === 'IMPOSTORS';
-}
-
-export function pendingGuesser(state: ImpostorPublic): string | null {
-  if (state.phase === 'IMPOSTOR_GUESS') return state.guess?.guesserId ?? null;
-  if (state.phase !== 'REVEAL' || outcome(state) !== 'GUESS') return null;
-  return lastImpostorOut(state)?.playerId ?? null;
 }
 
 export function finish(
@@ -247,15 +225,6 @@ export function finish(
 export function nextRound(state: ImpostorPublic, facts: MatchFacts): ImpostorPublic {
   const result = outcome(state);
   if (isWinner(result)) return finish(state, result, facts);
-  if (result === 'GUESS') {
-    const guesserId = pendingGuesser(state);
-    if (!guesserId) return finish(state, 'CIVILIANS', facts);
-    return {
-      ...state,
-      phase: 'IMPOSTOR_GUESS',
-      guess: { guesserId, options: [...facts.options], chosen: null, correct: null },
-    };
-  }
   return {
     ...state,
     phase: 'VOTING',
@@ -263,22 +232,6 @@ export function nextRound(state: ImpostorPublic, facts: MatchFacts): ImpostorPub
     votedPlayerIds: [],
     lastResult: null,
   };
-}
-
-export function submitGuess(
-  state: ImpostorPublic,
-  option: string,
-  facts: MatchFacts,
-): ImpostorPublic {
-  const correct = option === facts.word;
-  const finished = finish(state, correct ? 'IMPOSTORS' : 'CIVILIANS', facts);
-  return state.guess
-    ? { ...finished, guess: { ...state.guess, chosen: option, correct } }
-    : finished;
-}
-
-export function skipGuess(state: ImpostorPublic, facts: MatchFacts): ImpostorPublic {
-  return finish(state, 'CIVILIANS', facts);
 }
 
 export function removePlayer(input: {
@@ -291,11 +244,7 @@ export function removePlayer(input: {
 }): { state: ImpostorPublic; dropped: Ballot[] } {
   const { state, playerId, reason, facts, ballots, randomInt } = input;
   const unchanged = { state, dropped: [] };
-  if (state.status !== 'PLAYING') return unchanged;
-  if (pendingGuesser(state) === playerId) {
-    return { state: finish(state, 'CIVILIANS', facts), dropped: [] };
-  }
-  if (!isLiving(state, playerId)) return unchanged;
+  if (state.status !== 'PLAYING' || !isLiving(state, playerId)) return unchanged;
 
   const remaining = eliminate(state, playerId, reason, facts.impostorIds);
   const result = outcome(remaining);
@@ -310,7 +259,9 @@ export function removePlayer(input: {
   if (isWinner(result)) return { state: finish(remaining, result, facts), dropped };
   const synced = recordBallots(remaining, kept);
   return {
-    state: everyoneVoted(synced) ? closeVoting(synced, kept, facts.impostorIds, randomInt) : synced,
+    state: everyoneConfirmed(synced)
+      ? closeVoting(synced, kept, facts.impostorIds, randomInt)
+      : synced,
     dropped,
   };
 }

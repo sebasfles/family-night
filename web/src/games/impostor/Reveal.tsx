@@ -12,7 +12,6 @@ interface RevealProps {
 
 const nextLabels = {
   CONTINUE: 'Siguiente ronda',
-  GUESS: 'Última oportunidad',
   CIVILIANS: 'Ver resultado',
   IMPOSTORS: 'Ver resultado',
 } as const;

@@ -19,11 +19,10 @@ const GAMES: Game[] = [
 interface GamePickerProps {
   selected: GameType;
   editable: boolean;
-  busy: boolean;
   onSelect: (game: GameType) => void;
 }
 
-export function GamePicker({ selected, editable, busy, onSelect }: GamePickerProps) {
+export function GamePicker({ selected, editable, onSelect }: GamePickerProps) {
   return (
     <section aria-labelledby="games-title" className="flex flex-col gap-3">
       <h2 id="games-title" className="text-xl font-bold">
@@ -55,11 +54,10 @@ export function GamePicker({ selected, editable, busy, onSelect }: GamePickerPro
                   type="button"
                   aria-label={`Jugar ${game.name}`}
                   aria-pressed={chosen}
-                  disabled={busy}
                   onClick={() => {
                     if (!chosen) onSelect(id);
                   }}
-                  className="absolute inset-0 rounded-3xl focus-visible:ring-2 focus-visible:ring-moon focus-visible:outline-none disabled:cursor-wait"
+                  className="absolute inset-0 rounded-3xl focus-visible:ring-2 focus-visible:ring-moon focus-visible:outline-none"
                 />
               )}
             </li>

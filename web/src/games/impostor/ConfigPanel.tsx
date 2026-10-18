@@ -7,7 +7,6 @@ interface ConfigPanelProps {
   playerCount: number;
   categories: WordCategory[] | undefined;
   editable: boolean;
-  busy: boolean;
   onChange: (config: ImpostorConfig) => void;
 }
 
@@ -20,10 +19,9 @@ export function ConfigPanel({
   playerCount,
   categories,
   editable,
-  busy,
   onChange,
 }: ConfigPanelProps) {
-  const locked = !editable || busy;
+  const locked = !editable;
   const set = (patch: Partial<ImpostorConfig>) => {
     onChange({ ...config, ...patch });
   };
@@ -31,7 +29,6 @@ export function ConfigPanel({
   return (
     <section
       aria-labelledby="impostor-config-title"
-      aria-busy={busy || undefined}
       className="flex flex-col gap-5 rounded-3xl bg-night-soft p-5 ring-1 ring-cream/10"
     >
       <div className="flex flex-col gap-1">
@@ -121,16 +118,6 @@ export function ConfigPanel({
         disabled={locked}
         onChange={(showCategoryToImpostor) => {
           set({ showCategoryToImpostor });
-        }}
-      />
-
-      <Switch
-        label="Última oportunidad"
-        hint="El último impostor atrapado puede adivinar la palabra"
-        checked={config.impostorLastGuess}
-        disabled={locked}
-        onChange={(impostorLastGuess) => {
-          set({ impostorLastGuess });
         }}
       />
 

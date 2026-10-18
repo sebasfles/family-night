@@ -2,9 +2,11 @@ import { DIAL_MAX, guessersOf, type RoomMember, type WavelengthPublic } from '@f
 import { useState } from 'react';
 import { Button } from '../../components/Button';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { SoundIcon } from '../../components/icons';
 import { nameOf } from '../../components/match';
 import { Dial } from './Dial';
 import type { Seat } from './model';
+import { useDialSound } from './tick';
 
 interface GuessPhaseProps {
   match: WavelengthPublic;
@@ -14,9 +16,8 @@ interface GuessPhaseProps {
   target: number | undefined;
   myGuess: number | null;
   isHost: boolean;
-  committing: boolean;
   closing: boolean;
-  onCommit: (value: number) => Promise<unknown>;
+  onCommit: (value: number) => void;
   onClose: () => void;
 }
 
@@ -28,19 +29,17 @@ export function GuessPhase({
   target,
   myGuess,
   isHost,
-  committing,
   closing,
   onCommit,
   onClose,
 }: GuessPhaseProps) {
   const [value, setValue] = useState(myGuess ?? DIAL_MAX / 2);
-  const [sent, setSent] = useState(false);
   const [confirmClose, setConfirmClose] = useState(false);
+  const [sound, toggleSound] = useDialSound();
   const total = guessersOf(match).length;
   const done = match.committedPlayerIds.length;
   const missing = total - done;
   const committed = match.committedPlayerIds.includes(selfId);
-  const locked = committed || committing || sent;
   const { left, right } = match.spectrum;
   const psychic = nameOf(members, match.psychicId);
 
@@ -54,14 +53,28 @@ export function GuessPhase({
       </div>
 
       {seat === 'GUESSER' ? (
-        <Dial
-          label="Tu respuesta"
-          left={left}
-          right={right}
-          value={committed ? (myGuess ?? value) : value}
-          disabled={locked}
-          onChange={setValue}
-        />
+        <div className="flex flex-col gap-2">
+          {!committed && (
+            <button
+              type="button"
+              aria-pressed={sound}
+              aria-label="Sonido del dial"
+              onClick={toggleSound}
+              className="flex size-12 items-center justify-center self-end rounded-full text-cream/80 hover:bg-cream/10 focus-visible:ring-2 focus-visible:ring-moon focus-visible:outline-none"
+            >
+              <SoundIcon muted={!sound} className="size-6" />
+            </button>
+          )}
+          <Dial
+            label="Tu respuesta"
+            left={left}
+            right={right}
+            value={committed ? (myGuess ?? value) : value}
+            disabled={committed}
+            sound={sound}
+            onChange={setValue}
+          />
+        </div>
       ) : (
         <Dial
           label={seat === 'PSYCHIC' ? 'El objetivo' : `Escala entre ${left} y ${right}`}
@@ -80,12 +93,8 @@ export function GuessPhase({
           <p className="text-center text-xl font-semibold">Listo. Esperando a los demás…</p>
         ) : (
           <Button
-            busy={committing || sent}
             onClick={() => {
-              setSent(true);
-              onCommit(value).catch(() => {
-                setSent(false);
-              });
+              onCommit(value);
             }}
           >
             Confirmar

@@ -1,14 +1,9 @@
-import type { GuessRequest, RoomResponse, VoteRequest } from '@family-night/shared';
+import type { RoomResponse, VoteRequest } from '@family-night/shared';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import type { Deps } from '../deps.ts';
 import { playerIdSchema } from '../lib/auth.ts';
-import {
-  castVote,
-  closeVotingCommand,
-  guessCommand,
-  skipGuessCommand,
-} from '../services/impostor/index.ts';
+import { castVote, closeVotingCommand } from '../services/impostor/index.ts';
 import {
   matchIdParam,
   parseBody,
@@ -21,8 +16,8 @@ import {
 const voteSchema: z.ZodType<VoteRequest> = z.object({
   round: roundNumber,
   targetId: playerIdSchema,
+  confirmed: z.boolean(),
 });
-const guessSchema: z.ZodType<GuessRequest> = z.object({ option: z.string().min(1).max(100) });
 
 export function impostorRoutes(deps: Deps) {
   return new Hono<AppEnv>()
@@ -39,17 +34,5 @@ export function impostorRoutes(deps: Deps) {
       return c.json<RoomResponse>({
         room: await closeVotingCommand(deps, c.get('player'), code, matchId, body),
       });
-    })
-    .post('/:code/matches/:matchId/guess', async (c) => {
-      const [code, matchId] = [roomCodeParam(c), matchIdParam(c)];
-      const body = await parseBody(c, guessSchema);
-      return c.json<RoomResponse>({
-        room: await guessCommand(deps, c.get('player'), code, matchId, body),
-      });
-    })
-    .post('/:code/matches/:matchId/skip-guess', async (c) =>
-      c.json<RoomResponse>({
-        room: await skipGuessCommand(deps, c.get('player'), roomCodeParam(c), matchIdParam(c)),
-      }),
-    );
+    });
 }

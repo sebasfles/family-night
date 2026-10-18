@@ -9,23 +9,24 @@ import {
   type RoomMember,
   type RoomSnapshot,
 } from '@family-night/shared';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { useState, type ReactNode } from 'react';
 import { api } from '../../api/client';
-import { useRoomMutation } from '../../api/match';
-import { useRoom } from '../../api/room';
+import { useRoomMutation, useRoomView } from '../../api/match';
 import { Button } from '../../components/Button';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { CyclesPanel } from '../../components/lobby/CyclesPanel';
 import { GamePicker } from '../../components/lobby/GamePicker';
 import { InviteCard } from '../../components/lobby/InviteCard';
 import { MemberList } from '../../components/lobby/MemberList';
+import { RenameDialog } from '../../components/lobby/RenameDialog';
 import { useRoomSession } from '../../components/roomSession';
 import { useToast } from '../../components/useToast';
 import { useNow } from '../../components/useNow';
 import { LobbyPanel as ImpostorPanel } from '../../games/impostor/LobbyPanel';
 import { useIdentity } from '../../identity/identity';
+import { saveIdentity, type Identity } from '../../identity/storage';
 
 export const Route = createFileRoute('/$code/')({
   component: Lobby,
@@ -66,20 +67,37 @@ function Lobby() {
   const session = useRoomSession();
   const toast = useToast();
   const now = useNow(PRESENCE_RECOMPUTE_MS);
-  const room = useRoom(code).data;
+  const queryClient = useQueryClient();
+  const room = useRoomView(code);
   const [confirmLeave, setConfirmLeave] = useState(false);
+  const [renaming, setRenaming] = useState(false);
 
-  const makeHost = useRoomMutation((member: RoomMember) =>
-    api.makeHost(code, { playerId: member.playerId }),
+  const makeHost = useRoomMutation(
+    code,
+    (member: RoomMember) => api.makeHost(code, { playerId: member.playerId }),
+    (member) => ({ kind: 'host', playerId: member.playerId }),
   );
-  const kick = useRoomMutation((member: RoomMember) =>
-    api.kick(code, { playerId: member.playerId }),
+  const kick = useRoomMutation(
+    code,
+    (member: RoomMember) => api.kick(code, { playerId: member.playerId }),
+    (member) => ({ kind: 'kick', playerId: member.playerId }),
   );
-  const pick = useRoomMutation((game: GameType) => {
-    const configs = room?.snapshot.configs;
-    if (!configs) throw new Error('no room');
-    return api.updateConfig(code, { gameType: game, config: configs[game] } as GameConfigRequest);
-  });
+  const pick = useRoomMutation(
+    code,
+    (request: GameConfigRequest) => api.updateConfig(code, request),
+    (request) => ({ kind: 'config', request }),
+  );
+  const rename = useRoomMutation(
+    code,
+    async (name: string) => {
+      const response = await api.rename({ name, roomCode: code });
+      const renamed: Identity = { ...identity, name: response.player.name };
+      saveIdentity(renamed);
+      queryClient.setQueryData(['identity'], renamed);
+      return response;
+    },
+    (name) => ({ kind: 'rename', playerId: identity.playerId, name }),
+  );
   const leave = useMutation({
     mutationFn: session.leave,
     onError: (error) => {
@@ -107,14 +125,16 @@ function Lobby() {
         onKick={(member) => {
           kick.mutate(member);
         }}
+        onRename={() => {
+          setRenaming(true);
+        }}
       />
 
       <GamePicker
         selected={snapshot.selectedGame}
         editable={isHost}
-        busy={pick.isPending}
-        onSelect={(game) => {
-          pick.mutate(game);
+        onSelect={(game: GameType) => {
+          pick.mutate({ gameType: game, config: snapshot.configs[game] } as GameConfigRequest);
         }}
       />
 
@@ -129,6 +149,20 @@ function Lobby() {
       >
         Salir de la sala
       </Button>
+
+      {renaming && (
+        <RenameDialog
+          current={snapshot.members.find((m) => m.playerId === identity.playerId)?.name ?? ''}
+          others={snapshot.members.filter((m) => m.playerId !== identity.playerId)}
+          onRename={(name) => {
+            setRenaming(false);
+            rename.mutate(name);
+          }}
+          onCancel={() => {
+            setRenaming(false);
+          }}
+        />
+      )}
 
       {confirmLeave && (
         <ConfirmDialog

@@ -1,3 +1,4 @@
+import { DIAL_MAX, dialPoints } from '@family-night/shared';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { useState } from 'react';
 import { describe, expect, test, vi } from 'vitest';
@@ -61,5 +62,71 @@ describe('the dial', () => {
     expect(screen.queryByRole('button')).toBeNull();
     expect(screen.getByText('Frío')).toBeVisible();
     expect(screen.getByText('Caliente')).toBeVisible();
+  });
+});
+
+function bandLabels(target: number): { points: number; value: number }[] {
+  render(<Dial label="El objetivo" left="Frío" right="Caliente" target={target} />);
+  const svg = document.querySelector('svg');
+  const hub = svg?.querySelector('circle[r="7"]');
+  if (!svg || !hub) throw new Error('no dial');
+  const cx = Number(hub.getAttribute('cx'));
+  const cy = Number(hub.getAttribute('cy'));
+  return Array.from(svg.querySelectorAll('text')).map((text) => {
+    const angle = Math.atan2(
+      cy - Number(text.getAttribute('y')),
+      Number(text.getAttribute('x')) - cx,
+    );
+    return { points: Number(text.textContent), value: (1 - angle / Math.PI) * DIAL_MAX };
+  });
+}
+
+describe('the scoring zones', () => {
+  test.each([0, 3, 50, 97, 100])(
+    'around a target at %i every number sits on the zone it scores',
+    (target) => {
+      const labels = bandLabels(target);
+
+      expect(labels.map((label) => label.points)).toContain(4);
+      for (const label of labels) {
+        expect(label.value).toBeGreaterThanOrEqual(0);
+        expect(label.value).toBeLessThanOrEqual(DIAL_MAX);
+        expect(dialPoints(Math.round(label.value), target), JSON.stringify(label)).toBe(
+          label.points,
+        );
+      }
+    },
+  );
+
+  test('each zone spans half a point past the last whole value it scores', () => {
+    render(<Dial label="El objetivo" left="Frío" right="Caliente" target={50} />);
+    const svg = document.querySelector('svg');
+    const hub = svg?.querySelector('circle[r="7"]');
+    if (!svg || !hub) throw new Error('no dial');
+    const cx = Number(hub.getAttribute('cx'));
+    const cy = Number(hub.getAttribute('cy'));
+    const valueAt = (x: number, y: number) => (1 - Math.atan2(cy - y, x - cx) / Math.PI) * DIAL_MAX;
+    const zones = Array.from(svg.querySelectorAll('path'))
+      .slice(1)
+      .map((path) => {
+        const numbers = (path.getAttribute('d') ?? '').match(/-?\d+(\.\d+)?/g)?.map(Number) ?? [];
+        const [, , x1 = 0, y1 = 0] = numbers;
+        const [x2 = 0, y2 = 0] = numbers.slice(-2);
+        return [valueAt(x1, y1), valueAt(x2, y2)].map((value) => Number(value.toFixed(1)));
+      });
+
+    expect(zones).toEqual([
+      [37.5, 62.5],
+      [42.5, 57.5],
+      [47.5, 52.5],
+    ]);
+  });
+
+  test('a centred target shows 4 once and 3 and 2 on both sides', () => {
+    expect(
+      bandLabels(50)
+        .map((label) => label.points)
+        .toSorted(),
+    ).toEqual([2, 2, 3, 3, 4]);
   });
 });

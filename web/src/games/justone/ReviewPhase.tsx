@@ -11,7 +11,6 @@ interface ReviewPhaseProps {
   word: string | undefined;
   clues: JustOneClue[] | undefined;
   isHost: boolean;
-  toggling: string | null;
   showing: boolean;
   onToggle: (authorId: string, cancelled: boolean) => void;
   onShow: () => void;
@@ -24,7 +23,6 @@ export function ReviewPhase({
   word,
   clues,
   isHost,
-  toggling,
   showing,
   onToggle,
   onShow,
@@ -62,11 +60,10 @@ export function ReviewPhase({
                       type="button"
                       aria-pressed={cancelled}
                       aria-label={`${clue.clue}, de ${author}${cancelled ? ', tachada' : ''}`}
-                      disabled={toggling !== null}
                       onClick={() => {
                         onToggle(clue.authorId, !cancelled);
                       }}
-                      className={`flex min-h-14 w-full items-center justify-between gap-3 rounded-2xl px-4 py-3 text-left focus-visible:ring-2 focus-visible:ring-moon focus-visible:outline-none disabled:cursor-wait ${
+                      className={`flex min-h-14 w-full items-center justify-between gap-3 rounded-2xl px-4 py-3 text-left focus-visible:ring-2 focus-visible:ring-moon focus-visible:outline-none ${
                         cancelled
                           ? 'bg-night-soft/60 text-cream/50 ring-1 ring-cream/10'
                           : 'bg-night-soft ring-1 ring-cream/15'
@@ -86,7 +83,7 @@ export function ReviewPhase({
                           cancelled ? 'bg-cream/10 text-cream/70' : 'bg-moon text-night'
                         }`}
                       >
-                        {toggling === clue.authorId ? '…' : cancelled ? 'Tachada' : 'Queda'}
+                        {cancelled ? 'Tachada' : 'Queda'}
                       </span>
                     </button>
                   </li>

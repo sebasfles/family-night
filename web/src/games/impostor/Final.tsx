@@ -29,7 +29,6 @@ export function Final({
   const scores = Object.entries(matchScores(match, reveal.impostorIds)).filter(([playerId]) =>
     members.some((member) => member.playerId === playerId),
   );
-  const guess = match.guess;
 
   return (
     <section aria-labelledby="final-title" className="flex flex-col gap-5">
@@ -41,12 +40,6 @@ export function Final({
         <h2 id="final-title" className="text-3xl font-bold text-balance">
           {civilians ? 'Ganaron los civiles' : 'Ganaron los impostores'}
         </h2>
-        {guess?.correct && <p className="text-xl font-semibold">¡Robó la victoria!</p>}
-        {guess?.chosen && !guess.correct && (
-          <p className="text-lg">
-            {nameOf(members, guess.guesserId)} dijo «{guess.chosen}» y falló
-          </p>
-        )}
       </div>
 
       <div className="flex flex-col items-center gap-1 rounded-3xl bg-cream p-5 text-center text-night">

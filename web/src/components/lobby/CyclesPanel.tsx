@@ -35,16 +35,17 @@ export function CyclesPanel({
   const titleId = `${gameType.toLowerCase()}-config-title`;
   const choices = Array.from({ length: maxCycles }, (_, i) => i + 1);
 
-  const update = useRoomMutation((cycles: number) =>
-    api.updateConfig(code, { gameType, config: { cycles } }),
+  const update = useRoomMutation(
+    code,
+    (cycles: number) => api.updateConfig(code, { gameType, config: { cycles } }),
+    (cycles) => ({ kind: 'config', request: { gameType, config: { cycles } } }),
   );
-  const start = useRoomMutation(() => api.startMatch(code, { gameType, config }));
+  const start = useRoomMutation(code, () => api.startMatch(code, { gameType, config }));
 
   return (
     <>
       <section
         aria-labelledby={titleId}
-        aria-busy={update.isPending || undefined}
         className="flex flex-col gap-5 rounded-3xl bg-night-soft p-5 ring-1 ring-cream/10"
       >
         <div className="flex flex-col gap-1">
@@ -65,7 +66,7 @@ export function CyclesPanel({
                 type="button"
                 role="radio"
                 aria-checked={config.cycles === cycles}
-                disabled={locked || update.isPending}
+                disabled={locked}
                 onClick={() => {
                   if (config.cycles !== cycles) update.mutate(cycles);
                 }}

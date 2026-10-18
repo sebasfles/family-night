@@ -6,10 +6,10 @@ import {
 } from '@family-night/shared';
 import { createFileRoute } from '@tanstack/react-router';
 import { api } from '../../api/client';
-import { useMatchSecret, useRoomMutation } from '../../api/match';
+import { useMatchSecret, useRoomMutation, useRoomView } from '../../api/match';
 import { useRoom } from '../../api/room';
 import { MatchHeader } from '../../components/MatchHeader';
-import { nameOf, usePhaseVibration } from '../../components/match';
+import { nameOf, usePhaseVibration, useRoundDraft } from '../../components/match';
 import { useNow } from '../../components/useNow';
 import { CluePhase } from '../../games/wavelength/CluePhase';
 import { Final } from '../../games/wavelength/Final';
@@ -25,7 +25,8 @@ export const Route = createFileRoute('/$code/wavelength')({
 
 function WavelengthScreen() {
   const { code } = Route.useParams();
-  const room = useRoom(code).data;
+  const room = useRoomView(code);
+  const served = useRoom(code).data?.snapshot.currentMatch;
   const match = room?.snapshot.currentMatch;
   if (!room || match?.gameType !== 'WAVELENGTH') return null;
   return (
@@ -35,6 +36,7 @@ function WavelengthScreen() {
       snapshot={room.snapshot}
       match={match}
       clockOffsetMs={room.clockOffsetMs}
+      servedStep={served ? `${served.phase}:${String(served.round)}` : ''}
     />
   );
 }
@@ -44,9 +46,16 @@ interface WavelengthMatchProps {
   snapshot: RoomSnapshot;
   match: WavelengthPublic;
   clockOffsetMs: number;
+  servedStep: string;
 }
 
-function WavelengthMatch({ code, snapshot, match, clockOffsetMs }: WavelengthMatchProps) {
+function WavelengthMatch({
+  code,
+  snapshot,
+  match,
+  clockOffsetMs,
+  servedStep,
+}: WavelengthMatchProps) {
   const identity = useIdentity();
   const now = useNow(PRESENCE_RECOMPUTE_MS);
   const selfId = identity.playerId;
@@ -58,22 +67,29 @@ function WavelengthMatch({ code, snapshot, match, clockOffsetMs }: WavelengthMat
   const secret = useMatchSecret(code, matchId, round, seat === 'PSYCHIC' && playing && hidden);
   const target = secret.data?.role === 'PSYCHIC' ? secret.data.target : undefined;
   const [myGuess, rememberGuess] = useMyGuess(matchId, round);
-  usePhaseVibration(`${phase}:${String(round)}`);
+  const [clueDraft, setClueDraft] = useRoundDraft(round);
+  usePhaseVibration(servedStep);
 
-  const clue = useRoomMutation((text: string) =>
-    api.giveClue(code, matchId, { round, clue: text }),
+  const clue = useRoomMutation(
+    code,
+    (text: string) => api.giveClue(code, matchId, { round, clue: text }),
+    (text) => ({ kind: 'wavelength-clue', matchId, round, psychicId: selfId, clue: text }),
   );
-  const commit = useRoomMutation(async (value: number) => {
-    const response = await api.commitGuess(code, matchId, { round, value });
-    rememberGuess(value);
-    return response;
-  });
-  const close = useRoomMutation(() => api.closeGuessing(code, matchId, { round }));
-  const skip = useRoomMutation(() => api.skipPsychic(code, matchId, { round }));
-  const next = useRoomMutation(() => api.nextRound(code, matchId, { round }));
-  const abort = useRoomMutation(() => api.abortMatch(code, matchId));
-  const rematch = useRoomMutation(() => api.rematch(code, matchId));
-  const lobby = useRoomMutation(() => api.backToLobby(code));
+  const commit = useRoomMutation(
+    code,
+    async (value: number) => {
+      const response = await api.commitGuess(code, matchId, { round, value });
+      rememberGuess(value);
+      return response;
+    },
+    () => ({ kind: 'wavelength-commit', matchId, round, playerId: selfId }),
+  );
+  const close = useRoomMutation(code, () => api.closeGuessing(code, matchId, { round }));
+  const skip = useRoomMutation(code, () => api.skipPsychic(code, matchId, { round }));
+  const next = useRoomMutation(code, () => api.nextRound(code, matchId, { round }));
+  const abort = useRoomMutation(code, () => api.abortMatch(code, matchId));
+  const rematch = useRoomMutation(code, () => api.rematch(code, matchId));
+  const lobby = useRoomMutation(code, () => api.backToLobby(code));
 
   const psychic = snapshot.members.find((member) => member.playerId === match.psychicId);
   const psychicOnline = psychic ? isOnline(psychic.lastSeenAt, now + clockOffsetMs) : false;
@@ -117,9 +133,12 @@ function WavelengthMatch({ code, snapshot, match, clockOffsetMs }: WavelengthMat
           target={target}
           isHost={isHost}
           psychicOnline={psychicOnline}
-          sending={clue.isPending}
+          draft={clueDraft}
           skipping={skip.isPending}
-          onClue={(text) => clue.mutateAsync(text)}
+          onDraft={setClueDraft}
+          onClue={(text) => {
+            clue.mutate(text);
+          }}
           onSkip={() => {
             skip.mutate();
           }}
@@ -134,11 +153,12 @@ function WavelengthMatch({ code, snapshot, match, clockOffsetMs }: WavelengthMat
           seat={seat}
           selfId={selfId}
           target={target}
-          myGuess={myGuess}
+          myGuess={commit.variables ?? myGuess}
           isHost={isHost}
-          committing={commit.isPending}
           closing={close.isPending}
-          onCommit={(value) => commit.mutateAsync(value)}
+          onCommit={(value) => {
+            commit.mutate(value);
+          }}
           onClose={() => {
             close.mutate();
           }}

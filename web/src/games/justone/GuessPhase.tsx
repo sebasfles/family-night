@@ -1,5 +1,5 @@
 import { JUST_ONE_GUESS_MAX, type JustOnePublic, type RoomMember } from '@family-night/shared';
-import { useId, useState } from 'react';
+import { useId } from 'react';
 import { Button } from '../../components/Button';
 import { nameOf } from '../../components/match';
 import type { Seat } from './model';
@@ -10,11 +10,22 @@ interface GuessPhaseProps {
   members: RoomMember[];
   seat: Seat;
   word: string | undefined;
-  guessing: boolean;
-  onGuess: (guess: string | null) => Promise<unknown>;
+  draft: string;
+  sent: string | null | undefined;
+  onDraft: (draft: string) => void;
+  onGuess: (guess: string | null) => void;
 }
 
-export function GuessPhase({ match, members, seat, word, guessing, onGuess }: GuessPhaseProps) {
+export function GuessPhase({
+  match,
+  members,
+  seat,
+  word,
+  draft,
+  sent,
+  onDraft,
+  onGuess,
+}: GuessPhaseProps) {
   const guesser = nameOf(members, match.guesserId);
   const clues = match.clues ?? [];
 
@@ -42,9 +53,17 @@ export function GuessPhase({ match, members, seat, word, guessing, onGuess }: Gu
         )}
       </div>
 
-      {seat === 'GUESSER' ? (
-        <GuessForm guessing={guessing} onGuess={onGuess} />
-      ) : (
+      {seat === 'GUESSER' && sent !== undefined && (
+        <p role="status" className="text-center text-xl font-semibold text-balance break-words">
+          {sent === null
+            ? 'Pasaste. Viendo el resultado…'
+            : `Dijiste «${sent}». Viendo el resultado…`}
+        </p>
+      )}
+      {seat === 'GUESSER' && sent === undefined && (
+        <GuessForm guess={draft} onDraft={onDraft} onGuess={onGuess} />
+      )}
+      {seat !== 'GUESSER' && (
         <p role="status" className="text-center text-xl font-semibold text-balance">
           {guesser} está adivinando…
         </p>
@@ -54,31 +73,23 @@ export function GuessPhase({ match, members, seat, word, guessing, onGuess }: Gu
 }
 
 function GuessForm({
-  guessing,
+  guess,
+  onDraft,
   onGuess,
 }: {
-  guessing: boolean;
-  onGuess: (guess: string | null) => Promise<unknown>;
+  guess: string;
+  onDraft: (draft: string) => void;
+  onGuess: (guess: string | null) => void;
 }) {
   const inputId = useId();
-  const [guess, setGuess] = useState('');
-  const [sent, setSent] = useState<'GUESS' | 'PASS' | null>(null);
   const trimmed = guess.trim();
-  const locked = guessing || sent !== null;
-  const send = (kind: 'GUESS' | 'PASS') => {
-    if (locked) return;
-    setSent(kind);
-    onGuess(kind === 'PASS' ? null : trimmed).catch(() => {
-      setSent(null);
-    });
-  };
 
   return (
     <form
       className="flex flex-col gap-3"
       onSubmit={(event) => {
         event.preventDefault();
-        if (trimmed) send('GUESS');
+        if (trimmed) onGuess(trimmed);
       }}
     >
       <label htmlFor={inputId} className="text-lg font-semibold">
@@ -88,26 +99,23 @@ function GuessForm({
         id={inputId}
         value={guess}
         maxLength={JUST_ONE_GUESS_MAX}
-        disabled={locked}
         autoComplete="off"
         autoCapitalize="off"
         spellCheck={false}
         enterKeyHint="send"
         onChange={(event) => {
-          setGuess(event.target.value);
+          onDraft(event.target.value);
         }}
         className="min-h-14 rounded-2xl bg-cream px-4 text-xl text-night placeholder:text-night/50 focus-visible:ring-2 focus-visible:ring-moon focus-visible:outline-none disabled:opacity-70"
         placeholder="Tu respuesta"
       />
-      <Button type="submit" disabled={!trimmed || sent === 'PASS'} busy={sent === 'GUESS'}>
+      <Button type="submit" disabled={!trimmed}>
         Adivinar
       </Button>
       <Button
         variant="ghost"
-        disabled={sent === 'GUESS'}
-        busy={sent === 'PASS'}
         onClick={() => {
-          send('PASS');
+          onGuess(null);
         }}
       >
         Pasar

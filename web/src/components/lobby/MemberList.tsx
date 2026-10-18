@@ -1,6 +1,6 @@
 import { isOnline, type RoomMember } from '@family-night/shared';
 import { useEffect, useRef, useState } from 'react';
-import { CrownIcon, MoreIcon } from '../icons';
+import { CrownIcon, MoreIcon, PencilIcon } from '../icons';
 
 interface MemberListProps {
   members: RoomMember[];
@@ -9,6 +9,7 @@ interface MemberListProps {
   nowMs: number;
   onMakeHost: (member: RoomMember) => void;
   onKick: (member: RoomMember) => void;
+  onRename: () => void;
 }
 
 export function MemberList({
@@ -18,6 +19,7 @@ export function MemberList({
   nowMs,
   onMakeHost,
   onKick,
+  onRename,
 }: MemberListProps) {
   const isHost = hostId === selfId;
   const online = members.filter((member) => isOnline(member.lastSeenAt, nowMs)).length;
@@ -41,9 +43,9 @@ export function MemberList({
             host={member.playerId === hostId}
             self={member.playerId === selfId}
             canManage={isHost && member.playerId !== selfId}
-            menuColumn={isHost}
             onMakeHost={onMakeHost}
             onKick={onKick}
+            onRename={onRename}
           />
         ))}
       </ul>
@@ -57,9 +59,9 @@ interface MemberRowProps {
   host: boolean;
   self: boolean;
   canManage: boolean;
-  menuColumn: boolean;
   onMakeHost: (member: RoomMember) => void;
   onKick: (member: RoomMember) => void;
+  onRename: () => void;
 }
 
 function MemberRow({
@@ -68,9 +70,9 @@ function MemberRow({
   host,
   self,
   canManage,
-  menuColumn,
   onMakeHost,
   onKick,
+  onRename,
 }: MemberRowProps) {
   const cut = member.name.lastIndexOf(' ') + 1;
   const leading = member.name.slice(0, cut);
@@ -100,11 +102,18 @@ function MemberRow({
       <p className="shrink-0 text-base font-semibold text-cream/80 tabular-nums">
         {member.totalScore} <span className="text-sm font-normal text-cream/60">pts</span>
       </p>
-      {canManage ? (
-        <MemberMenu member={member} onMakeHost={onMakeHost} onKick={onKick} />
-      ) : (
-        menuColumn && <span aria-hidden="true" className="size-12 shrink-0" />
+      {canManage && <MemberMenu member={member} onMakeHost={onMakeHost} onKick={onKick} />}
+      {self && (
+        <button
+          type="button"
+          aria-label="Cambiar tu nombre"
+          onClick={onRename}
+          className="flex size-12 shrink-0 items-center justify-center rounded-full text-cream/80 hover:bg-cream/10 focus-visible:ring-2 focus-visible:ring-moon focus-visible:outline-none"
+        >
+          <PencilIcon className="size-6" />
+        </button>
       )}
+      {!canManage && !self && <span aria-hidden="true" className="size-12 shrink-0" />}
     </li>
   );
 }

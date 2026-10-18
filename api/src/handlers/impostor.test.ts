@@ -45,19 +45,77 @@ function scoresOf(room: RoomResponse['room']): Record<string, number> {
 }
 
 describe('voting', () => {
-  test('everyone sees who voted, never for whom, and a vote can change', async () => {
+  test('a selection is provisional and invisible, a confirmed vote shows who voted, never for whom', async () => {
     const { room, match, impostor, civilian, other } = await playing(4);
     room.harness.published.length = 0;
 
-    const first = await voted(room, civilian, impostor, match);
-    expect(first.votedPlayerIds).toEqual([civilian.playerId]);
-    const changed = await voted(room, civilian, other, match);
-    expect(changed.votedPlayerIds).toEqual([civilian.playerId]);
+    const selected = await voted(room, civilian, impostor, match, false);
+    expect(selected.votedPlayerIds).toEqual([]);
+    const changed = await voted(room, civilian, other, match, false);
+    expect(changed.votedPlayerIds).toEqual([]);
+    expect(updates(room.harness)).toHaveLength(0);
+
+    const confirmed = await voted(room, civilian, other, match);
+    expect(confirmed.votedPlayerIds).toEqual([civilian.playerId]);
 
     const stored = await storedVotes(room, match.matchId);
-    expect(stored).toEqual([expect.objectContaining({ targetId: other.playerId })]);
+    expect(stored).toEqual([
+      expect.objectContaining({ targetId: other.playerId, confirmed: true }),
+    ]);
     expect(JSON.stringify(room.harness.published)).not.toContain('targetId');
     expect(updates(room.harness)).toHaveLength(1);
+  });
+
+  test('a confirmed vote cannot change; confirming it again changes nothing', async () => {
+    const { room, match, impostor, civilian, other } = await playing(4);
+    await voted(room, civilian, impostor, match);
+    room.harness.published.length = 0;
+
+    await expectError(vote(room, civilian, other, match), 409, 'VOTE_CONFIRMED');
+    await expectError(
+      vote(room, civilian, other, match, { confirmed: false }),
+      409,
+      'VOTE_CONFIRMED',
+    );
+    await expectError(
+      vote(room, civilian, impostor, match, { confirmed: false }),
+      409,
+      'VOTE_CONFIRMED',
+    );
+    const again = await voted(room, civilian, impostor, match);
+
+    expect(again.votedPlayerIds).toEqual([civilian.playerId]);
+    expect(await storedVotes(room, match.matchId)).toEqual([
+      expect.objectContaining({ targetId: impostor.playerId, confirmed: true }),
+    ]);
+    expect(room.harness.published).toEqual([]);
+  });
+
+  test('a confirmed vote is never overwritten by racing requests of the same voter', async () => {
+    const { room, match, impostor, civilian, other } = await playing(5);
+    const racers = [other, impostor, other, impostor, other];
+
+    const [confirm, ...races] = await Promise.all([
+      vote(room, civilian, impostor, match),
+      ...racers.map((target) => vote(room, civilian, target, match, { confirmed: false })),
+    ]);
+
+    expect(confirm.status).toBe(200);
+    const statuses = await Promise.all(
+      races.map(async (response) => {
+        if (response.status === 200) return 200;
+        const { error } = (await response.json()) as { error: { code: string } };
+        return error.code;
+      }),
+    );
+    for (const status of statuses) expect([200, 'VOTE_CONFIRMED']).toContain(status);
+    expect(await storedVotes(room, match.matchId)).toEqual([
+      expect.objectContaining({
+        voterId: civilian.playerId,
+        targetId: impostor.playerId,
+        confirmed: true,
+      }),
+    ]);
   });
 
   test('a vote for oneself, by a spectator or for someone out is refused', async () => {
@@ -74,10 +132,10 @@ describe('voting', () => {
     await expectError(vote(room, a, a, match), 422, 'INVALID_VOTE');
     await expectError(vote(room, spectator, a, match), 422, 'INVALID_VOTE');
     await expectError(vote(room, a, spectator, match), 422, 'INVALID_VOTE');
-    await expectError(vote(room, a, b, match, 2), 409, 'STALE_ROUND');
+    await expectError(vote(room, a, b, match, { round: 2 }), 409, 'STALE_ROUND');
   });
 
-  test('voting closes by itself once every living player voted, with the ranking', async () => {
+  test('voting closes by itself once every living player confirmed, with the ranking', async () => {
     const { room, match, impostor, civilian } = await playing(4);
     room.harness.published.length = 0;
 
@@ -114,6 +172,43 @@ describe('voting', () => {
 
     expect(await getRoom(room.harness, room.host, room.code)).toEqual(before);
     expect(room.harness.published).toEqual([]);
+  });
+
+  test('a round with every selection made but not all confirmed stays open', async () => {
+    const { room, match, impostor, civilian } = await playing(4);
+    let latest = match;
+    for (const playerId of match.order) {
+      const voter = room.players.find((candidate) => candidate.playerId === playerId);
+      if (!voter) throw new Error('missing voter');
+      const confirmed = voter !== civilian;
+      latest = await voted(
+        room,
+        voter,
+        voter === impostor ? civilian : impostor,
+        latest,
+        confirmed,
+      );
+    }
+    expect(latest.phase).toBe('VOTING');
+    expect(latest.votedPlayerIds).toHaveLength(3);
+    expect(latest.votedPlayerIds).not.toContain(civilian.playerId);
+
+    const closed = await voted(room, civilian, impostor, latest);
+    expect(closed.phase).toBe('REVEAL');
+  });
+
+  test('an early close counts unconfirmed selections and missing votes are abstentions', async () => {
+    const { room, match, impostor, civilian, other } = await playing(5, { tieRule: 'SKIP' });
+    await voted(room, civilian, impostor, match);
+    await voted(room, other, impostor, match, false);
+
+    const closed = currentMatch(await hostAction(room, match, 'close-voting', { round: 1 }));
+
+    expect(closed.lastResult?.tally[0]).toEqual({ playerId: impostor.playerId, votes: 2 });
+    expect(closed.lastResult?.eliminatedId).toBe(impostor.playerId);
+    expect(closed.votedPlayerIds.toSorted()).toEqual(
+      [civilian.playerId, other.playerId].toSorted(),
+    );
   });
 
   test('the host closes voting early and missing votes are abstentions', async () => {
@@ -159,7 +254,7 @@ describe('voting', () => {
     );
   });
 
-  test(`${String(MAX_ROOM_MEMBERS)} simultaneous votes close the round exactly once`, async () => {
+  test(`${String(MAX_ROOM_MEMBERS)} simultaneous confirmed votes close the round exactly once`, async () => {
     const room = await roomWith(MAX_ROOM_MEMBERS);
     const match = currentMatch(await start(room));
     room.harness.published.length = 0;
@@ -169,6 +264,7 @@ describe('voting', () => {
     const responses = await Promise.all(
       room.players.map((voter) => vote(room, voter, voter === target ? fallback : target, match)),
     );
+    expect(await storedVotes(room, match.matchId)).toHaveLength(MAX_ROOM_MEMBERS);
 
     const bodies = await Promise.all(responses.map((response) => response.json()));
     expect(
@@ -212,77 +308,38 @@ describe('end of the match and scoring', () => {
     expect(scoresOf(await getRoom(room.harness, room.host, room.code))).toEqual(scoresOf(finished));
   });
 
-  test('a caught impostor who guesses right steals the win', async () => {
+  test('voting out the last impostor gives civilians 1 point each, with no last chance', async () => {
     const { room, match, roles, impostor, civilian } = await playing(4);
     const revealed = await everyoneVotes(room, match, impostor, civilian);
-    const guessing = currentMatch(await hostAction(room, revealed, 'next-round', { round: 1 }));
-    expect(guessing.phase).toBe('IMPOSTOR_GUESS');
-    expect(guessing.guess?.guesserId).toBe(impostor.playerId);
-    expect(guessing.guess?.options).toHaveLength(5);
-    expect(guessing.guess?.options).toContain(roles.word);
+    expect(revealed).toMatchObject({
+      phase: 'REVEAL',
+      lastResult: { eliminatedId: impostor.playerId },
+    });
 
-    await expectError(
-      call(room.harness, civilian, 'POST', matchPath(room, match.matchId, 'guess'), {
-        option: roles.word,
-      }),
-      403,
-      'NOT_GUESSER',
-    );
-    const { room: finished } = await json<RoomResponse>(
-      call(room.harness, impostor, 'POST', matchPath(room, match.matchId, 'guess'), {
-        option: roles.word,
-      }),
-    );
+    const finished = await hostAction(room, revealed, 'next-round', { round: 1 });
 
     expect(currentMatch(finished)).toMatchObject({
-      winner: 'IMPOSTORS',
-      guess: { chosen: roles.word, correct: true },
+      status: 'FINISHED',
+      winner: 'CIVILIANS',
       reveal: { word: roles.word, impostorIds: [impostor.playerId] },
     });
-    expect(scoresOf(finished)[impostor.playerId]).toBe(2);
-  });
-
-  test('a wrong guess gives civilians 1 point each', async () => {
-    const { room, match, roles, impostor, civilian } = await playing(4);
-    const revealed = await everyoneVotes(room, match, impostor, civilian);
-    const guessing = currentMatch(await hostAction(room, revealed, 'next-round', { round: 1 }));
-    const wrong = guessing.guess?.options.find((option) => option !== roles.word) ?? '';
-
-    const { room: finished } = await json<RoomResponse>(
-      call(room.harness, impostor, 'POST', matchPath(room, match.matchId, 'guess'), {
-        option: wrong,
-      }),
-    );
-
-    expect(currentMatch(finished)).toMatchObject({
-      winner: 'CIVILIANS',
-      guess: { chosen: wrong, correct: false },
-    });
+    expect(currentMatch(finished)).not.toHaveProperty('guess');
     const scores = scoresOf(finished);
     for (const player of roles.civilians) expect(scores[player.playerId]).toBe(1);
     expect(scores[impostor.playerId]).toBe(0);
   });
 
-  test('the host skips the guess and civilians win; a guess outside the phase is stale', async () => {
-    const { room, match, roles, impostor, civilian } = await playing(4);
-    await expectError(
-      call(room.harness, impostor, 'POST', matchPath(room, match.matchId, 'guess'), {
-        option: roles.word,
-      }),
-      409,
-      'STALE_ROUND',
-    );
-    const revealed = await everyoneVotes(room, match, impostor, civilian);
-    const guessing = currentMatch(await hostAction(room, revealed, 'next-round', { round: 1 }));
-
-    const finished = await hostAction(room, guessing, 'skip-guess');
-
-    expect(currentMatch(finished)).toMatchObject({ winner: 'CIVILIANS', guess: { chosen: null } });
-    await expectError(
-      call(room.harness, room.host, 'POST', matchPath(room, match.matchId, 'skip-guess')),
-      409,
-      'STALE_ROUND',
-    );
+  test('the last-chance routes no longer exist', async () => {
+    const { room, match, impostor } = await playing(3);
+    for (const action of ['guess', 'skip-guess']) {
+      await expectError(
+        call(room.harness, impostor, 'POST', matchPath(room, match.matchId, action), {
+          option: 'Perro',
+        }),
+        404,
+        'NOT_FOUND',
+      );
+    }
   });
 });
 

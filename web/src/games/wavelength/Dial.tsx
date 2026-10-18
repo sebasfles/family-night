@@ -1,5 +1,6 @@
 import { DIAL_BANDS, DIAL_MAX } from '@family-night/shared';
 import { useRef, type KeyboardEvent, type PointerEvent } from 'react';
+import { playTick, unlockTick } from './tick';
 
 export interface DialMarker {
   id: string;
@@ -17,6 +18,7 @@ interface DialProps {
   markers?: DialMarker[];
   onChange?: (value: number) => void;
   disabled?: boolean;
+  sound?: boolean;
 }
 
 const WIDTH = 260;
@@ -25,7 +27,8 @@ const CX = 130;
 const CY = 140;
 const R = 100;
 const LABEL_SPACE = 30;
-const BAND_COLORS = ['#f97316', '#ffd166', '#22c55e', '#3b82f6'];
+const BAND_COLORS = ['#f97316', '#ffd166', '#22c55e'];
+const LABEL_MIN_WIDTH = 2;
 const STEP_KEYS: Record<string, number> = {
   ArrowLeft: -1,
   ArrowDown: -1,
@@ -54,6 +57,34 @@ function wedge(from: number, to: number): string {
   return `M${String(CX)} ${String(CY)} L${fmt(x1)} ${fmt(y1)} A${String(R)} ${String(R)} 0 0 1 ${fmt(x2)} ${fmt(y2)} Z`;
 }
 
+interface BandLabel {
+  points: number;
+  at: number;
+}
+
+function bandEdge(index: number): number {
+  return index < 0 ? -0.5 : (DIAL_BANDS[index]?.within ?? 0) + 0.5;
+}
+
+function bandLabels(target: number): BandLabel[] {
+  return DIAL_BANDS.flatMap((band, index) => {
+    const inner = bandEdge(index - 1);
+    const outer = bandEdge(index);
+    const segments: [number, number][] =
+      index === 0
+        ? [[target - outer, target + outer]]
+        : [
+            [target - outer, target - inner],
+            [target + inner, target + outer],
+          ];
+    return segments.flatMap(([from, to]) => {
+      const lo = Math.max(0, from);
+      const hi = Math.min(DIAL_MAX, to);
+      return hi - lo >= LABEL_MIN_WIDTH ? [{ points: band.points, at: (lo + hi) / 2 }] : [];
+    });
+  });
+}
+
 function staggered(markers: DialMarker[]): (DialMarker & { lift: number })[] {
   const sorted = markers.toSorted((a, b) => a.value - b.value);
   return sorted.map((marker, index) => {
@@ -72,13 +103,18 @@ export function Dial({
   markers = [],
   onChange,
   disabled = false,
+  sound = false,
 }: DialProps) {
   const svg = useRef<SVGSVGElement>(null);
   const dragging = useRef(false);
   const interactive = onChange !== undefined && !disabled;
 
   const set = (next: number) => {
-    if (interactive) onChange(clamp(next));
+    if (!interactive) return;
+    const clamped = clamp(next);
+    if (clamped === value) return;
+    onChange(clamped);
+    if (sound) playTick();
   };
 
   const fromPointer = (event: PointerEvent<SVGSVGElement>) => {
@@ -93,6 +129,7 @@ export function Dial({
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (!interactive) return;
+    if (sound) unlockTick();
     const step = STEP_KEYS[event.key];
     const current = value ?? DIAL_MAX / 2;
     if (step !== undefined) set(current + step);
@@ -130,6 +167,7 @@ export function Dial({
           aria-hidden="true"
           onPointerDown={(event) => {
             if (!interactive) return;
+            if (sound) unlockTick();
             dragging.current = true;
             event.currentTarget.setPointerCapture(event.pointerId);
             fromPointer(event);
@@ -139,6 +177,7 @@ export function Dial({
           }}
           onPointerUp={() => {
             dragging.current = false;
+            if (interactive && sound) unlockTick();
           }}
           onPointerCancel={() => {
             dragging.current = false;
@@ -146,38 +185,32 @@ export function Dial({
         >
           <path d={wedge(0, DIAL_MAX)} fill="#241f55" stroke="#fdf6e3" strokeOpacity={0.15} />
           {target !== null &&
-            DIAL_BANDS.toReversed().map((band, index) => (
-              <path
-                key={band.points}
-                d={wedge(target - band.within, target + band.within)}
-                fill={BAND_COLORS[DIAL_BANDS.length - 1 - index]}
-              />
-            ))}
+            DIAL_BANDS.map((band, index) => ({ band, index }))
+              .toReversed()
+              .map(({ band, index }) => (
+                <path
+                  key={band.points}
+                  d={wedge(target - bandEdge(index), target + bandEdge(index))}
+                  fill={BAND_COLORS[index]}
+                />
+              ))}
           {target !== null &&
-            DIAL_BANDS.map((band, index) => {
-              const inner = index === 0 ? 0 : (DIAL_BANDS[index - 1]?.within ?? 0);
-              const middle =
-                index === 0 ? [0] : [-1, 1].map((s) => (s * (inner + band.within)) / 2);
-              return middle
-                .map((offset) => target + offset)
-                .filter((at) => at >= 0 && at <= DIAL_MAX)
-                .map((at) => {
-                  const [x, y] = point(at, R * 0.8);
-                  return (
-                    <text
-                      key={`${String(band.points)}-${String(at)}`}
-                      x={x}
-                      y={y}
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                      fontSize={11}
-                      fontWeight={700}
-                      fill="#16133a"
-                    >
-                      {band.points}
-                    </text>
-                  );
-                });
+            bandLabels(target).map(({ points, at }) => {
+              const [x, y] = point(at, R * 0.82);
+              return (
+                <text
+                  key={`${String(points)}-${String(at)}`}
+                  x={fmt(x)}
+                  y={fmt(y)}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  fontSize={11}
+                  fontWeight={700}
+                  fill="#16133a"
+                >
+                  {points}
+                </text>
+              );
             })}
           {Array.from({ length: 11 }, (_, i) => i * 10).map((at) => {
             const [x1, y1] = point(at, R);
@@ -249,6 +282,7 @@ export function Dial({
             label="Un punto hacia la izquierda"
             disabled={value === 0}
             onClick={() => {
+              if (sound) unlockTick();
               set((value ?? DIAL_MAX / 2) - 1);
             }}
           >
@@ -261,6 +295,7 @@ export function Dial({
             label="Un punto hacia la derecha"
             disabled={value === DIAL_MAX}
             onClick={() => {
+              if (sound) unlockTick();
               set((value ?? DIAL_MAX / 2) + 1);
             }}
           >

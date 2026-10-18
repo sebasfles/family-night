@@ -27,4 +27,32 @@ updated: 2026-10-18
 
 ## om-developer notes
 
+### Round 1
+
+Done:
+
+- Shared: `DIAL_BANDS` are 4 within 2, 3 within 7, 2 within 12 (integer distances, so 2.5, 7.5 and 12.5 on the dial); `normalizePlayerName` and `playerNameKey` in `shared/src/players.ts`; `VoteRequest.confirmed`; `RenamePlayerRequest`/`RenamePlayerResponse`; errors `VOTE_CONFIRMED`, `NAME_TAKEN`, `INVALID_NAME`; the last chance gone from config, phases, `ImpostorGuess`, `NOT_GUESSER`, rules and constants.
+- Api: `PATCH /api/players/me` through one `updateRoom` write (player rename conditional on the old name, claim of the new name unless the caller already owns it, release of the old name conditional on `playerId`, the member's name); a rejoin refreshes a stale member name; `POST guess` and `POST skip-guess` removed; a ballot is a put conditional on not being confirmed, and a refused put of the same target with `confirmed: true` is an idempotent success.
+- Web: optimistic overlay (`web/src/api/optimistic.ts`, `useRoomView`, `useRoomMutation(code, command, optimistic)`), every room command of a phone runs in one mutation scope so they reach the server in tap order; lobby rename dialog; Impostor select and "Confirmar voto"; Wavelength band drawing and labels on half-point edges, tick and mute; drafts of clues and guesses kept per round so a rollback restores the text; `LastChance.tsx` deleted.
+- Screenshots: `screenshots/phase_1/` in the workspace, every screen at 390, 768 and 1280, plus the dial at targets 0, 3, 50, 97 and 100, the voting selection and confirmation, and the rename dialog.
+
+Decisions the plan did not record:
+
+- `votedPlayerIds` lists confirmed voters while voting and, once the round closes, every voter whose ballot counted (confirmed or not), so the existing late-vote rule ("200 if your ballot was counted") keeps working for early closes.
+- One endpoint for selection and confirmation: `PUT votes { round, targetId, confirmed }`. Confirming carries the target, so a lost provisional request cannot confirm a different player.
+- The old stored Impostor config keeps `impostorLastGuess` in Dynamo and in the snapshot until it is saved again; the zod schema drops the key on every parse (start, config, rematch). Snapshots are not rewritten.
+- Phase vibration follows the served snapshot, not the overlay, so an own optimistic step or its rollback never vibrates.
+- Name length counts graphemes (`Intl.Segmenter`), so an emoji counts as one character.
+- In-room clash is also checked in the dialog before sending; the server stays the authority.
+- The dial's mute control shows only to a guesser who has not confirmed, above the dial; the tick is a 30 ms triangle at 1800 Hz; the context is resumed on pointerdown, pointerup, key and button presses, so on iOS the first drag ticks once the finger lifts.
+- Lobby busy states removed for config, game pick, host and kick (optimistic now); start, rematch, lobby and leave keep their busy button.
+- `terraform validate` ran after a local `terraform init -backend=false` (no AWS access); the diff does not touch infra.
+
+Deferred:
+
+- `ConfirmDialog` refocuses Cancelar on every parent render because its effect depends on an inline `onCancel`; the new rename dialog avoids it, the old dialog is untouched.
+- A match left in `IMPOSTOR_GUESS` shows only the header and card until the host aborts it; no explanatory copy.
+
+Pending: none.
+
 ## Result

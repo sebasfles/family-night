@@ -29,10 +29,6 @@ export function isKnownCategory(id: string): boolean {
   return wordCategories.some((category) => category.id === id);
 }
 
-export function categoryWords(categoryId: string): string[] {
-  return bankEntries.filter((entry) => entry.category === categoryId).map((entry) => entry.word);
-}
-
 export function defaultImpostorConfig(): ImpostorConfig {
   return { ...IMPOSTOR_DEFAULTS, categories: wordCategories.map((category) => category.id) };
 }

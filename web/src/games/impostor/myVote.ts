@@ -1,8 +1,12 @@
 import { useState } from 'react';
 
-interface StoredVote {
-  round: number;
+export interface MyVote {
   targetId: string;
+  confirmed: boolean;
+}
+
+interface StoredVote extends MyVote {
+  round: number;
 }
 
 const key = (matchId: string) => `family-night.vote.${matchId}`;
@@ -11,8 +15,9 @@ function read(matchId: string): StoredVote | null {
   try {
     const parsed: unknown = JSON.parse(sessionStorage.getItem(key(matchId)) ?? 'null');
     if (typeof parsed !== 'object' || parsed === null) return null;
-    const { round, targetId } = parsed as Record<string, unknown>;
-    return typeof round === 'number' && typeof targetId === 'string' ? { round, targetId } : null;
+    const { round, targetId, confirmed } = parsed as Record<string, unknown>;
+    if (typeof round !== 'number' || typeof targetId !== 'string') return null;
+    return { round, targetId, confirmed: confirmed === true };
   } catch {
     return null;
   }
@@ -20,14 +25,16 @@ function read(matchId: string): StoredVote | null {
 
 export function useMyVote(matchId: string, round: number) {
   const [vote, setVote] = useState(() => read(matchId));
-  const remember = (targetId: string) => {
-    const next = { round, targetId };
-    setVote(next);
+  const remember = (next: MyVote) => {
+    const stored = { round, ...next };
+    setVote(stored);
     try {
-      sessionStorage.setItem(key(matchId), JSON.stringify(next));
+      sessionStorage.setItem(key(matchId), JSON.stringify(stored));
     } catch {
       return;
     }
   };
-  return [vote?.round === round ? vote.targetId : null, remember] as const;
+  const current: MyVote | null =
+    vote?.round === round ? { targetId: vote.targetId, confirmed: vote.confirmed } : null;
+  return [current, remember] as const;
 }

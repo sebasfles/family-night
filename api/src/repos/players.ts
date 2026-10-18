@@ -35,6 +35,19 @@ export class PlayersRepo {
     };
   }
 
+  renameItem(playerId: string, from: string, to: string): TransactItem {
+    return {
+      Update: {
+        TableName: this.table,
+        Key: { playerId },
+        UpdateExpression: 'SET #name = :to',
+        ConditionExpression: '#name = :from',
+        ExpressionAttributeNames: { '#name': 'name' },
+        ExpressionAttributeValues: { ':from': from, ':to': to },
+      },
+    };
+  }
+
   async touch(playerId: string, lastSeenAt: string): Promise<void> {
     await this.client.send(
       new UpdateCommand({

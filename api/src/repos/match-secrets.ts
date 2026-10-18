@@ -27,7 +27,6 @@ export interface MatchSecretItem {
   word: string;
   category: string;
   clue: string;
-  options: string[];
   impostorIds: string[];
   ttl: number;
 }
