@@ -1,9 +1,10 @@
 import {
   isOnline,
-  type GameConfigRequest,
-  type ImpostorConfig,
+  type GameConfigs,
+  type GameType,
   type MatchSecretResponse,
   type RoomSnapshot,
+  type RoundRequest,
 } from '@family-night/shared';
 import type { Deps } from '../../deps.ts';
 import { AppError } from '../../lib/errors.ts';
@@ -11,46 +12,59 @@ import { iso, ttlFrom } from '../../lib/time.ts';
 import { ulid } from '../../lib/ulid.ts';
 import { byJoinOrder } from '../../realtime/snapshot.ts';
 import type { PlayerItem } from '../../repos/players.ts';
-import {
-  checkImpostorStart,
-  impostorDeparture,
-  parseImpostorConfig,
-  prepareImpostor,
-} from '../impostor/index.ts';
+import { gameOf, type DepartureReason } from '../games.ts';
 import { updateRoom, type RoomChange, type RoomState } from '../room-state.ts';
-import { applyMatchUpdate, callerChange, requireCurrentMatch } from './match-change.ts';
+import {
+  applyMatchUpdate,
+  callerChange,
+  matchCommand,
+  requireCurrentMatch,
+} from './match-change.ts';
 
 export interface ConfigBody {
-  gameType: GameConfigRequest['gameType'];
+  gameType: GameType;
   config: unknown;
 }
 
+type GameConfig = GameConfigs[GameType];
+
 function isPlaying(state: RoomState): boolean {
   return state.match?.publicState.status === 'PLAYING';
+}
+
+function withConfig(
+  configs: Partial<GameConfigs>,
+  gameType: GameType,
+  config: GameConfig,
+): Partial<GameConfigs> {
+  return { ...configs, [gameType]: config };
 }
 
 function createMatch(
   deps: Deps,
   state: RoomState,
   change: RoomChange,
-  config: ImpostorConfig,
+  gameType: GameType,
+  config: GameConfig,
   nowMs: number,
 ): RoomChange {
+  const game = gameOf(gameType);
   const participants = change.members
     .filter((member) => isOnline(member.lastSeenAt, nowMs))
     .toSorted(byJoinOrder)
     .map((member) => member.playerId);
-  checkImpostorStart(config, participants.length);
+  game.checkStart(config, participants.length);
   const matchId = ulid(nowMs);
-  const prepared = prepareImpostor(deps, {
+  const prepared = game.prepare(deps, {
     matchId,
     config,
     participants,
-    usedWordIds: state.room.usedWordIds,
+    room: state.room,
     nowMs,
   });
   return {
     ...change,
+    selectedGame: gameType,
     currentMatch: {
       roomCode: state.room.roomCode,
       matchId,
@@ -59,8 +73,9 @@ function createMatch(
       endedAt: null,
       ttl: ttlFrom(nowMs),
     },
-    usedWordIds: prepared.usedWordIds,
-    writes: [...(change.writes ?? []), ...prepared.writes],
+    ...(prepared.usedWordIds ? { usedWordIds: prepared.usedWordIds } : {}),
+    ...(prepared.usedSpectrumIds ? { usedSpectrumIds: prepared.usedSpectrumIds } : {}),
+    writes: [...(change.writes ?? []), ...(prepared.writes ?? [])],
   };
 }
 
@@ -73,11 +88,12 @@ export function startMatch(
   return updateRoom(deps, roomCode, (state, nowMs) => {
     const change = callerChange(state, player.playerId, nowMs, 'host');
     if (isPlaying(state)) throw new AppError('MATCH_IN_PROGRESS');
-    const config = parseImpostorConfig(body.config);
+    const config = gameOf(body.gameType).parseConfig(body.config);
     return createMatch(
       deps,
       state,
-      { ...change, configs: { ...state.room.configs, [body.gameType]: config } },
+      { ...change, configs: withConfig(state.room.configs, body.gameType, config) },
+      body.gameType,
       config,
       nowMs,
     );
@@ -92,8 +108,12 @@ export function updateConfig(
 ): Promise<RoomSnapshot> {
   return updateRoom(deps, roomCode, (state, nowMs) => {
     const change = callerChange(state, player.playerId, nowMs, 'host');
-    const config = parseImpostorConfig(body.config);
-    return { ...change, configs: { ...state.room.configs, [body.gameType]: config } };
+    const config = gameOf(body.gameType).parseConfig(body.config);
+    return {
+      ...change,
+      selectedGame: body.gameType,
+      configs: withConfig(state.room.configs, body.gameType, config),
+    };
   });
 }
 
@@ -107,9 +127,22 @@ export function rematch(
     const change = callerChange(state, player.playerId, nowMs, 'host');
     const match = await requireCurrentMatch(deps, state, matchId, nowMs);
     if (match.publicState.status === 'PLAYING') throw new AppError('MATCH_IN_PROGRESS');
-    const config = parseImpostorConfig(match.publicState.config);
-    return createMatch(deps, state, change, config, nowMs);
+    const { gameType } = match.publicState;
+    const config = gameOf(gameType).parseConfig(match.publicState.config);
+    return createMatch(deps, state, change, gameType, config, nowMs);
   });
+}
+
+export function nextRound(
+  deps: Deps,
+  player: PlayerItem,
+  roomCode: string,
+  matchId: string,
+  { round }: RoundRequest,
+): Promise<RoomSnapshot> {
+  return matchCommand(deps, player, roomCode, matchId, 'host', (match, nowMs, state) =>
+    gameOf(match.publicState.gameType).nextRound(deps, match, round, state.room, nowMs),
+  );
 }
 
 export function abortMatch(
@@ -153,12 +186,14 @@ export async function departureChange(
   state: RoomState,
   change: RoomChange,
   playerId: string,
-  reason: 'LEFT' | 'KICKED',
+  reason: DepartureReason,
   nowMs: number,
 ): Promise<RoomChange> {
-  if (!state.match) return change;
-  const update = await impostorDeparture(deps, state.match, playerId, reason, nowMs);
-  return update ? applyMatchUpdate(change, state.match, update, nowMs) : change;
+  const { match } = state;
+  if (!match) return change;
+  const game = gameOf(match.publicState.gameType);
+  const update = await game.departure(deps, match, playerId, reason, state.room, nowMs);
+  return update ? applyMatchUpdate(change, match, update, nowMs) : change;
 }
 
 export async function mySecret(
@@ -177,6 +212,6 @@ export async function mySecret(
     throw new AppError('NOT_MEMBER');
   }
   if (!match) throw new AppError('MATCH_NOT_FOUND');
-  const item = await deps.repos.matchSecrets.getPlayer(matchId, player.playerId, nowMs);
-  return { secret: item?.secret ?? null };
+  const game = gameOf(match.publicState.gameType);
+  return { secret: await game.secret(deps, match, player.playerId, nowMs) };
 }

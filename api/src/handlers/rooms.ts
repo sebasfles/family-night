@@ -15,6 +15,7 @@ import {
 import { parseBody, requirePlayer, roomCodeParam, type AppEnv } from './context.ts';
 import { impostorRoutes } from './impostor.ts';
 import { matchesRoutes } from './matches.ts';
+import { wavelengthRoutes } from './wavelength.ts';
 
 const targetSchema: z.ZodType<TargetPlayerRequest> = z.object({ playerId: playerIdSchema });
 
@@ -56,5 +57,6 @@ export function roomsRoutes(deps: Deps) {
       });
     })
     .route('/', matchesRoutes(deps))
-    .route('/', impostorRoutes(deps));
+    .route('/', impostorRoutes(deps))
+    .route('/', wavelengthRoutes(deps));
 }

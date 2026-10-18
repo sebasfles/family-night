@@ -1,5 +1,5 @@
 import { GetCommand, UpdateCommand, type DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
-import type { GameConfigs } from '@family-night/shared';
+import type { GameConfigs, GameType } from '@family-night/shared';
 import { epochSeconds } from '../lib/time.ts';
 import type { TransactItem } from './db.ts';
 
@@ -12,6 +12,8 @@ export interface RoomItem {
   ttl: number;
   currentMatchId: string | null;
   usedWordIds: string[];
+  usedSpectrumIds: string[];
+  selectedGame: GameType;
   configs: Partial<GameConfigs>;
 }
 
@@ -21,6 +23,8 @@ export interface RoomBump {
   hostId: string;
   currentMatchId: string | null;
   usedWordIds: string[];
+  usedSpectrumIds: string[];
+  selectedGame: GameType;
   configs: Partial<GameConfigs>;
   updatedAt: string;
   ttl: number;
@@ -45,6 +49,8 @@ export class RoomsRepo {
       ...(room as RoomItem),
       currentMatchId: room.currentMatchId ?? null,
       usedWordIds: room.usedWordIds ?? [],
+      usedSpectrumIds: room.usedSpectrumIds ?? [],
+      selectedGame: room.selectedGame ?? 'IMPOSTOR',
       configs: room.configs ?? {},
     };
   }
@@ -68,7 +74,8 @@ export class RoomsRepo {
         Key: { roomCode: bump.roomCode },
         UpdateExpression:
           'SET version = :next, hostId = :hostId, currentMatchId = :currentMatchId, ' +
-          'usedWordIds = :usedWordIds, configs = :configs, updatedAt = :updatedAt, #ttl = :ttl',
+          'usedWordIds = :usedWordIds, usedSpectrumIds = :usedSpectrumIds, ' +
+          'selectedGame = :selectedGame, configs = :configs, updatedAt = :updatedAt, #ttl = :ttl',
         ConditionExpression: 'version = :expected',
         ExpressionAttributeNames: { '#ttl': 'ttl' },
         ExpressionAttributeValues: {
@@ -77,6 +84,8 @@ export class RoomsRepo {
           ':hostId': bump.hostId,
           ':currentMatchId': bump.currentMatchId,
           ':usedWordIds': bump.usedWordIds,
+          ':usedSpectrumIds': bump.usedSpectrumIds,
+          ':selectedGame': bump.selectedGame,
           ':configs': bump.configs,
           ':updatedAt': bump.updatedAt,
           ':ttl': bump.ttl,

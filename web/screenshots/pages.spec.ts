@@ -1,6 +1,7 @@
 import { join } from 'node:path';
 import {
   IMPOSTOR_DEFAULTS,
+  WAVELENGTH_DEFAULTS,
   type ImpostorPublic,
   type ImpostorSecret,
   type RoomMember,
@@ -55,11 +56,13 @@ function room(overrides: Partial<RoomSnapshot> = {}): RoomSnapshot {
     hostId: me.playerId,
     members: [member(me.playerId, me.name)],
     currentMatch: null,
+    selectedGame: 'IMPOSTOR',
     configs: {
       IMPOSTOR: {
         ...IMPOSTOR_DEFAULTS,
         categories: ['animales', 'comida', 'lugares', 'deportes', 'familia'],
       },
+      WAVELENGTH: { ...WAVELENGTH_DEFAULTS },
     },
     serverTime: new Date().toISOString(),
     ...overrides,

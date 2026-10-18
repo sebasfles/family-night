@@ -120,3 +120,24 @@ Review beyond the Pipeline:
 clearance: repo
 
 ## om-developer notes
+
+### Round 1
+
+Done (shared and api, as `Context & decisions` set for this round):
+- `shared`: `random.ts` holds `RandomInt` and `shuffle` (moved out of Impostor's rules); `wavelength/rules.ts` with scoring, rotation, round completion, departures and spectrum choice; Wavelength types, `selectedGame` on `RoomSnapshot`, `GameConfigRequest` as a union by `gameType`, `MatchSecret` union, `wavelengthConfigSchema` in `schemas.ts`.
+- `api`: game registry `services/games.ts` (`gameOf`, `resolveConfigs`, replaces `configs.ts`) used by start, config, rematch, next-round, `/me`, departure and defaults; `services/wavelength` with clue, guess, close-guessing, skip-psychic; `data/wavelength-spectra.json` with 152 pairs; `Rooms.selectedGame` and `usedSpectrumIds`; guesses as `#GUESS#{round}#{playerId}` items in MatchSecrets, the round's target in `#MATCH`.
+- `web`: only what the new contract needs to compile (fixtures get `selectedGame` and the Wavelength config; the Impostor screen narrows by `gameType` and ignores a psychic secret). No Wavelength UI yet.
+
+Decisions not recorded in the plan:
+- `POST {match}/next-round` moved from the Impostor router to the platform router, which dispatches by the current match's `gameType`; both games use that path, and two routes on one method and path cannot coexist in Hono.
+- A command meant for the other game (a clue on an Impostor match) answers `STALE_ROUND`.
+- New error codes: `NOT_PSYCHIC` (403, a clue from anyone but the psychic) and `INVALID_GUESS` (422, a guess from the psychic, a departed player or a spectator).
+- `skip-psychic` does not check that the psychic is offline on the server; the client shows the button only then, and the server's 45 s window could disagree with the phone's view at the edge.
+- The registry is a function, not a module-level object: `room-state` imports it and the game services import `room-state`, so an object built at load time could hit a binding not yet initialized.
+- Public state fields: `turn` (position in the cycles times order sequence) beside `round` (bumped by every opened round, cancelled ones included), `departedIds`, `totals` per participant, `skipped` (the cancelled turn, cleared by the next clue), `lastResult.guesses` listing every guesser with `value: null` for those who did not commit.
+- A second commit answers `STALE_ROUND` only if the first one is already counted; if its sync had failed, the retry syncs it and answers 200.
+- Spectrum ids are `{left}.{right}` slugs; on exhaustion `usedSpectrumIds` restarts from empty.
+
+Pending: web (round 2): lobby card and panel, `$code/wavelength.tsx`, the dial, the screens, the match-and-round-keyed secret query, the generalized navigation, shared pieces into `web/src/components/`, screenshots.
+
+Deferred: none.

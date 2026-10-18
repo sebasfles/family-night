@@ -1,4 +1,10 @@
-import type { GameType, ImpostorConfig, ImpostorSecret, Player, RoomSnapshot } from './domain.ts';
+import type {
+  ImpostorConfig,
+  MatchSecret,
+  Player,
+  RoomSnapshot,
+  WavelengthConfig,
+} from './domain.ts';
 
 export interface HealthResponse {
   ok: true;
@@ -26,16 +32,15 @@ export interface TargetPlayerRequest {
 export type KickRequest = TargetPlayerRequest;
 export type HandOverHostRequest = TargetPlayerRequest;
 
-export interface GameConfigRequest {
-  gameType: GameType;
-  config: ImpostorConfig;
-}
+export type GameConfigRequest =
+  | { gameType: 'IMPOSTOR'; config: ImpostorConfig }
+  | { gameType: 'WAVELENGTH'; config: WavelengthConfig };
 
 export type StartMatchRequest = GameConfigRequest;
 export type UpdateConfigRequest = GameConfigRequest;
 
 export interface MatchSecretResponse {
-  secret: ImpostorSecret | null;
+  secret: MatchSecret | null;
 }
 
 export interface RoundRequest {
@@ -52,6 +57,17 @@ export interface VoteRequest extends RoundRequest {
 export interface GuessRequest {
   option: string;
 }
+
+export interface ClueRequest extends RoundRequest {
+  clue: string;
+}
+
+export interface DialGuessRequest extends RoundRequest {
+  value: number;
+}
+
+export type CloseGuessingRequest = RoundRequest;
+export type SkipPsychicRequest = RoundRequest;
 
 export interface WordCategory {
   id: string;
@@ -73,11 +89,13 @@ export const API_ERRORS = {
   TARGET_NOT_MEMBER: { status: 409, message: 'Esa persona ya no está en la sala' },
   MATCH_NOT_FOUND: { status: 404, message: 'Esta partida no existe' },
   NOT_GUESSER: { status: 403, message: 'Solo el impostor atrapado puede adivinar' },
+  NOT_PSYCHIC: { status: 403, message: 'Solo el psíquico puede dar la pista' },
   MATCH_IN_PROGRESS: { status: 409, message: 'Ya hay una partida en curso' },
   STALE_ROUND: { status: 409, message: 'Esa ronda ya terminó' },
   NOT_ENOUGH_PLAYERS: { status: 422, message: 'Se necesitan al menos 3 jugadores en línea' },
   INVALID_CONFIG: { status: 422, message: 'La configuración de la partida no es válida' },
   INVALID_VOTE: { status: 422, message: 'Ese voto no es válido' },
+  INVALID_GUESS: { status: 422, message: 'En esta ronda no te toca adivinar' },
   CONFLICT: { status: 409, message: 'Hubo cambios al mismo tiempo, intenta de nuevo' },
   VALIDATION_ERROR: { status: 400, message: 'Los datos enviados no son válidos' },
   INTERNAL_ERROR: { status: 500, message: 'Algo salió mal, intenta de nuevo' },

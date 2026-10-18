@@ -1,6 +1,7 @@
 import {
   isOnline,
   type GameConfigs,
+  type GameType,
   type MatchPublic,
   type RoomMember,
   type RoomSnapshot,
@@ -14,6 +15,7 @@ export interface SnapshotSource {
   hostId: string;
   members: MemberItem[];
   currentMatch: MatchPublic | null;
+  selectedGame: GameType;
   configs: GameConfigs;
 }
 
@@ -39,6 +41,7 @@ export function buildSnapshot(source: SnapshotSource, nowMs: number): RoomSnapsh
     hostId: source.hostId,
     members: source.members.toSorted(byJoinOrder).map((member) => publicMember(member, nowMs)),
     currentMatch: source.currentMatch,
+    selectedGame: source.selectedGame,
     configs: source.configs,
     serverTime: iso(nowMs),
   };

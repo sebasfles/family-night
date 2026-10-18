@@ -29,7 +29,7 @@ function ImpostorScreen() {
   const { code } = Route.useParams();
   const room = useRoom(code).data;
   const match = room?.snapshot.currentMatch;
-  if (!room || !match) return null;
+  if (!room || match?.gameType !== 'IMPOSTOR') return null;
   return (
     <ImpostorMatch
       key={match.matchId}
@@ -109,7 +109,7 @@ function ImpostorMatch({ code, snapshot, match, clockOffsetMs }: ImpostorMatchPr
       )}
 
       {seat !== 'SPECTATOR' && match.phase !== 'FINISHED' && (
-        <Card secret={secret.data ?? undefined} />
+        <Card secret={secret.data?.role === 'PSYCHIC' ? undefined : (secret.data ?? undefined)} />
       )}
 
       {match.phase === 'VOTING' && (

@@ -13,8 +13,7 @@ import type {
   TallyEntry,
   TieRule,
 } from '../domain.ts';
-
-export type RandomInt = (maxExclusive: number) => number;
+import { shuffle, type RandomInt } from '../random.ts';
 
 export interface Ballot {
   voterId: string;
@@ -40,17 +39,6 @@ export function startProblem(config: ImpostorConfig, playerCount: number): Start
   if (playerCount < MIN_IMPOSTOR_PLAYERS) return 'NOT_ENOUGH_PLAYERS';
   if (config.impostorCount > maxImpostors(playerCount)) return 'TOO_MANY_IMPOSTORS';
   return null;
-}
-
-export function shuffle<T>(items: readonly T[], randomInt: RandomInt): T[] {
-  const result = [...items];
-  for (let i = result.length - 1; i > 0; i--) {
-    const j = randomInt(i + 1);
-    const current = result[i] as T;
-    result[i] = result[j] as T;
-    result[j] = current;
-  }
-  return result;
 }
 
 export interface BankWord {

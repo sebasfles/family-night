@@ -7,7 +7,7 @@ import { isWriteConflict, transactWrite } from '../repos/db.ts';
 import type { PlayerItem } from '../repos/players.ts';
 import type { MemberItem } from '../repos/room-members.ts';
 import type { RoomItem } from '../repos/rooms.ts';
-import { resolveConfigs } from './configs.ts';
+import { resolveConfigs } from './games.ts';
 import { departureChange } from './matches/index.ts';
 import { randomRoomCode, ROOM_CODE_ATTEMPTS } from './room-code.ts';
 import {
@@ -60,6 +60,8 @@ export async function createRoom(deps: Deps, player: PlayerItem): Promise<RoomSn
       ttl: ttlFrom(nowMs),
       currentMatchId: null,
       usedWordIds: [],
+      usedSpectrumIds: [],
+      selectedGame: 'IMPOSTOR',
       configs: {},
     };
     const member = newMember(roomCode, player, nowMs);

@@ -20,8 +20,8 @@ import {
   voteProblem,
   type Ballot,
   type MatchFacts,
-  type RandomInt,
 } from './rules.ts';
+import type { RandomInt } from '../random.ts';
 
 function seeded(seed: number): RandomInt {
   let state = seed >>> 0;
