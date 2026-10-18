@@ -1,6 +1,6 @@
 ---
-updated: 2026-10-17
-source: 0003_impostor
+updated: 2026-10-18
+source: 0004_wavelength
 ---
 
 # Platform: decisions
@@ -175,3 +175,48 @@ source: 0003_impostor
 - Debt created: none
 - Revisit when: a client needs to tell these apart.
 - Source: 0003_impostor
+
+## 2026-10-18: Games plug in through a registry keyed by `gameType`
+
+- Decision: `services/games.ts` maps each `gameType` to a module with default and parsed config, start check, preparation, next round, departure and `/me`; start, config, rematch, next-round, `/me`, departures and the snapshot's default configs call the game only through it. The registry is built inside a function, not at module load.
+- Alternatives rejected: `services/matches` importing each game directly, as 0003 shipped.
+- Reason: a second game proved the dispatch 0003 described was missing; the function form avoids reading a game binding before it is initialized, since `room-state` imports the registry and the games import `room-state`.
+- Debt created: none
+- Revisit when: a game needs a hook the registry does not have.
+- Source: 0004_wavelength
+
+## 2026-10-18: A route several games share lives in the platform router
+
+- Decision: `POST {match}/next-round` moved from the Impostor router to the platform router, which hands it to the current match's game; a game command aimed at a match of another game answers `STALE_ROUND`.
+- Alternatives rejected: per-game paths for the same action.
+- Reason: the plan gives both games the same path, and Hono cannot hold two handlers on one method and path.
+- Debt created: none
+- Revisit when: two games need different bodies on one shared path.
+- Source: 0004_wavelength
+
+## 2026-10-18: The room remembers the selected game
+
+- Decision: `selectedGame` on the room and in the snapshot, default `IMPOSTOR`, set by `PUT /config` (the host tapping a card sends that game's current config) and by every start or rematch; members see the chosen game and its config read only. The version bump compares it too.
+- Alternatives rejected: keeping the selection on the host's phone.
+- Reason: every phone and a reload must show the same lobby.
+- Debt created: none
+- Revisit when: games need settings shared across games.
+- Source: 0004_wavelength
+
+## 2026-10-18: Pieces shared by game screens live in `web/src/components/`
+
+- Decision: the host's "Terminar partida" menu with its confirmation, `vibrate`, `usePhaseVibration` and the departed player's name moved from `games/impostor` to `web/src/components/`; game folders never import each other.
+- Alternatives rejected: Wavelength importing from `games/impostor`.
+- Reason: a game must be removable without breaking another.
+- Debt created: none
+- Revisit when: a piece is needed by only one game again.
+- Source: 0004_wavelength
+
+## 2026-10-18: The secret query is keyed by match and round
+
+- Decision: `useMatchSecret` caches under `['match-secret', matchId, round]`; Impostor, whose secret does not change, passes `null`.
+- Alternatives rejected: the 0003 key by match only.
+- Reason: cached forever by match, a player who is the psychic again in a later round would see the earlier target.
+- Debt created: none
+- Revisit when: a game's secret changes within a round.
+- Source: 0004_wavelength

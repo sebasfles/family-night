@@ -1,6 +1,6 @@
 ---
-updated: 2026-10-17
-source: 0003_impostor
+updated: 2026-10-18
+source: 0004_wavelength
 ---
 
 # Platform: technical
@@ -19,8 +19,8 @@ Every payload change starts in `shared`, so an incompatible change breaks compil
 | `api/scripts/build.mjs` | esbuild bundles of both functions, zipped reproducibly into `dist/api.zip` and `dist/events-auth.zip`. |
 | `api/src/lib/` | Errors with their codes, zod validation, authentication by header. |
 | `api/src/repos/` | One class per table; the only code that touches DynamoDB. |
-| `api/src/services/{players,rooms,presence,matches}` | Identity and names, rooms and host rules, ping and away, match start, config, abort, lobby, rematch and the departure hook that hands leave and kick to the game. |
-| `api/src/services/configs.ts` | Fills each game's default config into the snapshot until the host stores one. |
+| `api/src/services/{players,rooms,presence,matches}` | Identity and names, rooms and host rules, ping and away, match start, config, abort, lobby, rematch, next round and the departure hook that hands leave and kick to the game. |
+| `api/src/services/games.ts` | The game registry keyed by `gameType`: config defaults and parsing, start check, preparation, next round, departure and `/me` of each game; also fills each game's default config into the snapshot. |
 | `api/src/services/room-state.ts` | The one write path of every room request: read room then members, decide, commit, publish. |
 | `api/src/deps.ts` | Repos, publisher, clock and random injected into `createApp`, so tests swap them. |
 | `api/src/realtime/publish.ts` | Builds the public snapshot and posts it, signed with SigV4, to the AppSync Events channel. |
@@ -30,7 +30,7 @@ Every payload change starts in `shared`, so an incompatible change breaks compil
 | `web/src/identity/` | `playerId`, `playerToken` and name in localStorage, guarded by try/catch. |
 | `web/src/api/` | Typed fetch client that adds the identity headers and throws `ApiError`; query and mutation hooks. |
 | `web/src/realtime/` | One WebSocket per tab to AppSync Events, own client, backoff 1 s to 30 s, resubscribe and invalidate the room query on reconnect. |
-| `web/src/components/` | Shared UI of the lobby and the shell. |
+| `web/src/components/` | Shared UI of the lobby, the shell and every game (`AbortMatchMenu`, `match.ts` with `nameOf`, `vibrate`, `usePhaseVibration`); games never import each other. |
 | `web/public/og.png` and the Open Graph tags in `web/index.html` | The WhatsApp preview; static because WhatsApp runs no JavaScript. |
 
 ## Endpoints owned
@@ -51,9 +51,10 @@ Authentication, membership and host rules are in [the plan](../../implementation
 | POST | `/api/rooms/{code}/kick` | Host removes a member. | [plan](../../implementation-plan.md#salas) |
 | POST | `/api/rooms/{code}/host` | Host hands the role over. | [plan](../../implementation-plan.md#salas) |
 | POST | `/api/rooms/{code}/matches` | Host starts a match of a game. | [plan](../../implementation-plan.md#partidas-comunes-a-todos-los-juegos) |
-| PUT | `/api/rooms/{code}/config` | Host stores a game's config; members see it live and the lobby opens with it. | `shared/src/api.ts` |
+| PUT | `/api/rooms/{code}/config` | Host selects a game and stores its config; members see both live and the lobby opens with them. | `shared/src/api.ts` |
 | GET | `/api/rooms/{code}/matches/{matchId}/me` | The caller's own secret, or null. | [plan](../../implementation-plan.md#partidas-comunes-a-todos-los-juegos) |
 | POST | `/api/rooms/{code}/matches/{matchId}/abort` | Host ends a match without score. | [plan](../../implementation-plan.md#partidas-comunes-a-todos-los-juegos) |
+| POST | `/api/rooms/{code}/matches/{matchId}/next-round` | Host leaves the result; the current game decides what comes next. | `shared/src/api.ts` |
 | POST | `/api/rooms/{code}/lobby` | Host sets `currentMatchId` to null. | [plan](../../implementation-plan.md#partidas-comunes-a-todos-los-juegos) |
 | POST | `/api/rooms/{code}/matches/{matchId}/rematch` | Host starts a new match with the finished match's config. | [plan](../../implementation-plan.md#partidas-comunes-a-todos-los-juegos) |
 
@@ -72,19 +73,20 @@ Channel `/rooms/{ROOMCODE}` in namespace `rooms` carries `room.updated`, `member
 - Host transfer is lazy: it happens on the next request of an online member, not on a timer, and counts 60 s of real silence; the away setback of `lastSeenAt` does not count.
 - Every POST carries `x-amz-content-sha256`, computed in `web/src/api/client.ts`; bodyless ones use the constant empty-body hash with no `await` before `fetch`, so the away call leaves inside the `visibilitychange` handler.
 - The realtime connection authenticates with `playerId:playerToken` through the AppSync Lambda authorizer; subscribing to `/rooms/{code}` needs membership of that room.
-- Game endpoints are mounted in the same router by the game modules; the platform router dispatches by `gameType` when starting a match.
+- Game endpoints are mounted in the same router by the game modules; start, config, rematch, next-round, `/me` and departures reach the game through the registry by `gameType`. A route both games share (`next-round`) lives in the platform router.
 - Leaving or being kicked mid-match calls the game's own handling of a player who left.
 - Match routes live under the room, which is also the membership check; a match id that exists but is no longer current answers `STALE_ROUND`.
-- The `$code/route.tsx` effect moves the phone to `/$code/impostor` while a match is current and back to the lobby when `currentMatch` is null; aborting clears it in the same write.
+- The `$code/route.tsx` effect moves the phone to the current match's game route (`/$code/impostor`, `/$code/wavelength`) and back to the lobby when `currentMatch` is null; aborting clears it in the same write.
+- `selectedGame` changes with `PUT /config` and with every start or rematch; the lobby shows that game's panel.
 
 ## Depends on
 
 - infra: the tables, the Lambda and its Function URL behind CloudFront, the AppSync Events API, the Lambda authorizer of the Events API, the Actions variables the web build reads.
-- impostor: game start, config validation, `publicState` and player-left handling that matches call into.
+- impostor, wavelength: their registry entries (config, start, next round, player-left handling, secret) and `publicState`.
 
 ## Depended on by
 
-- impostor: auth, membership checks, version and optimistic locking, snapshot building, publishing, the `$code` shell and `GET /api/rooms/{code}/matches/{matchId}/me`.
+- impostor, wavelength: auth, membership checks, version and optimistic locking, snapshot building, publishing, the `$code` shell and `GET /api/rooms/{code}/matches/{matchId}/me`.
 - deploy: builds and ships `shared`, `api` and `web`.
 
 ## Configuration

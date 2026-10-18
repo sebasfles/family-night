@@ -178,3 +178,9 @@ Findings applied:
 Pending: docs (after the clean signal).
 
 Deferred: none.
+
+### Docs
+
+- `document-task` created `docs/modules/wavelength/` (README, prd, trd, ard, database, flows) and updated platform (README, prd, trd, database, ard) and impostor (trd, database).
+- Beyond `docs/modules/` and the debt index, as the task's Scope and `Context & decisions` ask: module and secret lists in `docs/TRD.md`, the Wavelength capability in `docs/PRD.md`, the secret list in `CLAUDE.md`. No global `Decisions` entry of `docs/ARD.md` was edited.
+- Debt index: one new row (wavelength, spectra restart may repeat the last spectrum). No earlier debt resolved.

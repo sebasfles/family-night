@@ -1,6 +1,6 @@
 ---
-updated: 2026-10-17
-source: setup
+updated: 2026-10-18
+source: 0004_wavelength
 ---
 
 # Product Requirements Document
@@ -9,7 +9,7 @@ source: setup
 
 Family Night is a web app of party games for one family, ages 20 to 60, gathered in the same room.
 Each player uses their own phone inside a shared room that lasts the whole evening; the host picks a game, several matches are played in a row, and the talking happens in person.
-Phase 1 ships the common platform and the Impostor game; Just One and Wavelength come later.
+Phase 1 shipped the common platform and the Impostor game; Wavelength followed; Just One comes later.
 Source spec: [implementation-plan.md](implementation-plan.md) (Spanish).
 
 ## Users
@@ -30,6 +30,11 @@ Details: [modules/platform/prd.md](modules/platform/prd.md)
 Everyone gets the same secret word except the impostors, who get only a clue; players talk in person, vote on their phones, see who was eliminated and whether they were an impostor, until civilians or impostors win, with a last-chance guess for the final impostor.
 Details: [modules/impostor/prd.md](modules/impostor/prd.md)
 
+### Wavelength
+
+Each round a psychic sees where a hidden target sits on a scale between two opposites and gives a short clue; everyone turns their own dial and scores by how close they land, and the psychic scores their average, until everyone has been the psychic.
+Details: [modules/wavelength/prd.md](modules/wavelength/prd.md)
+
 ## Cross-cutting rules
 
 - No accounts and no login: identity is the device, and the name is assigned and permanent.
@@ -44,7 +49,7 @@ Details: [modules/impostor/prd.md](modules/impostor/prd.md)
 - Accounts, login, name changes.
 - Text chat, voice or video: the debate is in person.
 - Monetization, internationalization.
-- Just One and Wavelength in phase 1 (shown as "Próximamente").
+- Just One for now (shown as "Próximamente").
 
 ## Open questions
 
