@@ -174,8 +174,8 @@ export function updates(harness: Harness): RoomSnapshot[] {
   );
 }
 
-export async function roomWith(count: number) {
-  const harness = await createHarness();
+export async function roomWith(count: number, options: { secureRandomInt?: RandomInt } = {}) {
+  const harness = await createHarness(options);
   const players: CreatePlayerResponse[] = [];
   for (let i = 0; i < count; i++) players.push(await newPlayer(harness));
   const member = (index: number): CreatePlayerResponse => {

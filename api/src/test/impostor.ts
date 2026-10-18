@@ -22,7 +22,7 @@ export function impostorConfig(overrides: Partial<ImpostorConfig> = {}): Imposto
 }
 
 export function currentMatch(room: RoomSnapshot): ImpostorPublic {
-  if (!room.currentMatch) throw new Error('the room has no current match');
+  if (room.currentMatch?.gameType !== 'IMPOSTOR') throw new Error('no current Impostor match');
   return room.currentMatch;
 }
 
@@ -49,7 +49,9 @@ export async function secretOf(
   matchId: string,
 ): Promise<ImpostorSecret | null> {
   const response = call(room.harness, player, 'GET', matchPath(room, matchId, 'me'));
-  return (await json<MatchSecretResponse>(response)).secret;
+  const { secret } = await json<MatchSecretResponse>(response);
+  if (secret?.role === 'PSYCHIC') throw new Error('not an Impostor secret');
+  return secret;
 }
 
 export interface Roles {
@@ -100,7 +102,7 @@ export async function voted(
 
 export async function hostAction(
   room: Room,
-  match: ImpostorPublic,
+  match: { matchId: string },
   action: string,
   body?: unknown,
 ): Promise<RoomSnapshot> {

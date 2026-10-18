@@ -1,0 +1,764 @@
+{
+  "spectra": [
+    {
+      "id": "frio.caliente",
+      "left": "Frío",
+      "right": "Caliente"
+    },
+    {
+      "id": "barato.caro",
+      "left": "Barato",
+      "right": "Caro"
+    },
+    {
+      "id": "feo.bonito",
+      "left": "Feo",
+      "right": "Bonito"
+    },
+    {
+      "id": "aburrido.divertido",
+      "left": "Aburrido",
+      "right": "Divertido"
+    },
+    {
+      "id": "facil.dificil",
+      "left": "Fácil",
+      "right": "Difícil"
+    },
+    {
+      "id": "lento.rapido",
+      "left": "Lento",
+      "right": "Rápido"
+    },
+    {
+      "id": "silencioso.ruidoso",
+      "left": "Silencioso",
+      "right": "Ruidoso"
+    },
+    {
+      "id": "pequeno.enorme",
+      "left": "Pequeño",
+      "right": "Enorme"
+    },
+    {
+      "id": "ligero.pesado",
+      "left": "Ligero",
+      "right": "Pesado"
+    },
+    {
+      "id": "suave.aspero",
+      "left": "Suave",
+      "right": "Áspero"
+    },
+    {
+      "id": "seco.mojado",
+      "left": "Seco",
+      "right": "Mojado"
+    },
+    {
+      "id": "dulce.salado",
+      "left": "Dulce",
+      "right": "Salado"
+    },
+    {
+      "id": "blando.duro",
+      "left": "Blando",
+      "right": "Duro"
+    },
+    {
+      "id": "oscuro.brillante",
+      "left": "Oscuro",
+      "right": "Brillante"
+    },
+    {
+      "id": "corto.largo",
+      "left": "Corto",
+      "right": "Largo"
+    },
+    {
+      "id": "delgado.grueso",
+      "left": "Delgado",
+      "right": "Grueso"
+    },
+    {
+      "id": "debil.fuerte",
+      "left": "Débil",
+      "right": "Fuerte"
+    },
+    {
+      "id": "joven.viejo",
+      "left": "Joven",
+      "right": "Viejo"
+    },
+    {
+      "id": "vacio.lleno",
+      "left": "Vacío",
+      "right": "Lleno"
+    },
+    {
+      "id": "limpio.sucio",
+      "left": "Limpio",
+      "right": "Sucio"
+    },
+    {
+      "id": "ordenado.desordenado",
+      "left": "Ordenado",
+      "right": "Desordenado"
+    },
+    {
+      "id": "simple.complicado",
+      "left": "Simple",
+      "right": "Complicado"
+    },
+    {
+      "id": "claro.confuso",
+      "left": "Claro",
+      "right": "Confuso"
+    },
+    {
+      "id": "logico.absurdo",
+      "left": "Lógico",
+      "right": "Absurdo"
+    },
+    {
+      "id": "realista.fantastico",
+      "left": "Realista",
+      "right": "Fantástico"
+    },
+    {
+      "id": "natural.artificial",
+      "left": "Natural",
+      "right": "Artificial"
+    },
+    {
+      "id": "fragil.resistente",
+      "left": "Frágil",
+      "right": "Resistente"
+    },
+    {
+      "id": "normal.raro",
+      "left": "Normal",
+      "right": "Raro"
+    },
+    {
+      "id": "comun.rarisimo",
+      "left": "Común",
+      "right": "Rarísimo"
+    },
+    {
+      "id": "antiguo.moderno",
+      "left": "Antiguo",
+      "right": "Moderno"
+    },
+    {
+      "id": "analogico.digital",
+      "left": "Analógico",
+      "right": "Digital"
+    },
+    {
+      "id": "pasado-de-moda.de-moda",
+      "left": "Pasado de moda",
+      "right": "De moda"
+    },
+    {
+      "id": "triste.feliz",
+      "left": "Triste",
+      "right": "Feliz"
+    },
+    {
+      "id": "serio.chistoso",
+      "left": "Serio",
+      "right": "Chistoso"
+    },
+    {
+      "id": "tierno.terrorifico",
+      "left": "Tierno",
+      "right": "Terrorífico"
+    },
+    {
+      "id": "tranquilo.peligroso",
+      "left": "Tranquilo",
+      "right": "Peligroso"
+    },
+    {
+      "id": "relajante.estresante",
+      "left": "Relajante",
+      "right": "Estresante"
+    },
+    {
+      "id": "olvidable.inolvidable",
+      "left": "Olvidable",
+      "right": "Inolvidable"
+    },
+    {
+      "id": "desconocido.famosisimo",
+      "left": "Desconocido",
+      "right": "Famosísimo"
+    },
+    {
+      "id": "inutil.util",
+      "left": "Inútil",
+      "right": "Útil"
+    },
+    {
+      "id": "prescindible.imprescindible",
+      "left": "Prescindible",
+      "right": "Imprescindible"
+    },
+    {
+      "id": "opcional.obligatorio",
+      "left": "Opcional",
+      "right": "Obligatorio"
+    },
+    {
+      "id": "privado.publico",
+      "left": "Privado",
+      "right": "Público"
+    },
+    {
+      "id": "lujo.necesidad",
+      "left": "Lujo",
+      "right": "Necesidad"
+    },
+    {
+      "id": "subestimado.sobrevalorado",
+      "left": "Subestimado",
+      "right": "Sobrevalorado"
+    },
+    {
+      "id": "gusta-a-todos.gusta-a-pocos",
+      "left": "Gusta a todos",
+      "right": "Gusta a pocos"
+    },
+    {
+      "id": "nada-polemico.muy-polemico",
+      "left": "Nada polémico",
+      "right": "Muy polémico"
+    },
+    {
+      "id": "totalmente-cierto.puro-cuento",
+      "left": "Totalmente cierto",
+      "right": "Puro cuento"
+    },
+    {
+      "id": "cualquiera-lo-hace.pocos-lo-logran",
+      "left": "Cualquiera lo hace",
+      "right": "Pocos lo logran"
+    },
+    {
+      "id": "toma-un-minuto.toma-todo-el-dia",
+      "left": "Toma un minuto",
+      "right": "Toma todo el día"
+    },
+    {
+      "id": "muy-temprano.muy-tarde",
+      "left": "Muy temprano",
+      "right": "Muy tarde"
+    },
+    {
+      "id": "cerca-de-casa.lejisimos",
+      "left": "Cerca de casa",
+      "right": "Lejísimos"
+    },
+    {
+      "id": "de-dia.de-noche",
+      "left": "De día",
+      "right": "De noche"
+    },
+    {
+      "id": "de-verano.de-invierno",
+      "left": "De verano",
+      "right": "De invierno"
+    },
+    {
+      "id": "de-ciudad.de-campo",
+      "left": "De ciudad",
+      "right": "De campo"
+    },
+    {
+      "id": "mas-de-la-costa.mas-de-la-sierra",
+      "left": "Más de la costa",
+      "right": "Más de la sierra"
+    },
+    {
+      "id": "bajo-techo.al-aire-libre",
+      "left": "Bajo techo",
+      "right": "Al aire libre"
+    },
+    {
+      "id": "individual.en-equipo",
+      "left": "Individual",
+      "right": "En equipo"
+    },
+    {
+      "id": "para-ninos.para-adultos",
+      "left": "Para niños",
+      "right": "Para adultos"
+    },
+    {
+      "id": "les-gusta-a-los-abuelos.les-gusta-a-los-nietos",
+      "left": "Les gusta a los abuelos",
+      "right": "Les gusta a los nietos"
+    },
+    {
+      "id": "comida-fea.comida-rica",
+      "left": "Comida fea",
+      "right": "Comida rica"
+    },
+    {
+      "id": "comida-sana.comida-chatarra",
+      "left": "Comida sana",
+      "right": "Comida chatarra"
+    },
+    {
+      "id": "comida-casera.comida-de-restaurante",
+      "left": "Comida casera",
+      "right": "Comida de restaurante"
+    },
+    {
+      "id": "piqueo.banquete",
+      "left": "Piqueo",
+      "right": "Banquete"
+    },
+    {
+      "id": "lonche-ligero.lonche-contundente",
+      "left": "Lonche ligero",
+      "right": "Lonche contundente"
+    },
+    {
+      "id": "para-el-desayuno.para-la-cena",
+      "left": "Para el desayuno",
+      "right": "Para la cena"
+    },
+    {
+      "id": "nada-picante.muy-picante",
+      "left": "Nada picante",
+      "right": "Muy picante"
+    },
+    {
+      "id": "blandito.crocante",
+      "left": "Blandito",
+      "right": "Crocante"
+    },
+    {
+      "id": "se-come-frio.se-come-caliente",
+      "left": "Se come frío",
+      "right": "Se come caliente"
+    },
+    {
+      "id": "mal-sanguche.buen-sanguche",
+      "left": "Mal sánguche",
+      "right": "Buen sánguche"
+    },
+    {
+      "id": "fruta-fea.fruta-rica",
+      "left": "Fruta fea",
+      "right": "Fruta rica"
+    },
+    {
+      "id": "verdura-odiada.verdura-amada",
+      "left": "Verdura odiada",
+      "right": "Verdura amada"
+    },
+    {
+      "id": "postre-malo.postre-delicioso",
+      "left": "Postre malo",
+      "right": "Postre delicioso"
+    },
+    {
+      "id": "mala-bebida.buena-bebida",
+      "left": "Mala bebida",
+      "right": "Buena bebida"
+    },
+    {
+      "id": "mala-combinacion.combinacion-perfecta",
+      "left": "Mala combinación",
+      "right": "Combinación perfecta"
+    },
+    {
+      "id": "huele-feo.huele-rico",
+      "left": "Huele feo",
+      "right": "Huele rico"
+    },
+    {
+      "id": "facil-de-cocinar.dificil-de-cocinar",
+      "left": "Fácil de cocinar",
+      "right": "Difícil de cocinar"
+    },
+    {
+      "id": "mala-cancion.buena-cancion",
+      "left": "Mala canción",
+      "right": "Buena canción"
+    },
+    {
+      "id": "musica-tranquila.musica-movida",
+      "left": "Música tranquila",
+      "right": "Música movida"
+    },
+    {
+      "id": "baile-facil.baile-dificil",
+      "left": "Baile fácil",
+      "right": "Baile difícil"
+    },
+    {
+      "id": "mala-pelicula.buena-pelicula",
+      "left": "Mala película",
+      "right": "Buena película"
+    },
+    {
+      "id": "pelicula-infantil.pelicula-de-terror",
+      "left": "Película infantil",
+      "right": "Película de terror"
+    },
+    {
+      "id": "mal-dibujo-animado.buen-dibujo-animado",
+      "left": "Mal dibujo animado",
+      "right": "Buen dibujo animado"
+    },
+    {
+      "id": "personaje-olvidable.personaje-iconico",
+      "left": "Personaje olvidable",
+      "right": "Personaje icónico"
+    },
+    {
+      "id": "villano.heroe",
+      "left": "Villano",
+      "right": "Héroe"
+    },
+    {
+      "id": "deporte-aburrido.deporte-emocionante",
+      "left": "Deporte aburrido",
+      "right": "Deporte emocionante"
+    },
+    {
+      "id": "mal-juego-de-mesa.buen-juego-de-mesa",
+      "left": "Mal juego de mesa",
+      "right": "Buen juego de mesa"
+    },
+    {
+      "id": "tono-aburrido.tonazo",
+      "left": "Tono aburrido",
+      "right": "Tonazo"
+    },
+    {
+      "id": "mal-plan-de-domingo.buen-plan-de-domingo",
+      "left": "Mal plan de domingo",
+      "right": "Buen plan de domingo"
+    },
+    {
+      "id": "mal-plan-de-cumpleanos.buen-plan-de-cumpleanos",
+      "left": "Mal plan de cumpleaños",
+      "right": "Buen plan de cumpleaños"
+    },
+    {
+      "id": "mal-destino-de-viaje.buen-destino-de-viaje",
+      "left": "Mal destino de viaje",
+      "right": "Buen destino de viaje"
+    },
+    {
+      "id": "pasatiempo-barato.pasatiempo-caro",
+      "left": "Pasatiempo barato",
+      "right": "Pasatiempo caro"
+    },
+    {
+      "id": "mal-regalo.buen-regalo",
+      "left": "Mal regalo",
+      "right": "Buen regalo"
+    },
+    {
+      "id": "mal-nombre-para-perro.buen-nombre-para-perro",
+      "left": "Mal nombre para perro",
+      "right": "Buen nombre para perro"
+    },
+    {
+      "id": "mala-mascota.buena-mascota",
+      "left": "Mala mascota",
+      "right": "Buena mascota"
+    },
+    {
+      "id": "mascota-facil-de-cuidar.mascota-dificil-de-cuidar",
+      "left": "Mascota fácil de cuidar",
+      "right": "Mascota difícil de cuidar"
+    },
+    {
+      "id": "animal-tierno.animal-feroz",
+      "left": "Animal tierno",
+      "right": "Animal feroz"
+    },
+    {
+      "id": "animal-tonto.animal-inteligente",
+      "left": "Animal tonto",
+      "right": "Animal inteligente"
+    },
+    {
+      "id": "superpoder-inutil.superpoder-util",
+      "left": "Superpoder inútil",
+      "right": "Superpoder útil"
+    },
+    {
+      "id": "talento-inutil.talento-util",
+      "left": "Talento inútil",
+      "right": "Talento útil"
+    },
+    {
+      "id": "invento-inutil.invento-genial",
+      "left": "Invento inútil",
+      "right": "Invento genial"
+    },
+    {
+      "id": "trabajo-aburrido.trabajo-sonado",
+      "left": "Trabajo aburrido",
+      "right": "Trabajo soñado"
+    },
+    {
+      "id": "chamba-facil.chamba-dificil",
+      "left": "Chamba fácil",
+      "right": "Chamba difícil"
+    },
+    {
+      "id": "profesion-tranquila.profesion-arriesgada",
+      "left": "Profesión tranquila",
+      "right": "Profesión arriesgada"
+    },
+    {
+      "id": "quehacer-facil.quehacer-pesado",
+      "left": "Quehacer fácil",
+      "right": "Quehacer pesado"
+    },
+    {
+      "id": "mueble-incomodo.mueble-comodo",
+      "left": "Mueble incómodo",
+      "right": "Mueble cómodo"
+    },
+    {
+      "id": "zapato-incomodo.zapato-comodo",
+      "left": "Zapato incómodo",
+      "right": "Zapato cómodo"
+    },
+    {
+      "id": "lugar-incomodo-para-dormir.lugar-comodo-para-dormir",
+      "left": "Lugar incómodo para dormir",
+      "right": "Lugar cómodo para dormir"
+    },
+    {
+      "id": "lugar-aburrido-de-la-casa.lugar-favorito-de-la-casa",
+      "left": "Lugar aburrido de la casa",
+      "right": "Lugar favorito de la casa"
+    },
+    {
+      "id": "ropa-informal.ropa-formal",
+      "left": "Ropa informal",
+      "right": "Ropa formal"
+    },
+    {
+      "id": "color-feo.color-bonito",
+      "left": "Color feo",
+      "right": "Color bonito"
+    },
+    {
+      "id": "color-frio.color-calido",
+      "left": "Color frío",
+      "right": "Color cálido"
+    },
+    {
+      "id": "sonido-molesto.sonido-agradable",
+      "left": "Sonido molesto",
+      "right": "Sonido agradable"
+    },
+    {
+      "id": "ideal-con-frio.ideal-con-calor",
+      "left": "Ideal con frío",
+      "right": "Ideal con calor"
+    },
+    {
+      "id": "malo-para-la-salud.bueno-para-la-salud",
+      "left": "Malo para la salud",
+      "right": "Bueno para la salud"
+    },
+    {
+      "id": "ecologico.contaminante",
+      "left": "Ecológico",
+      "right": "Contaminante"
+    },
+    {
+      "id": "gasto-innecesario.buena-inversion",
+      "left": "Gasto innecesario",
+      "right": "Buena inversión"
+    },
+    {
+      "id": "mal-habito.buen-habito",
+      "left": "Mal hábito",
+      "right": "Buen hábito"
+    },
+    {
+      "id": "mal-consejo.buen-consejo",
+      "left": "Mal consejo",
+      "right": "Buen consejo"
+    },
+    {
+      "id": "mala-excusa.buena-excusa",
+      "left": "Mala excusa",
+      "right": "Buena excusa"
+    },
+    {
+      "id": "chiste-malo.chiste-buenazo",
+      "left": "Chiste malo",
+      "right": "Chiste buenazo"
+    },
+    {
+      "id": "nada-bacan.bacanisimo",
+      "left": "Nada bacán",
+      "right": "Bacanísimo"
+    },
+    {
+      "id": "cero-roche.mucho-roche",
+      "left": "Cero roche",
+      "right": "Mucho roche"
+    },
+    {
+      "id": "no-duele-nada.duele-muchisimo",
+      "left": "No duele nada",
+      "right": "Duele muchísimo"
+    },
+    {
+      "id": "nada-abrazable.muy-abrazable",
+      "left": "Nada abrazable",
+      "right": "Muy abrazable"
+    },
+    {
+      "id": "pesadilla.sueno-hermoso",
+      "left": "Pesadilla",
+      "right": "Sueño hermoso"
+    },
+    {
+      "id": "pina.suertudo",
+      "left": "Piña",
+      "right": "Suertudo"
+    },
+    {
+      "id": "misio.millonario",
+      "left": "Misio",
+      "right": "Millonario"
+    },
+    {
+      "id": "sencillo.pituco",
+      "left": "Sencillo",
+      "right": "Pituco"
+    },
+    {
+      "id": "sin-floro.puro-floro",
+      "left": "Sin floro",
+      "right": "Puro floro"
+    },
+    {
+      "id": "facil-de-dibujar.dificil-de-dibujar",
+      "left": "Fácil de dibujar",
+      "right": "Difícil de dibujar"
+    },
+    {
+      "id": "facil-de-explicar.dificil-de-explicar",
+      "left": "Fácil de explicar",
+      "right": "Difícil de explicar"
+    },
+    {
+      "id": "facil-de-aprender.dificil-de-aprender",
+      "left": "Fácil de aprender",
+      "right": "Difícil de aprender"
+    },
+    {
+      "id": "facil-de-encontrar.dificil-de-encontrar",
+      "left": "Fácil de encontrar",
+      "right": "Difícil de encontrar"
+    },
+    {
+      "id": "facil-de-limpiar.dificil-de-limpiar",
+      "left": "Fácil de limpiar",
+      "right": "Difícil de limpiar"
+    },
+    {
+      "id": "facil-de-pronunciar.dificil-de-pronunciar",
+      "left": "Fácil de pronunciar",
+      "right": "Difícil de pronunciar"
+    },
+    {
+      "id": "facil-de-compartir.imposible-de-compartir",
+      "left": "Fácil de compartir",
+      "right": "Imposible de compartir"
+    },
+    {
+      "id": "muy-honesto.muy-mentiroso",
+      "left": "Muy honesto",
+      "right": "Muy mentiroso"
+    },
+    {
+      "id": "maleducado.educado",
+      "left": "Maleducado",
+      "right": "Educado"
+    },
+    {
+      "id": "codo.generoso",
+      "left": "Codo",
+      "right": "Generoso"
+    },
+    {
+      "id": "ocioso.chambeador",
+      "left": "Ocioso",
+      "right": "Chambeador"
+    },
+    {
+      "id": "flojo-para-estudiar.chancon",
+      "left": "Flojo para estudiar",
+      "right": "Chancón"
+    },
+    {
+      "id": "madrugador.dormilon",
+      "left": "Madrugador",
+      "right": "Dormilón"
+    },
+    {
+      "id": "callado.hablador",
+      "left": "Callado",
+      "right": "Hablador"
+    },
+    {
+      "id": "miedoso.valiente",
+      "left": "Miedoso",
+      "right": "Valiente"
+    },
+    {
+      "id": "impaciente.paciente",
+      "left": "Impaciente",
+      "right": "Paciente"
+    },
+    {
+      "id": "distraido.atento",
+      "left": "Distraído",
+      "right": "Atento"
+    },
+    {
+      "id": "impuntual.puntual",
+      "left": "Impuntual",
+      "right": "Puntual"
+    },
+    {
+      "id": "terco.flexible",
+      "left": "Terco",
+      "right": "Flexible"
+    },
+    {
+      "id": "huachafo.elegante",
+      "left": "Huachafo",
+      "right": "Elegante"
+    },
+    {
+      "id": "bamba.original",
+      "left": "Bamba",
+      "right": "Original"
+    },
+    {
+      "id": "mala-onda.buena-onda",
+      "left": "Mala onda",
+      "right": "Buena onda"
+    }
+  ]
+}

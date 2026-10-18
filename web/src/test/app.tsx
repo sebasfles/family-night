@@ -1,4 +1,9 @@
-import { IMPOSTOR_DEFAULTS, type RoomMember, type RoomSnapshot } from '@family-night/shared';
+import {
+  IMPOSTOR_DEFAULTS,
+  WAVELENGTH_DEFAULTS,
+  type RoomMember,
+  type RoomSnapshot,
+} from '@family-night/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createMemoryHistory, RouterProvider } from '@tanstack/react-router';
 import { render } from '@testing-library/react';
@@ -64,7 +69,11 @@ export function snapshot(overrides: Partial<RoomSnapshot> = {}): RoomSnapshot {
     hostId: me.playerId,
     members: [member({ playerId: me.playerId, name: me.name })],
     currentMatch: null,
-    configs: { IMPOSTOR: { ...IMPOSTOR_DEFAULTS, categories: ['animales'] } },
+    selectedGame: 'IMPOSTOR',
+    configs: {
+      IMPOSTOR: { ...IMPOSTOR_DEFAULTS, categories: ['animales'] },
+      WAVELENGTH: { ...WAVELENGTH_DEFAULTS },
+    },
     serverTime: new Date().toISOString(),
     ...overrides,
   };

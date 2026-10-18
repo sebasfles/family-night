@@ -1,15 +1,17 @@
-import type { MatchPublic } from '@family-night/shared';
+import type { GameType, MatchPublic, RoomSnapshot } from '@family-night/shared';
 import type { Deps } from '../../deps.ts';
 import { AppError } from '../../lib/errors.ts';
 import { iso } from '../../lib/time.ts';
 import type { TransactItem } from '../../repos/db.ts';
 import type { MatchItem } from '../../repos/matches.ts';
+import type { PlayerItem } from '../../repos/players.ts';
 import type { MemberItem } from '../../repos/room-members.ts';
 import {
   replaceMember,
   requireMember,
   resolveHost,
   touchMember,
+  updateRoom,
   type RoomChange,
   type RoomState,
 } from '../room-state.ts';
@@ -18,6 +20,16 @@ export interface MatchUpdate {
   publicState: MatchPublic;
   writes?: TransactItem[];
   scores?: Record<string, number>;
+  usedWordIds?: string[];
+  usedSpectrumIds?: string[];
+}
+
+export type GameState<G extends GameType> = Extract<MatchPublic, { gameType: G }>;
+
+export function gameState<G extends GameType>(match: MatchItem, gameType: G): GameState<G> {
+  const state = match.publicState;
+  if (state.gameType !== gameType) throw new AppError('STALE_ROUND');
+  return state as GameState<G>;
 }
 
 export function callerChange(
@@ -66,5 +78,28 @@ export function applyMatchUpdate(
       endedAt: ended ? iso(nowMs) : match.endedAt,
     },
     writes: [...(change.writes ?? []), ...(update.writes ?? [])],
+    ...(update.usedWordIds ? { usedWordIds: update.usedWordIds } : {}),
+    ...(update.usedSpectrumIds ? { usedSpectrumIds: update.usedSpectrumIds } : {}),
   };
+}
+
+export type MatchAction = (
+  match: MatchItem,
+  nowMs: number,
+  state: RoomState,
+) => Promise<MatchUpdate>;
+
+export function matchCommand(
+  deps: Deps,
+  player: PlayerItem,
+  roomCode: string,
+  matchId: string,
+  role: 'member' | 'host',
+  act: MatchAction,
+): Promise<RoomSnapshot> {
+  return updateRoom(deps, roomCode, async (state, nowMs) => {
+    const change = callerChange(state, player.playerId, nowMs, role);
+    const match = await requireCurrentMatch(deps, state, matchId, nowMs);
+    return applyMatchUpdate(change, match, await act(match, nowMs, state), nowMs);
+  });
 }

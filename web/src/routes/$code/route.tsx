@@ -1,4 +1,9 @@
-import { normalizeRoomCode, PING_INTERVAL_MS, type RoomEvent } from '@family-night/shared';
+import {
+  normalizeRoomCode,
+  PING_INTERVAL_MS,
+  type GameType,
+  type RoomEvent,
+} from '@family-night/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   createFileRoute,
@@ -17,6 +22,11 @@ import { Screen } from '../../components/Screen';
 import { useToast } from '../../components/useToast';
 import { useIdentity } from '../../identity/identity';
 import { useRoomChannel } from '../../realtime/useRoomChannel';
+
+const gamePaths = {
+  IMPOSTOR: '/$code/impostor',
+  WAVELENGTH: '/$code/wavelength',
+} as const satisfies Record<GameType, string>;
 
 export const Route = createFileRoute('/$code')({
   beforeLoad: ({ params }) => {
@@ -163,14 +173,21 @@ function RoomSession({ code }: { code: string }) {
   }, [room.error, kicked]);
 
   const gameType = room.data?.snapshot.currentMatch?.gameType ?? null;
-  const onGame = useLocation({ select: (location) => location.pathname.endsWith('/impostor') });
+  const onGame = useLocation({
+    select: (location) => {
+      const game = Object.entries(gamePaths).find(([, path]) =>
+        location.pathname.endsWith(path.slice('/$code'.length)),
+      );
+      return (game?.[0] as GameType | undefined) ?? null;
+    },
+  });
   useEffect(() => {
-    if (!room.data) return;
-    if (gameType === 'IMPOSTOR' && !onGame) {
-      void navigate({ to: '/$code/impostor', params: { code }, replace: true });
-    } else if (gameType === null && onGame) {
-      void navigate({ to: '/$code', params: { code }, replace: true });
-    }
+    if (!room.data || gameType === onGame) return;
+    void navigate({
+      to: gameType ? gamePaths[gameType] : '/$code',
+      params: { code },
+      replace: true,
+    });
   }, [code, gameType, navigate, onGame, room.data]);
 
   const session = useMemo(

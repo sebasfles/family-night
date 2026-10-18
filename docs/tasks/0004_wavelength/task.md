@@ -120,3 +120,67 @@ Review beyond the Pipeline:
 clearance: repo
 
 ## om-developer notes
+
+### Round 1
+
+Done (shared and api, as `Context & decisions` set for this round):
+- `shared`: `random.ts` holds `RandomInt` and `shuffle` (moved out of Impostor's rules); `wavelength/rules.ts` with scoring, rotation, round completion, departures and spectrum choice; Wavelength types, `selectedGame` on `RoomSnapshot`, `GameConfigRequest` as a union by `gameType`, `MatchSecret` union, `wavelengthConfigSchema` in `schemas.ts`.
+- `api`: game registry `services/games.ts` (`gameOf`, `resolveConfigs`, replaces `configs.ts`) used by start, config, rematch, next-round, `/me`, departure and defaults; `services/wavelength` with clue, guess, close-guessing, skip-psychic; `data/wavelength-spectra.json` with 152 pairs; `Rooms.selectedGame` and `usedSpectrumIds`; guesses as `#GUESS#{round}#{playerId}` items in MatchSecrets, the round's target in `#MATCH`.
+- `web`: only what the new contract needs to compile (fixtures get `selectedGame` and the Wavelength config; the Impostor screen narrows by `gameType` and ignores a psychic secret). No Wavelength UI yet.
+
+Decisions not recorded in the plan:
+- `POST {match}/next-round` moved from the Impostor router to the platform router, which dispatches by the current match's `gameType`; both games use that path, and two routes on one method and path cannot coexist in Hono.
+- A command meant for the other game (a clue on an Impostor match) answers `STALE_ROUND`.
+- New error codes: `NOT_PSYCHIC` (403, a clue from anyone but the psychic) and `INVALID_GUESS` (422, a guess from the psychic, a departed player or a spectator).
+- `skip-psychic` does not check that the psychic is offline on the server; the client shows the button only then, and the server's 45 s window could disagree with the phone's view at the edge.
+- The registry is a function, not a module-level object: `room-state` imports it and the game services import `room-state`, so an object built at load time could hit a binding not yet initialized.
+- Public state fields: `turn` (position in the cycles times order sequence) beside `round` (bumped by every opened round, cancelled ones included), `departedIds`, `totals` per participant, `skipped` (the cancelled turn, cleared by the next clue), `lastResult.guesses` listing every guesser with `value: null` for those who did not commit.
+- A second commit answers `STALE_ROUND` only if the first one is already counted; if its sync had failed, the retry syncs it and answers 200.
+- Spectrum ids are `{left}.{right}` slugs; on exhaustion `usedSpectrumIds` restarts from empty.
+
+Pending: web (round 2): lobby card and panel, `$code/wavelength.tsx`, the dial, the screens, the match-and-round-keyed secret query, the generalized navigation, shared pieces into `web/src/components/`, screenshots.
+
+Deferred: none.
+
+### Round 2
+
+Finding applied:
+- Each round's target is its own MatchSecrets item, `#ROUND#{nn}`, put with `attribute_not_exists` in the version-conditional write that opens the round; reveal, close and `/me` read the key of the round they hold, so a decide that lost the race fails the version condition and retries instead of reading a newer round. `#MATCH` stays Impostor's. Test: a later round's item already stored leaves `/me` and the reveal of the earlier round untouched.
+
+Web done:
+- Lobby: `GamePicker` takes the selected game; the host taps a card (`Jugar {game}`, a stretched button over the card) and `PUT /config` sends that game's current config; members see the chosen card only. `StartSection` (players online plus Iniciar) is shared by both panels. Wavelength panel: Vueltas 1 to 3 as a radiogroup with the rounds it means.
+- `$code/route.tsx` navigates by a `gameType` to path map; `$code/wavelength.tsx` renders CLUE, GUESS, REVEAL and FINISHED, the Espectador variant, Saltar turno (host, psychic offline, with confirm), Cerrar (host, confirm when guesses are missing) and the Terminar partida menu.
+- `Dial`: SVG semicircle, pointer drag with capture, 1-point −/+ buttons, `role="slider"` with arrows, PageUp/PageDown by 10, Home and End; bands with their points around a target, name markers for the reveal; read-only it is an `img`.
+- Moved to `web/src/components/`: `AbortMatchMenu` (host menu plus confirm), `match.ts` (`nameOf`, `vibrate`, `usePhaseVibration`); Impostor imports them.
+- `useMatchSecret` is keyed by match and round (Impostor passes `null`); a test shows a psychic in a later round fetching again, and it fails with the old key.
+- `myGuess.ts` keeps the caller's committed value per match and round in `sessionStorage`, as `myVote` does.
+- Screenshots: `{{workspace}}/screenshots/`, 129 files at 390, 768 and 1280 (Impostor and lobby refreshed too), every listed Wavelength state including Saltar turno with confirm, Cerrar confirm, psychic waiting, member views, Espectador and Terminar partida.
+
+Decisions not recorded in the plan:
+- The clue form and Confirmar lock on the first tap and unlock only if the server refuses (the command's promise rejects), so a failed request is not a dead end.
+- On a locked dial the −/+ buttons are hidden, not disabled; the value stays shown.
+- The psychic sees no badge in the header (the screen already says "Eres el psíquico"), the subtitle reads "Psíquico: tú".
+- The final screen ranks the players still in the match by `totals`; ties are named together, nobody scoring says so.
+
+Fixed along the way: my round 1 api test used `room.member(3)` as a latecomer while it was a participant, so it failed whenever that player drew the psychic; it now uses a player who joins after the start.
+
+Pending: docs (after the clean signal).
+
+Deferred: in the lobby member list at 390 px the host's crown wraps under "(tú)" on its own line (`components/lobby/MemberList.tsx`, from 0002, untouched here). Fixed in round 3.
+
+### Round 3
+
+Findings applied:
+- `MemberList`: "(tú)" and the crown sit in one no-wrap group with the last word of the name, so they never wrap alone; at 390 px a name that does not fit takes them to the next line with its last word, at 768 and 1280 they stay on the name's line.
+- Scoreboard ranks are shared on ties (competition ranking: 4, 2, 2, 0 reads 1, 2, 2, 4), computed in `ranking()` of `games/wavelength/model.ts`; a Testing Library case pins a tied table.
+- Screenshots regenerated, all 129.
+
+Pending: docs (after the clean signal).
+
+Deferred: none.
+
+### Docs
+
+- `document-task` created `docs/modules/wavelength/` (README, prd, trd, ard, database, flows) and updated platform (README, prd, trd, database, ard) and impostor (trd, database).
+- Beyond `docs/modules/` and the debt index, as the task's Scope and `Context & decisions` ask: module and secret lists in `docs/TRD.md`, the Wavelength capability in `docs/PRD.md`, the secret list in `CLAUDE.md`. No global `Decisions` entry of `docs/ARD.md` was edited.
+- Debt index: one new row (wavelength, spectra restart may repeat the last spectrum). No earlier debt resolved.

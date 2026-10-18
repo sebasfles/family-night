@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Button } from '../../components/Button';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { CheckIcon } from '../../components/icons';
-import { nameOf } from './model';
+import { nameOf } from '../../components/match';
 
 interface VotingProps {
   match: ImpostorPublic;

@@ -1,4 +1,4 @@
-import type { GuessRequest, RoomResponse, RoundRequest, VoteRequest } from '@family-night/shared';
+import type { GuessRequest, RoomResponse, VoteRequest } from '@family-night/shared';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import type { Deps } from '../deps.ts';
@@ -7,12 +7,10 @@ import {
   castVote,
   closeVotingCommand,
   guessCommand,
-  nextRoundCommand,
   skipGuessCommand,
 } from '../services/impostor/index.ts';
 import { matchIdParam, parseBody, roomCodeParam, type AppEnv } from './context.ts';
-
-const roundSchema: z.ZodType<RoundRequest> = z.object({ round: z.int().min(1).max(99) });
+import { roundSchema } from './matches.ts';
 const voteSchema: z.ZodType<VoteRequest> = z.object({
   round: z.int().min(1).max(99),
   targetId: playerIdSchema,
@@ -33,13 +31,6 @@ export function impostorRoutes(deps: Deps) {
       const body = await parseBody(c, roundSchema);
       return c.json<RoomResponse>({
         room: await closeVotingCommand(deps, c.get('player'), code, matchId, body),
-      });
-    })
-    .post('/:code/matches/:matchId/next-round', async (c) => {
-      const [code, matchId] = [roomCodeParam(c), matchIdParam(c)];
-      const body = await parseBody(c, roundSchema);
-      return c.json<RoomResponse>({
-        room: await nextRoundCommand(deps, c.get('player'), code, matchId, body),
       });
     })
     .post('/:code/matches/:matchId/guess', async (c) => {

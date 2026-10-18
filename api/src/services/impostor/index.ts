@@ -18,6 +18,7 @@ import {
   type ImpostorConfig,
   type ImpostorPublic,
   type MatchFacts,
+  type MatchSecret,
   type RoomSnapshot,
   type RoundRequest,
   type VoteRequest,
@@ -35,14 +36,17 @@ import {
 import type { MatchItem } from '../../repos/matches.ts';
 import type { PlayerItem } from '../../repos/players.ts';
 import type { VoteItem } from '../../repos/votes.ts';
+import type { DepartureReason, GameModule, PrepareInput } from '../games.ts';
 import {
   applyMatchUpdate,
   callerChange,
+  gameState,
+  matchCommand,
   requireCurrentMatch,
   type MatchUpdate,
 } from '../matches/match-change.ts';
 import { updateRoom } from '../room-state.ts';
-import { bankEntries, categoryWords, isKnownCategory } from './words.ts';
+import { bankEntries, categoryWords, defaultImpostorConfig, isKnownCategory } from './words.ts';
 
 export function parseImpostorConfig(raw: unknown): ImpostorConfig {
   const parsed = impostorConfigSchema.safeParse(raw);
@@ -79,19 +83,10 @@ export function checkImpostorStart(config: ImpostorConfig, playerCount: number):
   }
 }
 
-export function prepareImpostor(
-  deps: Deps,
-  input: {
-    matchId: string;
-    config: ImpostorConfig;
-    participants: string[];
-    usedWordIds: string[];
-    nowMs: number;
-  },
-): { publicState: ImpostorPublic; usedWordIds: string[]; writes: TransactItem[] } {
-  const { matchId, config, participants, nowMs } = input;
+export function prepareImpostor(deps: Deps, input: PrepareInput<ImpostorConfig>): MatchUpdate {
+  const { matchId, config, participants, room, nowMs } = input;
   const randomInt = deps.secureRandomInt;
-  const picked = pickWord(bankEntries, input.usedWordIds, config.categories, randomInt);
+  const picked = pickWord(bankEntries, room.usedWordIds, config.categories, randomInt);
   const entry = picked.word;
   const { state, impostorIds } = startMatch({ matchId, config, participants, randomInt });
   const ttl = ttlFrom(nowMs);
@@ -158,10 +153,10 @@ export async function impostorDeparture(
   deps: Deps,
   match: MatchItem,
   playerId: string,
-  reason: 'LEFT' | 'KICKED',
+  reason: DepartureReason,
   nowMs: number,
 ): Promise<MatchUpdate | null> {
-  const before = match.publicState;
+  const before = gameState(match, 'IMPOSTOR');
   if (before.status !== 'PLAYING') return null;
   const facts = await loadFacts(deps, match.matchId, nowMs);
   const votes =
@@ -182,23 +177,6 @@ export async function impostorDeparture(
     .filter((vote) => dropped.some((ballot) => ballot.voterId === vote.voterId))
     .map((vote) => deps.repos.votes.deleteItem(vote));
   return withScores(before, state, facts, writes);
-}
-
-type MatchAction = (match: MatchItem, nowMs: number) => Promise<MatchUpdate>;
-
-function matchCommand(
-  deps: Deps,
-  player: PlayerItem,
-  roomCode: string,
-  matchId: string,
-  role: 'member' | 'host',
-  act: MatchAction,
-): Promise<RoomSnapshot> {
-  return updateRoom(deps, roomCode, async (state, nowMs) => {
-    const change = callerChange(state, player.playerId, nowMs, role);
-    const match = await requireCurrentMatch(deps, state, matchId, nowMs);
-    return applyMatchUpdate(change, match, await act(match, nowMs), nowMs);
-  });
 }
 
 async function roundBallots(deps: Deps, match: MatchItem, nowMs: number): Promise<Ballot[]> {
@@ -223,7 +201,7 @@ export async function castVote(
   const match = await deps.repos.matches.get(roomCode, matchId, nowMs);
   if (!match) throw new AppError('MATCH_NOT_FOUND');
   if (room.currentMatchId !== matchId) throw new AppError('STALE_ROUND');
-  const problem = voteProblem(match.publicState, player.playerId, targetId, round);
+  const problem = voteProblem(gameState(match, 'IMPOSTOR'), player.playerId, targetId, round);
   if (problem) throw new AppError(problem);
   await deps.repos.votes.put({
     matchId,
@@ -237,7 +215,7 @@ export async function castVote(
   return updateRoom(deps, roomCode, async (state, now) => {
     const change = callerChange(state, player.playerId, now, 'member');
     const current = await requireCurrentMatch(deps, state, matchId, now);
-    const before = current.publicState;
+    const before = gameState(current, 'IMPOSTOR');
     if (before.phase !== 'VOTING' || before.round !== round) {
       if (before.round === round && before.votedPlayerIds.includes(player.playerId)) return change;
       throw new AppError('STALE_ROUND');
@@ -260,7 +238,7 @@ export function closeVotingCommand(
   { round }: RoundRequest,
 ): Promise<RoomSnapshot> {
   return matchCommand(deps, player, roomCode, matchId, 'host', async (match, nowMs) => {
-    const before = match.publicState;
+    const before = gameState(match, 'IMPOSTOR');
     if (before.status !== 'PLAYING' || before.phase !== 'VOTING' || before.round !== round) {
       throw new AppError('STALE_ROUND');
     }
@@ -277,28 +255,25 @@ export function closeVotingCommand(
   });
 }
 
-export function nextRoundCommand(
+async function impostorNextRound(
   deps: Deps,
-  player: PlayerItem,
-  roomCode: string,
-  matchId: string,
-  { round }: RoundRequest,
-): Promise<RoomSnapshot> {
-  return matchCommand(deps, player, roomCode, matchId, 'host', async (match, nowMs) => {
-    const before = match.publicState;
-    if (before.status !== 'PLAYING' || before.phase !== 'REVEAL' || before.round !== round) {
-      throw new AppError('STALE_ROUND');
-    }
-    const facts = await loadFacts(deps, match.matchId, nowMs);
-    const after = nextRound(before, facts);
-    const cleared =
-      after.phase === 'VOTING'
-        ? (await deps.repos.votes.listRound(match.matchId, before.round, nowMs)).map((vote) =>
-            deps.repos.votes.deleteItem(vote),
-          )
-        : [];
-    return withScores(before, after, facts, cleared);
-  });
+  match: MatchItem,
+  round: number,
+  nowMs: number,
+): Promise<MatchUpdate> {
+  const before = gameState(match, 'IMPOSTOR');
+  if (before.status !== 'PLAYING' || before.phase !== 'REVEAL' || before.round !== round) {
+    throw new AppError('STALE_ROUND');
+  }
+  const facts = await loadFacts(deps, match.matchId, nowMs);
+  const after = nextRound(before, facts);
+  const cleared =
+    after.phase === 'VOTING'
+      ? (await deps.repos.votes.listRound(match.matchId, before.round, nowMs)).map((vote) =>
+          deps.repos.votes.deleteItem(vote),
+        )
+      : [];
+  return withScores(before, after, facts, cleared);
 }
 
 export function guessCommand(
@@ -309,7 +284,7 @@ export function guessCommand(
   { option }: GuessRequest,
 ): Promise<RoomSnapshot> {
   return matchCommand(deps, player, roomCode, matchId, 'member', async (match, nowMs) => {
-    const before = match.publicState;
+    const before = gameState(match, 'IMPOSTOR');
     if (before.status !== 'PLAYING' || before.phase !== 'IMPOSTOR_GUESS' || !before.guess) {
       throw new AppError('STALE_ROUND');
     }
@@ -327,7 +302,7 @@ export function skipGuessCommand(
   matchId: string,
 ): Promise<RoomSnapshot> {
   return matchCommand(deps, player, roomCode, matchId, 'host', async (match, nowMs) => {
-    const before = match.publicState;
+    const before = gameState(match, 'IMPOSTOR');
     if (before.status !== 'PLAYING' || before.phase !== 'IMPOSTOR_GUESS') {
       throw new AppError('STALE_ROUND');
     }
@@ -335,3 +310,24 @@ export function skipGuessCommand(
     return withScores(before, skipGuess(before, facts), facts);
   });
 }
+
+async function impostorSecret(
+  deps: Deps,
+  match: MatchItem,
+  playerId: string,
+  nowMs: number,
+): Promise<MatchSecret | null> {
+  const item = await deps.repos.matchSecrets.getPlayer(match.matchId, playerId, nowMs);
+  return item?.secret ?? null;
+}
+
+export const impostorGame: GameModule<'IMPOSTOR'> = {
+  defaultConfig: defaultImpostorConfig,
+  parseConfig: parseImpostorConfig,
+  checkStart: checkImpostorStart,
+  prepare: prepareImpostor,
+  nextRound: (deps, match, round, _room, nowMs) => impostorNextRound(deps, match, round, nowMs),
+  departure: (deps, match, playerId, reason, _room, nowMs) =>
+    impostorDeparture(deps, match, playerId, reason, nowMs),
+  secret: impostorSecret,
+};

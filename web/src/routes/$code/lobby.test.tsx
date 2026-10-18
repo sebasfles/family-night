@@ -29,6 +29,21 @@ function enterRoom(path: string, snapshotToServe: RoomSnapshot = room()) {
   return { ...renderApp(path), mock };
 }
 
+const players = (count: number) =>
+  Array.from({ length: count }, (_, index) =>
+    index === 0
+      ? member({ playerId: me.playerId, name: me.name })
+      : member({
+          playerId: `${String(index + 1).repeat(8)}-0000-4000-8000-000000000000`,
+          name: `Jugador ${String(index + 1)}`,
+        }),
+  );
+
+const body = (mock: ReturnType<typeof mockApi>, route: string): unknown => {
+  const sent = mock.calls.findLast((call) => call.route === route)?.init.body;
+  return typeof sent === 'string' ? JSON.parse(sent) : undefined;
+};
+
 function stubNavigator(key: 'clipboard' | 'share', value: unknown) {
   Object.defineProperty(navigator, key, { configurable: true, value });
   onTestFinished(() => {
@@ -170,7 +185,7 @@ describe('the lobby', () => {
     expect(screen.queryByRole('button', { name: /Opciones para/ })).toBeNull();
   });
 
-  test('Impostor is the chosen game and the others are coming soon', async () => {
+  test('Impostor is chosen by default, Wavelength can be picked and Just One is coming soon', async () => {
     enterRoom('/ABCD');
 
     const games = await screen.findByRole('region', { name: 'Juegos' });
@@ -178,7 +193,16 @@ describe('the lobby', () => {
       expect(within(games).getByRole('heading', { name })).toBeVisible();
     }
     expect(within(games).getByText('Elegido')).toBeVisible();
-    expect(within(games).getAllByText('Próximamente')).toHaveLength(2);
+    expect(within(games).getByRole('button', { name: 'Jugar Impostor' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    expect(within(games).getByRole('button', { name: 'Jugar Wavelength' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+    expect(within(games).queryByRole('button', { name: 'Jugar Just One' })).toBeNull();
+    expect(within(games).getAllByText('Próximamente')).toHaveLength(1);
   });
 
   test('leaving asks first, then leaves and goes home', async () => {
@@ -283,26 +307,12 @@ describe('the Impostor panel', () => {
     { id: 'animales', name: 'Animales', count: 25 },
     { id: 'comida', name: 'Comida', count: 25 },
   ];
-  const players = (count: number) =>
-    Array.from({ length: count }, (_, index) =>
-      index === 0
-        ? member({ playerId: me.playerId, name: me.name })
-        : member({
-            playerId: `${String(index + 1).repeat(8)}-0000-4000-8000-000000000000`,
-            name: `Jugador ${String(index + 1)}`,
-          }),
-    );
 
   function lobby(served: RoomSnapshot) {
     const entered = enterRoom('/ABCD', served);
     entered.mock.on('GET /api/words/categories', () => Response.json({ categories }));
     return entered;
   }
-
-  const body = (mock: ReturnType<typeof mockApi>, route: string): unknown => {
-    const sent = mock.calls.findLast((call) => call.route === route)?.init.body;
-    return typeof sent === 'string' ? JSON.parse(sent) : undefined;
-  };
 
   test('with fewer than 3 online the host cannot start', async () => {
     lobby(room());
@@ -402,5 +412,71 @@ describe('the Impostor panel', () => {
     expect(
       await screen.findByText('Con 3 jugadores puede haber como máximo 1 impostor'),
     ).toBeVisible();
+  });
+});
+
+describe('the Wavelength panel', () => {
+  const wavelengthRoom = (overrides: Partial<RoomSnapshot> = {}) =>
+    room({ members: players(3), selectedGame: 'WAVELENGTH', ...overrides });
+
+  test('the host picks Wavelength and every member sees it with its config', async () => {
+    const served = room({ members: players(3) });
+    const { mock } = enterRoom('/ABCD', served);
+    mock.on('GET /api/words/categories', () => Response.json({ categories: [] }));
+    mock.on('PUT /api/rooms/ABCD/config', () =>
+      Response.json({ room: { ...served, version: 9, selectedGame: 'WAVELENGTH' } }),
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Jugar Wavelength' }));
+
+    await waitFor(() => {
+      expect(body(mock, 'PUT /api/rooms/ABCD/config')).toEqual({
+        gameType: 'WAVELENGTH',
+        config: { cycles: 1 },
+      });
+    });
+    expect(await screen.findByRole('radio', { name: '1' })).toBeChecked();
+    expect(
+      screen.getByText(/Cada jugador es psíquico una vez: 3 rondas con 3 en línea/),
+    ).toBeVisible();
+  });
+
+  test('the host changes the cycles and starts with them', async () => {
+    const served = wavelengthRoom({ configs: { ...room().configs, WAVELENGTH: { cycles: 2 } } });
+    const { mock } = enterRoom('/ABCD', served);
+    mock.on('PUT /api/rooms/ABCD/config', () => Response.json({ room: served }));
+    mock.on('POST /api/rooms/ABCD/matches', () =>
+      apiError(422, 'NOT_ENOUGH_PLAYERS', 'Se necesitan al menos 3 jugadores en línea'),
+    );
+
+    expect(await screen.findByRole('radio', { name: '2' })).toBeChecked();
+    expect(screen.getByText(/psíquico 2 veces: 6 rondas/)).toBeVisible();
+    fireEvent.click(screen.getByRole('radio', { name: '3' }));
+    await waitFor(() => {
+      expect(body(mock, 'PUT /api/rooms/ABCD/config')).toEqual({
+        gameType: 'WAVELENGTH',
+        config: { cycles: 3 },
+      });
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Iniciar' }));
+    await waitFor(() => {
+      expect(body(mock, 'POST /api/rooms/ABCD/matches')).toEqual({
+        gameType: 'WAVELENGTH',
+        config: { cycles: 2 },
+      });
+    });
+    expect(await screen.findByText('Se necesitan al menos 3 jugadores en línea')).toBeVisible();
+  });
+
+  test('members see the chosen game and its config read-only', async () => {
+    enterRoom('/ABCD', wavelengthRoom({ hostId: guest.playerId }));
+
+    const games = await screen.findByRole('region', { name: 'Juegos' });
+    expect(within(games).queryByRole('button')).toBeNull();
+    expect(within(games).getByText('Elegido').closest('li')).toHaveTextContent('Wavelength');
+    expect(screen.getByText('Solo el host puede cambiarla.')).toBeVisible();
+    for (const radio of screen.getAllByRole('radio')) expect(radio).toBeDisabled();
+    expect(screen.getByText('Esperando a que el host inicie…')).toBeVisible();
   });
 });

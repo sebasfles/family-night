@@ -33,6 +33,19 @@ export const IMPOSTOR_DEFAULTS = {
   impostorLastGuess: true,
 } as const;
 
+export const MIN_WAVELENGTH_PLAYERS = 3;
+export const MIN_WAVELENGTH_ACTIVE = 2;
+export const WAVELENGTH_MAX_CYCLES = 3;
+export const WAVELENGTH_CLUE_MAX = 40;
+export const DIAL_MAX = 100;
+export const DIAL_BANDS = [
+  { within: 5, points: 4 },
+  { within: 10, points: 3 },
+  { within: 15, points: 2 },
+  { within: 25, points: 1 },
+] as const;
+export const WAVELENGTH_DEFAULTS = { cycles: 1 } as const;
+
 const roomCodePattern = new RegExp(`^[${ROOM_CODE_ALPHABET}]{${String(ROOM_CODE_LENGTH)}}$`);
 
 export function isRoomCode(value: string): boolean {

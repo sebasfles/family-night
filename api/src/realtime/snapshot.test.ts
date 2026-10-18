@@ -1,11 +1,19 @@
-import { IMPOSTOR_DEFAULTS, ONLINE_WINDOW_MS, type GameConfigs } from '@family-night/shared';
+import {
+  IMPOSTOR_DEFAULTS,
+  ONLINE_WINDOW_MS,
+  WAVELENGTH_DEFAULTS,
+  type GameConfigs,
+} from '@family-night/shared';
 import { expect, test } from 'vitest';
 import { iso } from '../lib/time.ts';
 import type { MemberItem } from '../repos/room-members.ts';
 import { buildSnapshot } from './snapshot.ts';
 
 const now = Date.parse('2026-10-17T20:00:00.000Z');
-const configs: GameConfigs = { IMPOSTOR: { ...IMPOSTOR_DEFAULTS, categories: ['animales'] } };
+const configs: GameConfigs = {
+  IMPOSTOR: { ...IMPOSTOR_DEFAULTS, categories: ['animales'] },
+  WAVELENGTH: { ...WAVELENGTH_DEFAULTS },
+};
 
 function member(playerId: string, joinedMsAgo: number, seenMsAgo: number): MemberItem {
   return {
@@ -28,6 +36,7 @@ test('the snapshot lists members by join order with online derived from the serv
       hostId: 'b',
       members: [member('a', 1_000, ONLINE_WINDOW_MS), member('b', 5_000, ONLINE_WINDOW_MS - 1)],
       currentMatch: null,
+      selectedGame: 'WAVELENGTH',
       configs,
     },
     now,
@@ -56,6 +65,7 @@ test('the snapshot lists members by join order with online derived from the serv
       },
     ],
     currentMatch: null,
+    selectedGame: 'WAVELENGTH',
     configs,
     serverTime: iso(now),
   });
@@ -65,7 +75,15 @@ test('the snapshot carries no internal field of the stored member', () => {
   const tokenHash = 'f'.repeat(64);
   const stored = { ...member('a', 0, 0), tokenHash } as MemberItem;
   const snapshot = buildSnapshot(
-    { roomCode: 'ABCD', version: 1, hostId: 'a', members: [stored], currentMatch: null, configs },
+    {
+      roomCode: 'ABCD',
+      version: 1,
+      hostId: 'a',
+      members: [stored],
+      currentMatch: null,
+      selectedGame: 'IMPOSTOR',
+      configs,
+    },
     now,
   );
 

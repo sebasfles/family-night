@@ -1,6 +1,6 @@
 ---
-updated: 2026-10-17
-source: setup
+updated: 2026-10-18
+source: 0004_wavelength
 ---
 
 # Platform
@@ -11,9 +11,9 @@ Every phone sees the same room in real time.
 
 ## Boundaries
 
-- Owns: identity and the random name, rooms and membership, host rules and transfer, lobby, presence, invitation, the realtime channel and the room snapshot contract, the match lifecycle shared by every game, and the web shell (routes, identity bootstrap, state-driven navigation, HTTP and realtime clients).
-- Does not own: Impostor rules, endpoints and screens (`impostor`), AWS resources (`infra`), workflows (`deploy`).
-- Code: `shared/src/` except `impostor/`, `api/src/{lib,repos,realtime}`, `api/src/services/{players,rooms,presence,matches}`, `web/src/{routes,identity,api,realtime,components}`.
+- Owns: identity and the random name, rooms and membership, host rules and transfer, lobby, presence, invitation, the realtime channel and the room snapshot contract, the match lifecycle shared by every game, the game registry and the selected game, and the web shell (routes, identity bootstrap, state-driven navigation, HTTP and realtime clients).
+- Does not own: game rules, endpoints and screens (`impostor`, `wavelength`), AWS resources (`infra`), workflows (`deploy`).
+- Code: `shared/src/` except `impostor/` and `wavelength/`, `api/src/{lib,repos,realtime}`, `api/src/services/{players,rooms,presence,matches,games.ts}`, `web/src/{routes,identity,api,realtime,components}` except the game routes.
 
 ## Documents
 

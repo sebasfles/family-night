@@ -12,7 +12,7 @@ export interface RoomMember {
   joinedAt: string;
 }
 
-export type GameType = 'IMPOSTOR';
+export type GameType = 'IMPOSTOR' | 'WAVELENGTH';
 
 export type TieRule = 'SKIP' | 'RANDOM';
 
@@ -25,8 +25,13 @@ export interface ImpostorConfig {
   impostorLastGuess: boolean;
 }
 
+export interface WavelengthConfig {
+  cycles: number;
+}
+
 export interface GameConfigs {
   IMPOSTOR: ImpostorConfig;
+  WAVELENGTH: WavelengthConfig;
 }
 
 export type MatchStatus = 'PLAYING' | 'FINISHED' | 'ABORTED';
@@ -86,11 +91,69 @@ export interface ImpostorPublic {
   reveal: ImpostorReveal | null;
 }
 
-export type MatchPublic = ImpostorPublic;
+export type WavelengthPhase = 'CLUE' | 'GUESS' | 'REVEAL' | 'FINISHED';
+
+export interface Spectrum {
+  id: string;
+  left: string;
+  right: string;
+}
+
+export interface DialGuess {
+  playerId: string;
+  value: number | null;
+  points: number;
+}
+
+export interface WavelengthResult {
+  round: number;
+  psychicId: string;
+  target: number;
+  guesses: DialGuess[];
+  psychicPoints: number;
+}
+
+export type SkipReason = 'LEFT' | 'KICKED' | 'SKIPPED';
+
+export interface SkippedTurn {
+  round: number;
+  psychicId: string;
+  reason: SkipReason;
+}
+
+export interface WavelengthPublic {
+  gameType: 'WAVELENGTH';
+  matchId: string;
+  status: MatchStatus;
+  phase: WavelengthPhase;
+  config: WavelengthConfig;
+  round: number;
+  turn: number;
+  participants: string[];
+  order: string[];
+  departedIds: string[];
+  psychicId: string;
+  spectrum: Spectrum;
+  clue: string | null;
+  committedPlayerIds: string[];
+  skipped: SkippedTurn | null;
+  lastResult: WavelengthResult | null;
+  totals: Record<string, number>;
+}
+
+export type MatchPublic = ImpostorPublic | WavelengthPublic;
 
 export type ImpostorSecret =
   | { role: 'CIVILIAN'; word: string; category: string }
   | { role: 'IMPOSTOR'; clue: string; category: string | null };
+
+export interface WavelengthSecret {
+  role: 'PSYCHIC';
+  round: number;
+  target: number;
+}
+
+export type MatchSecret = ImpostorSecret | WavelengthSecret;
 
 export interface RoomSnapshot {
   roomCode: string;
@@ -98,6 +161,7 @@ export interface RoomSnapshot {
   hostId: string;
   members: RoomMember[];
   currentMatch: MatchPublic | null;
+  selectedGame: GameType;
   configs: GameConfigs;
   serverTime: string;
 }

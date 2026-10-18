@@ -3,6 +3,7 @@ import {
   HOST_SILENCE_MS,
   isOnline,
   type GameConfigs,
+  type GameType,
   type RoomEvent,
   type RoomSnapshot,
 } from '@family-night/shared';
@@ -14,7 +15,7 @@ import { isWriteConflict, transactWrite, type TransactItem } from '../repos/db.t
 import type { MatchItem } from '../repos/matches.ts';
 import type { MemberItem } from '../repos/room-members.ts';
 import type { RoomItem } from '../repos/rooms.ts';
-import { resolveConfigs } from './configs.ts';
+import { resolveConfigs } from './games.ts';
 
 export const MAX_WRITE_ATTEMPTS = 4;
 
@@ -30,7 +31,9 @@ export interface RoomChange {
   events?: RoomEvent[];
   currentMatch?: MatchItem | null;
   configs?: Partial<GameConfigs>;
+  selectedGame?: GameType;
   usedWordIds?: string[];
+  usedSpectrumIds?: string[];
   writes?: TransactItem[];
 }
 
@@ -79,6 +82,7 @@ export function changesSnapshot(before: RoomState, after: RoomChange, nowMs: num
   if (after.configs && JSON.stringify(after.configs) !== JSON.stringify(before.room.configs)) {
     return true;
   }
+  if (after.selectedGame && after.selectedGame !== before.room.selectedGame) return true;
   const project = (members: MemberItem[]) =>
     JSON.stringify(
       members
@@ -124,6 +128,8 @@ async function commit(
         hostId: change.hostId,
         currentMatchId: current?.matchId ?? null,
         usedWordIds: change.usedWordIds ?? state.room.usedWordIds,
+        usedSpectrumIds: change.usedSpectrumIds ?? state.room.usedSpectrumIds,
+        selectedGame: change.selectedGame ?? state.room.selectedGame,
         configs: change.configs ?? state.room.configs,
         updatedAt: iso(nowMs),
         ttl,
@@ -166,6 +172,7 @@ export async function updateRoom(
         hostId: change.hostId,
         members: change.members,
         currentMatch: currentMatchAfter(state, change)?.publicState ?? null,
+        selectedGame: change.selectedGame ?? state.room.selectedGame,
         configs: resolveConfigs(change.configs ?? state.room.configs),
       },
       nowMs,

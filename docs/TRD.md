@@ -1,6 +1,6 @@
 ---
-updated: 2026-10-17
-source: 0003_impostor
+updated: 2026-10-18
+source: 0004_wavelength
 ---
 
 # Technical Requirements Document
@@ -24,7 +24,7 @@ Node comes from `.nvmrc` (24).
 ### shared
 
 - Stack: TypeScript 6 strict (`noUncheckedIndexedAccess`), Vitest.
-- Layout: `src/api.ts` request and response types per endpoint, `src/events.ts` realtime event types, `src/domain.ts` room, player and match types, `src/constants.ts` limits, `src/impostor/rules.ts` pure game rules.
+- Layout: `src/api.ts` request and response types per endpoint, `src/events.ts` realtime event types, `src/domain.ts` room, player and match types, `src/constants.ts` limits, `src/random.ts` shared random helpers, `src/{impostor,wavelength}/rules.ts` pure game rules.
 - Install: `pnpm install --frozen-lockfile` at the root.
 - Workspace files: none.
 - API spec: none; the types in `src/api.ts` are the contract and the api handler tests pin the shapes.
@@ -34,7 +34,7 @@ Node comes from `.nvmrc` (24).
 ### api
 
 - Stack: TypeScript, Hono as internal router, one Lambda handler (`src/index.ts`) and a Node server entry for local runs (`@hono/node-server`), AWS SDK v3 (`lib-dynamodb`) left external to the bundle, SigV4-signed `fetch` to AppSync Events, Vitest.
-- Layout: `src/handlers/` routes, `src/services/` players, rooms, presence, matches, impostor, `src/repos/` one class per table, `src/realtime/publish.ts`, `src/lib/` errors, validation, auth, `src/data/` names and word bank.
+- Layout: `src/handlers/` routes, `src/services/` players, rooms, presence, matches, the game registry (`games.ts`), impostor, wavelength, `src/repos/` one class per table, `src/realtime/publish.ts`, `src/lib/` errors, validation, auth, `src/data/` names, word bank and spectra bank.
 - Install: `pnpm install --frozen-lockfile` at the root.
 - Workspace files: none; table names and `EVENTS_HTTP_DOMAIN` come from the Lambda environment, locally from `.env` (ignored).
 - API spec: none; `shared/src/api.ts` is the contract.
@@ -44,7 +44,7 @@ Node comes from `.nvmrc` (24).
 ### web
 
 - Stack: React 19, Vite, `@tanstack/react-router` with `@tanstack/router-plugin`, `@tanstack/react-query`, Tailwind CSS, own components, Vitest with Testing Library.
-- Layout: `src/routes/` file-based routes, `src/api/` typed client and query hooks, `src/realtime/` AppSync Events WebSocket client, `src/identity/` player in localStorage, `src/components/`, `src/games/impostor/`, `public/og.png`.
+- Layout: `src/routes/` file-based routes, `src/api/` typed client and query hooks, `src/realtime/` AppSync Events WebSocket client, `src/identity/` player in localStorage, `src/components/`, `src/games/{impostor,wavelength}/`, `public/og.png`.
 - Install: `pnpm install --frozen-lockfile` at the root.
 - Workspace files: `.env.production` is not committed; `deploy-web.yml` passes `VITE_EVENTS_HTTP_DOMAIN` and `VITE_EVENTS_REALTIME_DOMAIN` from repository variables. Locally a `.env.local` (ignored) with the same two.
 - API spec: none; calls `/api/...` relatively.
@@ -90,6 +90,7 @@ Modules belong to the application and may span components.
 |---|---|---|---|
 | platform | Permanent anonymous identity, rooms, lobby, presence, invitation, realtime snapshot and the match lifecycle every game shares | shared, api, web | [README](modules/platform/README.md) |
 | impostor | The Impostor game: rules, endpoints, screens and word bank | shared, api, web | [README](modules/impostor/README.md) |
+| wavelength | The Wavelength game: rules, endpoints, dial, screens and spectra bank | shared, api, web | [README](modules/wavelength/README.md) |
 | infra | Every AWS resource the app runs on, the deploy role and the repository variables | infra | [README](modules/infra/README.md) |
 | deploy | CI on pull requests and deploy of `main` to production | deploy | [README](modules/deploy/README.md) |
 
@@ -107,9 +108,9 @@ Modules belong to the application and may span components.
 - Every command is a REST call; every realtime message is published by the Lambda, never by a client, and carries the full public room snapshot with a monotonic `version`.
 - Every request with a body carries `x-amz-content-sha256`, computed in the web client, because CloudFront origin access control signs requests to the Function URL.
 - Realtime subscribers authenticate with `playerId:playerToken` through the Events API's Lambda authorizer; no API key.
-- Secrets (word, role, clue) live only in `MatchSecrets` and reach a player only through `GET /api/rooms/{code}/matches/{matchId}/me`; they never enter a snapshot, an event or a log.
+- Secrets (Impostor word, role and clue; the Wavelength target and guesses before the reveal) live only in `MatchSecrets` and reach a player only through `GET /api/rooms/{code}/matches/{matchId}/me`; they never enter a snapshot, an event or a log.
 - Writes that change the snapshot are conditional on `version` (optimistic locking, three retries); round numbers in bodies make game commands idempotent.
 - Errors are `{ error: { code, message } }` with the message in Spanish, shown as is by the UI.
-- Game rules are pure functions in `shared/src/impostor/rules.ts`, tested without AWS.
+- Game rules are pure functions in `shared/src/{game}/rules.ts`, tested without AWS; games reach the platform through the registry in `api/src/services/games.ts`.
 - UI is mobile-first (360 px), 48 px touch targets, 18 px base text, Spanish copy; code and docs in English.
 - Markdown docs put each sentence on its own line and never use the em dash.

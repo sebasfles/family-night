@@ -5,16 +5,16 @@ import {
   type RoomSnapshot,
 } from '@family-night/shared';
 import { createFileRoute } from '@tanstack/react-router';
-import { useEffect, useRef } from 'react';
 import { api } from '../../api/client';
 import { useMatchSecret, useRoomMutation } from '../../api/match';
 import { useRoom } from '../../api/room';
+import { usePhaseVibration } from '../../components/match';
 import { useNow } from '../../components/useNow';
 import { Card } from '../../games/impostor/Card';
 import { Final } from '../../games/impostor/Final';
 import { LastChance } from '../../games/impostor/LastChance';
 import { MatchHeader } from '../../games/impostor/MatchHeader';
-import { seatOf, vibrate } from '../../games/impostor/model';
+import { seatOf } from '../../games/impostor/model';
 import { useMyVote } from '../../games/impostor/myVote';
 import { Reveal } from '../../games/impostor/Reveal';
 import { TurnOrder } from '../../games/impostor/TurnOrder';
@@ -29,7 +29,7 @@ function ImpostorScreen() {
   const { code } = Route.useParams();
   const room = useRoom(code).data;
   const match = room?.snapshot.currentMatch;
-  if (!room || !match) return null;
+  if (!room || match?.gameType !== 'IMPOSTOR') return null;
   return (
     <ImpostorMatch
       key={match.matchId}
@@ -48,15 +48,6 @@ interface ImpostorMatchProps {
   clockOffsetMs: number;
 }
 
-function usePhaseVibration(match: ImpostorPublic) {
-  const step = `${match.phase}:${String(match.round)}`;
-  const previous = useRef(step);
-  useEffect(() => {
-    if (previous.current !== step) vibrate();
-    previous.current = step;
-  }, [step]);
-}
-
 function ImpostorMatch({ code, snapshot, match, clockOffsetMs }: ImpostorMatchProps) {
   const identity = useIdentity();
   const now = useNow(PRESENCE_RECOMPUTE_MS);
@@ -64,10 +55,10 @@ function ImpostorMatch({ code, snapshot, match, clockOffsetMs }: ImpostorMatchPr
   const seat = seatOf(match, selfId);
   const isHost = snapshot.hostId === selfId;
   const playing = match.status === 'PLAYING';
-  const secret = useMatchSecret(code, match.matchId, seat !== 'SPECTATOR');
+  const secret = useMatchSecret(code, match.matchId, null, seat !== 'SPECTATOR');
   const { matchId, round } = match;
   const [myVote, rememberVote] = useMyVote(matchId, round);
-  usePhaseVibration(match);
+  usePhaseVibration(`${match.phase}:${String(match.round)}`);
 
   const vote = useRoomMutation(async (targetId: string) => {
     const response = await api.vote(code, matchId, { round, targetId });
@@ -109,7 +100,7 @@ function ImpostorMatch({ code, snapshot, match, clockOffsetMs }: ImpostorMatchPr
       )}
 
       {seat !== 'SPECTATOR' && match.phase !== 'FINISHED' && (
-        <Card secret={secret.data ?? undefined} />
+        <Card secret={secret.data?.role === 'PSYCHIC' ? undefined : (secret.data ?? undefined)} />
       )}
 
       {match.phase === 'VOTING' && (
