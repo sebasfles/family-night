@@ -19,12 +19,19 @@ import { useRoomSession } from '../../components/roomSession';
 import { useToast } from '../../components/useToast';
 import { useNow } from '../../components/useNow';
 import { LobbyPanel as ImpostorPanel } from '../../games/impostor/LobbyPanel';
+import { LobbyPanel as JustOnePanel } from '../../games/justone/LobbyPanel';
 import { LobbyPanel as WavelengthPanel } from '../../games/wavelength/LobbyPanel';
 import { useIdentity } from '../../identity/identity';
 
 export const Route = createFileRoute('/$code/')({
   component: Lobby,
 });
+
+const panels = {
+  IMPOSTOR: ImpostorPanel,
+  WAVELENGTH: WavelengthPanel,
+  JUST_ONE: JustOnePanel,
+} satisfies Record<GameType, unknown>;
 
 function Lobby() {
   const { code } = Route.useParams();
@@ -56,6 +63,7 @@ function Lobby() {
   if (!room) return null;
   const { snapshot, clockOffsetMs } = room;
   const isHost = snapshot.hostId === identity.playerId;
+  const Panel = panels[snapshot.selectedGame];
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-8 py-8 md:max-w-2xl">
@@ -83,21 +91,7 @@ function Lobby() {
         }}
       />
 
-      {snapshot.selectedGame === 'WAVELENGTH' ? (
-        <WavelengthPanel
-          code={code}
-          snapshot={snapshot}
-          isHost={isHost}
-          nowMs={now + clockOffsetMs}
-        />
-      ) : (
-        <ImpostorPanel
-          code={code}
-          snapshot={snapshot}
-          isHost={isHost}
-          nowMs={now + clockOffsetMs}
-        />
-      )}
+      <Panel code={code} snapshot={snapshot} isHost={isHost} nowMs={now + clockOffsetMs} />
 
       <Button
         variant="ghost"

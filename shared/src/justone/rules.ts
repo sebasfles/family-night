@@ -15,7 +15,7 @@ export function normalizeWord(text: string): string {
     .trim()
     .toLowerCase()
     .normalize('NFD')
-    .replace(/ñ/g, 'ñ')
+    .replace(/n\u0303/g, '\u00f1')
     .replace(/\p{M}/gu, '')
     .replace(/[^\p{L}\p{N}]/gu, '');
 }

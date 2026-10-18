@@ -9,9 +9,10 @@ export function useMatchSecret(
   matchId: string,
   round: number | null,
   enabled: boolean,
+  phase: string | null = null,
 ) {
   return useQuery({
-    queryKey: ['match-secret', matchId, round],
+    queryKey: ['match-secret', matchId, round, phase],
     queryFn: async () => (await api.matchSecret(code, matchId)).secret,
     staleTime: Infinity,
     enabled,

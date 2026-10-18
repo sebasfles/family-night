@@ -188,6 +188,37 @@ describe('secrets', () => {
     expect(await secretOf(room, first, match.matchId)).toBeNull();
   });
 
+  test('a clue stored after the clues closed is not shown to its author as given', async () => {
+    const room = await roomWith(4);
+    const match = await start(room);
+    const [early, late] = clueGiversOf(room, match).filter(
+      (giver) => giver.playerId !== room.host.playerId,
+    );
+    if (!early || !late) throw new Error('missing clue-givers');
+    await gaveClue(room, early, match, 'Pistaa');
+    const review = await host(room, match, 'close-clues');
+    const now = room.harness.now();
+    expect(
+      await room.harness.deps.repos.matchSecrets.putClue({
+        matchId: match.matchId,
+        round: match.round,
+        authorId: late.playerId,
+        clue: 'Tarde',
+        createdAt: new Date(now).toISOString(),
+        ttl: Math.floor(now / 1000) + 3600,
+      }),
+    ).toBe(true);
+
+    expect(await secretOf(room, late, match.matchId)).toMatchObject({
+      clue: null,
+      clues: [{ authorId: early.playerId, clue: 'Pistaa' }],
+    });
+    expect(await secretOf(room, early, match.matchId)).toMatchObject({ clue: 'Pistaa' });
+    const guessing = await acted(room, early, review, 'show-clues');
+    expect(await secretOf(room, late, match.matchId)).toMatchObject({ clue: null });
+    expect(guessing.clues).toEqual([{ authorId: early.playerId, clue: 'Pistaa' }]);
+  });
+
   test('no snapshot or event carries the word, an uncommitted clue or a cancelled one', async () => {
     const room = await roomWith(5);
     room.harness.published.length = 0;

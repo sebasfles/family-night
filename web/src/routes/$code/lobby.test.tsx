@@ -185,7 +185,7 @@ describe('the lobby', () => {
     expect(screen.queryByRole('button', { name: /Opciones para/ })).toBeNull();
   });
 
-  test('Impostor is chosen by default, Wavelength can be picked and Just One is coming soon', async () => {
+  test('Impostor is chosen by default and every other game can be picked', async () => {
     enterRoom('/ABCD');
 
     const games = await screen.findByRole('region', { name: 'Juegos' });
@@ -197,12 +197,10 @@ describe('the lobby', () => {
       'aria-pressed',
       'true',
     );
-    expect(within(games).getByRole('button', { name: 'Jugar Wavelength' })).toHaveAttribute(
-      'aria-pressed',
-      'false',
-    );
-    expect(within(games).queryByRole('button', { name: 'Jugar Just One' })).toBeNull();
-    expect(within(games).getAllByText('Próximamente')).toHaveLength(1);
+    for (const name of ['Jugar Wavelength', 'Jugar Just One']) {
+      expect(within(games).getByRole('button', { name })).toHaveAttribute('aria-pressed', 'false');
+    }
+    expect(within(games).queryByText('Próximamente')).toBeNull();
   });
 
   test('leaving asks first, then leaves and goes home', async () => {
@@ -478,5 +476,37 @@ describe('the Wavelength panel', () => {
     expect(screen.getByText('Solo el host puede cambiarla.')).toBeVisible();
     for (const radio of screen.getAllByRole('radio')) expect(radio).toBeDisabled();
     expect(screen.getByText('Esperando a que el host inicie…')).toBeVisible();
+  });
+});
+
+describe('the Just One panel', () => {
+  test('the host picks Just One, sets the cycles and starts with them', async () => {
+    const served = room({ members: players(3) });
+    const chosen = { ...served, version: 9, selectedGame: 'JUST_ONE' as const };
+    const { mock } = enterRoom('/ABCD', served);
+    mock.on('GET /api/words/categories', () => Response.json({ categories: [] }));
+    mock.on('PUT /api/rooms/ABCD/config', () => Response.json({ room: chosen }));
+    mock.on('POST /api/rooms/ABCD/matches', () =>
+      apiError(422, 'NOT_ENOUGH_PLAYERS', 'Se necesitan al menos 3 jugadores en línea'),
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Jugar Just One' }));
+
+    await waitFor(() => {
+      expect(body(mock, 'PUT /api/rooms/ABCD/config')).toEqual({
+        gameType: 'JUST_ONE',
+        config: { cycles: 1 },
+      });
+    });
+    expect(
+      await screen.findByText(/Cada jugador adivina una vez: 3 rondas con 3 en línea/),
+    ).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Iniciar' }));
+    await waitFor(() => {
+      expect(body(mock, 'POST /api/rooms/ABCD/matches')).toEqual({
+        gameType: 'JUST_ONE',
+        config: { cycles: 1 },
+      });
+    });
   });
 });

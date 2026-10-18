@@ -196,13 +196,15 @@ async function justOneSecret(
   if (state.status !== 'PLAYING' || !hidden || !isClueGiver(state, playerId)) return null;
   const secret = await deps.repos.matchSecrets.getJustOneRound(match.matchId, state.round, nowMs);
   if (!secret || secret.guesserId === playerId) return null;
-  const clues = await roundClues(deps, state, nowMs);
+  const stored = await roundClues(deps, state, nowMs);
+  const clues = state.phase === 'CLUE' ? [] : reviewedClues(state, stored);
+  const own = (state.phase === 'CLUE' ? stored : clues).find((clue) => clue.authorId === playerId);
   return {
     role: 'CLUE_GIVER',
     round: secret.round,
     word: secret.word,
-    clue: clues.find((clue) => clue.authorId === playerId)?.clue ?? null,
-    clues: state.phase === 'CLUE' ? [] : reviewedClues(state, clues),
+    clue: own?.clue ?? null,
+    clues,
   };
 }
 

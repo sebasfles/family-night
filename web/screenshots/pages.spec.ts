@@ -5,6 +5,8 @@ import {
   WAVELENGTH_DEFAULTS,
   type ImpostorPublic,
   type ImpostorSecret,
+  type JustOnePublic,
+  type JustOneSecret,
   type RoomMember,
   type RoomSnapshot,
   type WavelengthPublic,
@@ -12,6 +14,7 @@ import {
 } from '@family-night/shared';
 import { expect, type Page, test } from '@playwright/test';
 import { impostorMatch, MATCH_ID } from '../src/test/impostor-match';
+import { JUST_ONE_MATCH_ID, justOneMatch } from '../src/test/justone-match';
 import { WAVELENGTH_MATCH_ID, wavelengthMatch } from '../src/test/wavelength-match';
 
 const me = {
@@ -601,4 +604,227 @@ test('wavelength host menu', async ({ page }) => {
   await page.getByRole('menuitem', { name: 'Terminar partida' }).click();
   await expect(page.getByRole('alertdialog')).toBeVisible();
   await capture(page, 'wavelength-end-confirm', false);
+});
+
+async function serveJustOne(
+  page: Page,
+  match: JustOnePublic,
+  secret: JustOneSecret | null = null,
+  overrides: Partial<RoomSnapshot> = {},
+) {
+  await signIn(page);
+  await serveRoom(
+    page,
+    room({ members: online, currentMatch: match, selectedGame: 'JUST_ONE', ...overrides }),
+  );
+  await page.route(`**/api/rooms/KXPR/matches/${JUST_ONE_MATCH_ID}/me`, (route) =>
+    route.fulfill({ json: { secret } }),
+  );
+  await page.goto('/KXPR');
+  await expect(page.getByRole('heading', { name: /^(Ronda|Fin de la partida)/ })).toBeVisible();
+}
+
+const justOneOrder = [zorro, me.playerId, oso, colibri, hipo];
+const givers = [me.playerId, oso, colibri, hipo];
+const allClues = [
+  { authorId: me.playerId, clue: 'Verde' },
+  { authorId: oso, clue: 'Guacamole' },
+  { authorId: colibri, clue: 'verdes' },
+  { authorId: hipo, clue: 'Hueso' },
+];
+
+function word(overrides: Partial<JustOneSecret> = {}): JustOneSecret {
+  return { role: 'CLUE_GIVER', round: 2, word: 'Palta', clue: null, clues: [], ...overrides };
+}
+
+function jo(overrides: Partial<JustOnePublic> = {}): JustOnePublic {
+  return justOneMatch(justOneOrder, { round: 2, turn: 0, score: 1, roundsWon: 1, ...overrides });
+}
+
+const asGuesser = { guesserId: me.playerId, turn: 1 };
+
+function joRevealed(outcome: 'CORRECT' | 'WRONG'): JustOnePublic {
+  const won = outcome === 'CORRECT';
+  return jo({
+    ...asGuesser,
+    phase: 'REVEAL',
+    committedPlayerIds: [zorro, oso, colibri, hipo],
+    cancelledAuthorIds: [zorro, colibri],
+    clues: [
+      { authorId: oso, clue: 'Guacamole' },
+      { authorId: hipo, clue: 'Pepa' },
+    ],
+    score: won ? 2 : 0,
+    roundsWon: won ? 2 : 1,
+    lastResult: {
+      round: 2,
+      guesserId: me.playerId,
+      word: 'Palta',
+      guess: won ? 'palta' : 'Aguacate',
+      outcome,
+      accepted: false,
+      clues: [
+        { authorId: zorro, clue: 'Verde', cancelled: true },
+        { authorId: oso, clue: 'Guacamole', cancelled: false },
+        { authorId: colibri, clue: 'verdes', cancelled: true },
+        { authorId: hipo, clue: 'Pepa', cancelled: false },
+      ],
+      scoreBefore: 1,
+      score: won ? 2 : 0,
+    },
+  });
+}
+
+test('lobby as host with the Just One config', async ({ page }) => {
+  await signIn(page);
+  await serveRoom(
+    page,
+    room({
+      members: online,
+      selectedGame: 'JUST_ONE',
+      configs: { ...room().configs, JUST_ONE: { cycles: 2 } },
+    }),
+  );
+  await page.goto('/KXPR');
+  await expect(page.getByRole('radio', { name: '2' })).toBeChecked();
+  await capture(page, 'lobby-host-justone');
+});
+
+test('just one clue, clue-giver', async ({ page }) => {
+  await serveJustOne(page, jo({ committedPlayerIds: [oso] }), word(), { hostId: zorro });
+  await page.getByRole('textbox', { name: 'Tu pista' }).fill('Verde');
+  await capture(page, 'justone-clue-giver');
+});
+
+test('just one clue, clue-giver committed', async ({ page }) => {
+  await serveJustOne(
+    page,
+    jo({ committedPlayerIds: [oso, me.playerId] }),
+    word({ clue: 'Verde' }),
+    {
+      hostId: zorro,
+    },
+  );
+  await expect(page.getByText('Listo. Esperando a los demás…')).toBeVisible();
+  await capture(page, 'justone-clue-giver-committed');
+});
+
+test('just one clue, guesser', async ({ page }) => {
+  await serveJustOne(page, jo({ ...asGuesser, committedPlayerIds: [oso, colibri] }), null, {
+    hostId: zorro,
+  });
+  await expect(page.getByText('Están escribiendo pistas…')).toBeVisible();
+  await capture(page, 'justone-clue-guesser');
+});
+
+test('just one clue, host closing early', async ({ page }) => {
+  await serveJustOne(page, jo({ committedPlayerIds: [oso] }), word());
+  await page.getByRole('button', { name: 'Cerrar pistas' }).click();
+  await expect(page.getByRole('alertdialog')).toBeVisible();
+  await capture(page, 'justone-clue-close-confirm', false);
+});
+
+test('just one clue, host with the guesser offline after a skip', async ({ page }) => {
+  const members = online.map((player) =>
+    player.playerId === oso
+      ? { ...player, online: false, lastSeenAt: new Date(Date.now() - 120_000).toISOString() }
+      : player,
+  );
+  const match = jo({
+    guesserId: oso,
+    round: 3,
+    turn: 2,
+    skipped: { round: 2, guesserId: zorro, reason: 'SKIPPED' },
+  });
+  await serveJustOne(page, match, word({ round: 3 }), { members });
+  await expect(page.getByRole('button', { name: 'Saltar turno' })).toBeVisible();
+  await capture(page, 'justone-clue-skip');
+  await page.getByRole('button', { name: 'Saltar turno' }).click();
+  await expect(page.getByRole('alertdialog')).toBeVisible();
+  await capture(page, 'justone-clue-skip-confirm', false);
+});
+
+test('just one review, clue-giver', async ({ page }) => {
+  await serveJustOne(
+    page,
+    jo({ phase: 'REVIEW', committedPlayerIds: givers, cancelledAuthorIds: [me.playerId, colibri] }),
+    word({ clue: 'Verde', clues: allClues }),
+    { hostId: zorro },
+  );
+  await expect(page.getByRole('list', { name: 'Pistas' })).toBeVisible();
+  await capture(page, 'justone-review-giver');
+});
+
+test('just one review, host who is the guesser', async ({ page }) => {
+  await serveJustOne(
+    page,
+    jo({
+      ...asGuesser,
+      phase: 'REVIEW',
+      committedPlayerIds: [zorro, oso, colibri],
+      cancelledAuthorIds: [zorro],
+    }),
+  );
+  await expect(page.getByRole('button', { name: 'Mostrar pistas' })).toBeVisible();
+  await capture(page, 'justone-review-host');
+});
+
+const guessPhase = {
+  phase: 'GUESS' as const,
+  committedPlayerIds: [zorro, oso, colibri, hipo],
+  cancelledAuthorIds: [zorro, colibri],
+  clues: [
+    { authorId: oso, clue: 'Guacamole' },
+    { authorId: hipo, clue: 'Pepa' },
+  ],
+};
+
+test('just one guess, guesser', async ({ page }) => {
+  await serveJustOne(page, jo({ ...asGuesser, ...guessPhase }), null, { hostId: zorro });
+  await page.getByLabel('¿Cuál es la palabra?').fill('Palta');
+  await capture(page, 'justone-guess-guesser');
+});
+
+test('just one guess, others', async ({ page }) => {
+  await serveJustOne(
+    page,
+    jo({
+      ...guessPhase,
+      committedPlayerIds: givers,
+      clues: [{ authorId: oso, clue: 'Guacamole' }],
+    }),
+    word({ clues: allClues }),
+    { hostId: zorro },
+  );
+  await expect(page.getByText('Zorro Astuto está adivinando…')).toBeVisible();
+  await capture(page, 'justone-guess-others');
+});
+
+test('just one reveal, correct', async ({ page }) => {
+  await serveJustOne(page, joRevealed('CORRECT'), null, { hostId: zorro });
+  await expect(page.getByText('¡Cóndor Veloz acertó!')).toBeVisible();
+  await capture(page, 'justone-reveal-correct');
+});
+
+test('just one reveal, wrong, host', async ({ page }) => {
+  await serveJustOne(page, joRevealed('WRONG'));
+  await expect(page.getByRole('button', { name: 'Contar como acierto' })).toBeVisible();
+  await capture(page, 'justone-reveal-wrong-host');
+});
+
+test('just one final', async ({ page }) => {
+  await serveJustOne(
+    page,
+    jo({ status: 'FINISHED', phase: 'FINISHED', round: 5, turn: 4, score: 3, roundsWon: 4 }),
+  );
+  await expect(page.getByText('Acertaron 4 rondas')).toBeVisible();
+  await capture(page, 'justone-final');
+});
+
+test('just one spectator', async ({ page }) => {
+  await serveJustOne(page, jo({ ...guessPhase, departedIds: [me.playerId] }), null, {
+    hostId: zorro,
+  });
+  await expect(page.getByText('Partida en curso, juegas en la siguiente')).toBeVisible();
+  await capture(page, 'justone-spectator');
 });

@@ -153,3 +153,28 @@ Decisions not in the plan:
 Pending: web screens, lobby card and panel, Testing Library tests, screenshots (round 2).
 
 Deferred: none.
+
+### Round 2
+
+Findings applied:
+
+1. The `ñ` guard in `normalizeWord` is written as ASCII escapes; the file is ASCII only. My first write carried escapes that reached disk as literal characters.
+2. `/me` takes the caller's `clue` from the stored items only in CLUE; from REVIEW on it comes from the reviewed clues, so a clue put after the clues closed reads as not given. New api case covers it and fails on the round 1 code.
+
+Web (planned for this round):
+
+- Lobby: the Just One card is playable and "Próximamente" is gone from `GamePicker`; the panel (Vueltas 1 to 3) is picked from a `gameType` map.
+- `$code/justone.tsx` with `games/justone/`: CLUE (word card and one-word form for clue-givers, waiting for the guesser, "Pistas listas: N de M", host "Cerrar pistas" with confirmation when clues are missing), REVIEW (clue-givers toggle each clue, crossed out when cancelled; "Mostrar pistas" for clue-givers and the host), GUESS (surviving clues, guess input with Adivinar and Pasar), REVEAL (word, verdict, team score, every clue with the cancelled ones crossed, host "Contar como acierto" on a wrong guess, "Siguiente ronda" or "Ver resultado"), FINISHED (team score, rounds won, host Jugar otra vez and Volver al lobby), Espectador, "Saltar turno" with confirmation while the guesser is offline in CLUE, REVIEW or GUESS, vibration on phase change.
+- Testing Library: navigation, clue input, refused clue, guesser waiting with early close, skip, review toggles and show, guesser view and host-guesser view of the review, guess, pass, others in guess, host override, member reveal, final, spectator; lobby picks Just One and starts with its config.
+- Screenshots: `{{workspace}}/screenshots/`, 174 files at 390, 768 and 1280, every listed Just One state plus the clue-giver after committing, the early close confirmation, Saltar turno with its confirmation; lobby and the other games refreshed.
+
+Decisions not in the plan:
+
+- `useMatchSecret` takes an optional phase as the last key part; Just One passes it, the other games pass nothing.
+- After a clue commit the CLUE secret is refetched, so the clue-giver sees their own clue; whether the form shows comes from the public `committedPlayerIds`.
+- The clue input drops whitespace as it is typed rather than refusing on submit.
+- `games/justone/MatchHeader.tsx` is the game's own header, as the games do not import each other.
+
+Pending: none.
+
+Deferred: none.
