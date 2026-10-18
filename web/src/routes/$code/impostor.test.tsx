@@ -4,7 +4,7 @@ import {
   type ImpostorSecret,
   type RoomSnapshot,
 } from '@family-night/shared';
-import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, test, vi } from 'vitest';
 import { me, member, mockApi, renderApp, signIn, snapshot, type Handler } from '../../test/app';
 import { impostorMatch, MATCH_ID } from '../../test/impostor-match';
@@ -169,6 +169,47 @@ describe('voting', () => {
     expect(screen.getByText('Votaron 1 de 4')).toBeVisible();
   });
 
+  test('my vote stays marked after a reload of the same round', async () => {
+    const match = impostorMatch(ids);
+    const voted = room({ ...match, votedPlayerIds: [me.playerId] }, { version: 4 });
+    play(room(match), civilian, {
+      [`PUT ${base}/votes`]: () => Response.json({ room: voted }),
+    });
+    await screen.findByRole('heading', { name: 'Ronda 1' });
+    fireEvent.click(screen.getByRole('button', { name: /Oso Sabio/ }));
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Oso Sabio/ })).toHaveAttribute(
+        'aria-pressed',
+        'true',
+      );
+    });
+
+    cleanup();
+    play(voted);
+
+    await screen.findByRole('heading', { name: 'Ronda 1' });
+    expect(screen.getByRole('button', { name: /Oso Sabio/ })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    expect(screen.getByText('tu voto')).toBeVisible();
+    expect(JSON.stringify(voted)).not.toContain('targetId');
+  });
+
+  test('a stored vote of an earlier round is not shown in the next one', async () => {
+    sessionStorage.setItem(
+      `family-night.vote.${MATCH_ID}`,
+      JSON.stringify({ round: 1, targetId: oso.playerId }),
+    );
+    play(room(impostorMatch(ids, { round: 2 })));
+
+    await screen.findByRole('heading', { name: 'Ronda 2' });
+    expect(screen.getByRole('button', { name: /Oso Sabio/ })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+  });
+
   test('an eliminated player keeps the card but cannot vote', async () => {
     play(
       room(
@@ -285,6 +326,7 @@ describe('the reveal', () => {
     expect(
       await screen.findByRole('heading', { name: 'Empate: eliminado por sorteo' }),
     ).toBeVisible();
+    expect(screen.getByText('Oso Sabio no era impostor')).toBeVisible();
   });
 
   test('a vote that ends the match leads to the result', async () => {
@@ -385,6 +427,17 @@ describe('the final screen', () => {
     const points = screen.getByRole('heading', { name: 'Puntos de esta partida' }).parentElement;
     expect(within(points ?? document.body).getAllByText('+1')).toHaveLength(3);
     expect(screen.queryByRole('button', { name: /Toca para ver tu carta/ })).toBeNull();
+  });
+
+  test('points list only the winners still in the room, as the server credits them', async () => {
+    const gone = '55555555-5555-4555-8555-555555555555';
+    const match = finished('CIVILIANS', false);
+    play(room({ ...match, participants: [...match.participants, gone] }));
+
+    const points = (await screen.findByRole('heading', { name: 'Puntos de esta partida' }))
+      .parentElement;
+    expect(within(points ?? document.body).getAllByText('+1')).toHaveLength(3);
+    expect(screen.queryByText('Alguien que salió')).toBeNull();
   });
 
   test('a right guess steals the win and the impostor gets 2 points', async () => {

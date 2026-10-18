@@ -25,7 +25,9 @@ export function Final({
   const reveal = match.reveal;
   if (!reveal || !match.winner) return null;
   const civilians = match.winner === 'CIVILIANS';
-  const scores = Object.entries(matchScores(match, reveal.impostorIds));
+  const scores = Object.entries(matchScores(match, reveal.impostorIds)).filter(([playerId]) =>
+    members.some((member) => member.playerId === playerId),
+  );
   const guess = match.guess;
 
   return (

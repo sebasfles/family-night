@@ -177,3 +177,14 @@ Decisions not in the plan:
 
 Pending: docs (on the clean signal).
 Deferred: none.
+
+### Round 3
+
+Findings:
+- 1: the final screen lists points only for winners still in `members`, the ones the server credits; test with a departed winner.
+- 2: a tie broken by lot keeps "Empate: eliminado por sorteo" and the banner names the drawn player ("Oso Sabio no era impostor"); the test checks the name.
+- 3: the caller's own vote is kept per match and round in `sessionStorage` (`family-night.vote.{matchId}`), read on mount and ignored for another round; it never enters a request other than the vote itself, a snapshot or an event; tests remount the screen and check an earlier round is not shown.
+
+Screenshots refreshed.
+Pending: docs (on the clean signal).
+Deferred: none.

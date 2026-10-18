@@ -47,7 +47,11 @@ export function Reveal({ match, members, isHost, busy, onNext }: RevealProps) {
           }`}
         >
           <p className="text-2xl font-bold">
-            {out.wasImpostor ? 'Era impostor' : 'No era impostor'}
+            {result.tie
+              ? `${nameOf(members, out.playerId)} ${out.wasImpostor ? 'era' : 'no era'} impostor`
+              : out.wasImpostor
+                ? 'Era impostor'
+                : 'No era impostor'}
           </p>
         </div>
       )}

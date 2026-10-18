@@ -5,7 +5,7 @@ import {
   type RoomSnapshot,
 } from '@family-night/shared';
 import { createFileRoute } from '@tanstack/react-router';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { api } from '../../api/client';
 import { useMatchSecret, useRoomMutation } from '../../api/match';
 import { useRoom } from '../../api/room';
@@ -15,6 +15,7 @@ import { Final } from '../../games/impostor/Final';
 import { LastChance } from '../../games/impostor/LastChance';
 import { MatchHeader } from '../../games/impostor/MatchHeader';
 import { seatOf, vibrate } from '../../games/impostor/model';
+import { useMyVote } from '../../games/impostor/myVote';
 import { Reveal } from '../../games/impostor/Reveal';
 import { TurnOrder } from '../../games/impostor/TurnOrder';
 import { Voting } from '../../games/impostor/Voting';
@@ -64,13 +65,13 @@ function ImpostorMatch({ code, snapshot, match, clockOffsetMs }: ImpostorMatchPr
   const isHost = snapshot.hostId === selfId;
   const playing = match.status === 'PLAYING';
   const secret = useMatchSecret(code, match.matchId, seat !== 'SPECTATOR');
-  const [myVote, setMyVote] = useState<{ round: number; targetId: string } | null>(null);
   const { matchId, round } = match;
+  const [myVote, rememberVote] = useMyVote(matchId, round);
   usePhaseVibration(match);
 
   const vote = useRoomMutation(async (targetId: string) => {
     const response = await api.vote(code, matchId, { round, targetId });
-    setMyVote({ round, targetId });
+    rememberVote(targetId);
     return response;
   });
   const close = useRoomMutation(() => api.closeVoting(code, matchId, { round }));
@@ -119,7 +120,7 @@ function ImpostorMatch({ code, snapshot, match, clockOffsetMs }: ImpostorMatchPr
             members={snapshot.members}
             selfId={selfId}
             canVote={seat === 'PLAYER'}
-            myVote={myVote?.round === match.round ? myVote.targetId : null}
+            myVote={myVote}
             pendingTarget={vote.isPending ? vote.variables : null}
             isHost={isHost}
             closing={close.isPending}
