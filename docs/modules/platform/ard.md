@@ -1,6 +1,6 @@
 ---
 updated: 2026-10-17
-source: setup
+source: 0002_identity_and_rooms
 ---
 
 # Platform: decisions
@@ -94,3 +94,57 @@ source: setup
 - Debt created: none
 - Revisit when: a browser in use drops keepalive requests on tab hide.
 - Source: setup
+
+## 2026-10-17: The version bump is derived from the snapshot, and every room request has one write path
+
+- Decision: `services/room-state.ts` reads the room then its members, lets the command return the new host and member list, and bumps `version` only when host, membership, name, score or a member's online status differs at the same instant; a bump is one transaction conditional on `version`, otherwise only the caller's presence fields and the room `ttl` are written. Four attempts with jitter, then `CONFLICT`.
+- Alternatives rejected: each command flagging whether it bumps; putting whole member items on presence writes.
+- Reason: one rule keeps plain pings and online rejoins silent and every visible change published, and presence writes cannot revert a field a concurrent bump just changed.
+- Debt created: none
+- Revisit when: a game needs a snapshot field this comparison does not see.
+- Source: 0002_identity_and_rooms
+
+## 2026-10-17: Host-only commands judge the host after the lazy transfer
+
+- Decision: kick and host handover first apply the transfer rule, then check the caller against the resulting host; if the command then fails (`NOT_HOST`, `TARGET_NOT_MEMBER`, kicking oneself), nothing is written, transfer included.
+- Alternatives rejected: committing the transfer in a separate write before the command.
+- Reason: one write per request; the next ping, at most 20 s later, performs the transfer.
+- Debt created: a failed host-only command does not hand over a silent host's crown.
+- Revisit when: a room is seen with a silent host after such a failure.
+- Source: 0002_identity_and_rooms
+
+## 2026-10-17: Error choices the plan left open
+
+- Decision: a malformed room code in the path is 400 `VALIDATION_ERROR`; a kick or handover target outside the room is 409 `TARGET_NOT_MEMBER`; kicking oneself is `VALIDATION_ERROR` and handing the crown to oneself is a no-op; unknown routes answer 404 `NOT_FOUND` and unhandled errors 500 `INTERNAL_ERROR`, both in the envelope; `POST /players` answers 200, as the plan marks 201 only for rooms and matches.
+- Alternatives rejected: 404 for malformed codes; 404 for a missing target.
+- Reason: the web never sends a malformed code, so 400 flags a client bug; a missing target is a state that changed under the host, not an absent resource.
+- Debt created: none
+- Revisit when: a client needs to tell these cases apart differently.
+- Source: 0002_identity_and_rooms
+
+## 2026-10-17: The authorizer allows only exact room channels and caches allows for 300 s
+
+- Decision: the token is `playerId:playerToken`; connect needs a valid identity; subscribe also needs a non-expired membership of the room in exactly `/rooms/{CODE}`, no wildcards; publish and anything else are denied; an error denies; allows carry `ttlOverride: 300`, denials 0.
+- Alternatives rejected: no caching; checking membership on connect.
+- Reason: AppSync caches per token, operation and channel, so caching allows spares a Lambda call on most reconnects while a denial never sticks.
+- Debt created: a kicked or departed member can resubscribe to the room's channel within the 300 s allow cache.
+- Revisit when: a removed member is seen still receiving a room's events.
+- Source: 0002_identity_and_rooms
+
+## 2026-10-17: Web session details
+
+- Decision: the room cache holds the snapshot with the clock offset taken when it was applied; the join on `/{CODE}` is a query with `gcTime: 0`, so opening or reloading joins and nothing else does; identity falls back to memory when localStorage throws.
+- Alternatives rejected: storing the offset apart from the snapshot; a join mutation in an effect.
+- Reason: presence is computed against the server clock of the snapshot in hand; a query deduplicates the join under StrictMode; a private tab still works for its session.
+- Debt created: none
+- Revisit when: a screen needs the offset without a room.
+- Source: 0002_identity_and_rooms
+
+## 2026-10-17: The lobby ships on the dark palette only
+
+- Decision: the shell keeps 0001's dark palette for every screen of this task.
+- Alternatives rejected: adding a light theme driven by `prefers-color-scheme` now.
+- Reason: out of the task's scope; the plan's dark mode is met, a light mode is not.
+- Debt created: no light theme for players whose system is in light mode.
+- Revisit when: a player asks for it or a game needs it.
+- Source: 0002_identity_and_rooms

@@ -1,6 +1,6 @@
 ---
 updated: 2026-10-17
-source: setup
+source: 0002_identity_and_rooms
 ---
 
 # Architecture and Debt Record
@@ -60,6 +60,9 @@ Rebuilt by `write-ard` on every run, kept current by `document-task` on every ta
 | platform | 2026-10-17 | A failed publish is only logged; a phone stays stale until the next event or reconnect | Stale phones reported in play |
 | platform | 2026-10-17 | Host transfer is lazy; a silent host stays until someone acts | A room stays hostless in practice |
 | platform | 2026-10-17 | Own WebSocket client: AppSync Events protocol changes are on us | Handshake changes |
+| platform | 2026-10-17 | A failed host-only command does not hand over a silent host's crown | A silent host seen after such a failure |
+| platform | 2026-10-17 | A removed member can resubscribe within the 300 s authorizer cache | A removed member still receives events |
+| platform | 2026-10-17 | No light theme | A player asks for it |
 | infra | 2026-10-17 | Requests with a body need `x-amz-content-sha256`; no per-route throttle beyond reserved concurrency | Abuse shows up in logs |
 | infra | 2026-10-17 | Authorizer cold start on the first realtime connect after a quiet period | Players notice the delay |
 | infra | 2026-10-17 | State bucket settings are not in code | Bucket needs a change or a second environment |

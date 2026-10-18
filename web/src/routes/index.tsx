@@ -1,46 +1,81 @@
-import { useQuery } from '@tanstack/react-query';
-import { createFileRoute } from '@tanstack/react-router';
-import { getHealth } from '../api/client';
+import { isRoomCode, ROOM_CODE_LENGTH } from '@family-night/shared';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { useState, type SubmitEvent } from 'react';
+import { Button } from '../components/Button';
+import { MoonIcon } from '../components/icons';
+import { useCreateRoom } from '../components/useCreateRoom';
+import { useIdentity } from '../identity/identity';
 
 export const Route = createFileRoute('/')({
   component: Home,
 });
 
 function Home() {
+  const identity = useIdentity();
+  const navigate = useNavigate();
+  const createRoom = useCreateRoom();
+  const [code, setCode] = useState('');
+  const valid = isRoomCode(code);
+
+  const join = (event: SubmitEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (valid) void navigate({ to: '/$code', params: { code } });
+  };
+
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col items-center justify-center gap-6 py-12 text-center">
-      <svg aria-hidden="true" viewBox="0 0 64 64" className="size-20">
-        <path
-          d="M40 14a20 20 0 1 0 10 34A16 16 0 0 1 40 14z"
-          fill="currentColor"
-          className="text-moon"
-        />
-      </svg>
-      <h1 className="text-4xl font-bold tracking-tight">Noche de juegos</h1>
-      <p className="text-balance text-cream/80">
-        Juegos para la familia, cada uno desde su celular.
-      </p>
-      <ServerStatus />
+    <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-10 py-12">
+      <header className="flex flex-col items-center gap-4 text-center">
+        <MoonIcon className="size-16 text-moon" />
+        <h1 className="text-4xl font-bold tracking-tight">Noche de juegos</h1>
+        <p className="text-xl text-cream/90">
+          Hola, <strong className="font-semibold text-moon">{identity.name}</strong>
+        </p>
+      </header>
+
+      <Button
+        busy={createRoom.isPending}
+        onClick={() => {
+          createRoom.mutate();
+        }}
+        className="w-full"
+      >
+        Crear sala
+      </Button>
+
+      <div className="flex items-center gap-3 text-base text-cream/60" aria-hidden="true">
+        <span className="h-px flex-1 bg-cream/15" />o únete a una sala
+        <span className="h-px flex-1 bg-cream/15" />
+      </div>
+
+      <form onSubmit={join} className="flex flex-col gap-3">
+        <label htmlFor="room-code" className="text-base font-semibold text-cream/80">
+          Código de sala
+        </label>
+        <div className="flex gap-3">
+          <input
+            id="room-code"
+            value={code}
+            onChange={(event) => {
+              setCode(
+                event.target.value
+                  .toUpperCase()
+                  .replace(/[^A-Z]/g, '')
+                  .slice(0, ROOM_CODE_LENGTH),
+              );
+            }}
+            autoComplete="off"
+            autoCapitalize="characters"
+            autoCorrect="off"
+            spellCheck={false}
+            enterKeyHint="go"
+            placeholder="ABCD"
+            className="min-h-12 w-0 flex-1 rounded-2xl bg-night-soft pr-4 pl-[calc(1rem+0.3em)] text-center text-2xl font-bold tracking-[0.3em] uppercase ring-1 ring-cream/15 placeholder:text-cream/25 focus:ring-2 focus:ring-moon focus:outline-none"
+          />
+          <Button type="submit" variant="secondary" disabled={!valid}>
+            Unirme
+          </Button>
+        </div>
+      </form>
     </main>
-  );
-}
-
-function ServerStatus() {
-  const health = useQuery({ queryKey: ['health'], queryFn: getHealth, retry: false });
-
-  const [dot, text] = health.isPending
-    ? ['bg-cream/40', 'Conectando con el servidor…']
-    : health.isError
-      ? ['bg-red-400', 'El servidor no responde']
-      : ['bg-emerald-400', `En línea, versión ${health.data.version}`];
-
-  return (
-    <p
-      role="status"
-      className="flex min-h-12 items-center gap-3 rounded-full bg-night-soft px-5 text-base text-cream/90"
-    >
-      <span aria-hidden="true" className={`size-2.5 shrink-0 rounded-full ${dot}`} />
-      {text}
-    </p>
   );
 }

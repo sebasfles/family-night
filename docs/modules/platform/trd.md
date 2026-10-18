@@ -1,6 +1,6 @@
 ---
 updated: 2026-10-17
-source: 0001_scaffold_and_infra
+source: 0002_identity_and_rooms
 ---
 
 # Platform: technical
@@ -15,11 +15,13 @@ Every payload change starts in `shared`, so an incompatible change breaks compil
 |---|---|
 | `shared/src/{api,events,domain,constants}.ts` | Types of every endpoint and event, the domain types, limits (members, TTL, thresholds, room code alphabet). Pure, no AWS. |
 | `api/src/index.ts`, `api/src/app.ts`, `api/src/server.ts` | The Lambda entry and the Node entry around one Hono app (`app.ts`) for every route, platform and game. |
-| `api/src/events-auth.ts` | The Events API authorizer, bundled as its own function; it denies everything until rooms exist. |
+| `api/src/events-auth.ts` | The Events API authorizer, bundled as its own function: connect needs a valid `playerId:playerToken`, subscribe also membership of the exact channel's room; allows cached 300 s, denials never cached. |
 | `api/scripts/build.mjs` | esbuild bundles of both functions, zipped reproducibly into `dist/api.zip` and `dist/events-auth.zip`. |
 | `api/src/lib/` | Errors with their codes, zod validation, authentication by header. |
 | `api/src/repos/` | One class per table; the only code that touches DynamoDB. |
 | `api/src/services/{players,rooms,presence,matches}` | Identity and names, rooms and host rules, ping and away, match start, abort, lobby and rematch. |
+| `api/src/services/room-state.ts` | The one write path of every room request: read room then members, decide, commit, publish. |
+| `api/src/deps.ts` | Repos, publisher, clock and random injected into `createApp`, so tests swap them. |
 | `api/src/realtime/publish.ts` | Builds the public snapshot and posts it, signed with SigV4, to the AppSync Events channel. |
 | `api/src/data/names.json` | 100 animals and 100 adjectives, masculine singular. |
 | `web/src/routes/{__root,index}.tsx` | Layout, providers, toasts, identity bootstrap; home. |
@@ -43,7 +45,7 @@ Authentication, membership and host rules are in [the plan](../../implementation
 | GET | `/api/rooms/{code}` | Snapshot, used to resync. | [plan](../../implementation-plan.md#salas) |
 | POST | `/api/rooms/{code}/join` | Idempotent join and rejoin. | [plan](../../implementation-plan.md#salas) |
 | POST | `/api/rooms/{code}/leave` | Remove own membership. | [plan](../../implementation-plan.md#salas) |
-| POST | `/api/rooms/{code}/ping` | Presence heartbeat. | [plan](../../implementation-plan.md#salas) |
+| POST | `/api/rooms/{code}/ping` | Presence heartbeat; answers `{ room }` so quiet members stay fresh without an extra GET. | [plan](../../implementation-plan.md#salas) |
 | POST | `/api/rooms/{code}/away` | Keepalive fetch on tab hidden, same auth headers as every call. | [plan](../../implementation-plan.md#salas) |
 | POST | `/api/rooms/{code}/kick` | Host removes a member. | [plan](../../implementation-plan.md#salas) |
 | POST | `/api/rooms/{code}/host` | Host hands the role over. | [plan](../../implementation-plan.md#salas) |
@@ -61,11 +63,12 @@ Channel `/rooms/{ROOMCODE}` in namespace `rooms` carries `room.updated`, `member
 
 - Every state-changing endpoint answers with the public snapshot and publishes the same one.
 - A failed publish is logged and never fails the request; the state is already stored.
-- Client rule: apply a snapshot only if its `version` is greater than the cached one, for events and for mutation responses alike.
+- Client rule, for events, mutations, ping and GET alike: apply a snapshot when its `version` is greater, or equal with a newer `serverTime` (plain pings refresh presence without a new version).
 - `online` is derived from `lastSeenAt` and `serverTime` (under 45 s); the client recomputes it every 5 s, so going offline sends no event.
-- `ping` publishes only when the member comes back from offline.
+- The version rises, and an event is published, only when the public snapshot changes: host, membership, name, score or a member's online status; plain pings and online rejoins write presence only.
+- On returning to the foreground the web pings, never joins; `NOT_MEMBER` sends it home with "Te sacaron de la sala". Only opening or reloading `/{CODE}` joins.
 - Host transfer is lazy: it happens on the next request of an online member, not on a timer, and counts 60 s of real silence; the away setback of `lastSeenAt` does not count.
-- Every request with a body carries `x-amz-content-sha256` (SHA-256 of the exact body sent), computed once in `web/src/api/client.ts`; CloudFront origin access control rejects it otherwise.
+- Every POST carries `x-amz-content-sha256`, computed in `web/src/api/client.ts`; bodyless ones use the constant empty-body hash with no `await` before `fetch`, so the away call leaves inside the `visibilitychange` handler.
 - The realtime connection authenticates with `playerId:playerToken` through the AppSync Lambda authorizer; subscribing to `/rooms/{code}` needs membership of that room.
 - Game endpoints are mounted in the same router by the game modules; the platform router dispatches by `gameType` when starting a match.
 - Leaving or being kicked mid-match calls the game's own handling of a player who left.
@@ -83,13 +86,15 @@ Channel `/rooms/{ROOMCODE}` in namespace `rooms` carries `room.updated`, `member
 ## Configuration
 
 - API: the table names, `EVENTS_HTTP_DOMAIN`, `NODE_OPTIONS=--enable-source-maps`, set by infra on the function.
-- Web build: `VITE_EVENTS_HTTP_DOMAIN` and `VITE_EVENTS_REALTIME_DOMAIN`, injected by `deploy-web` from the repository Actions variables.
+- Web build: `VITE_EVENTS_HTTP_DOMAIN` and `VITE_EVENTS_REALTIME_DOMAIN`, injected by `deploy-web` from the repository Actions variables; without them the web runs with no realtime channel.
+- Local api: `pnpm dev` reads `api/.env`; `DYNAMODB_ENDPOINT` points it at a local DynamoDB, and without `EVENTS_HTTP_DOMAIN` publishes are logged and skipped.
 - The web calls the API with relative `/api/...`; no variable.
 
 ## Testing
 
 - Unit: Vitest in `shared`, `api` and `web`.
-- API integration: handlers against DynamoDB Local with the publisher mocked, covering forced name collision, create and join, idempotent rejoin and automatic host transfer.
-- Web: Testing Library; the plan names only the Impostor screens; lobby and shell get the same treatment.
+- API integration: handlers against DynamoDB Local with the publisher mocked; a vitest `globalSetup` starts `amazon/dynamodb-local` in Docker on a random port and fails without Docker, so the api suite needs Docker locally and in CI.
+- Web: Testing Library on home, lobby and the `$code` session, with the realtime channel driven by a fake WebSocket.
+- Screenshots: `pnpm screenshots` in `web/` with `SCREENSHOTS_DIR` set, every screen mocked at 390, 768 and 1280 px.
 - A test serializes a snapshot of a running match and asserts it holds no secret.
 - Module-specific run: see TRD.

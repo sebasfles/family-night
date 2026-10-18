@@ -112,6 +112,7 @@ Decisions (om-reviewer, accepted):
 - RoomMembers gets a real-activity timestamp besides `lastSeenAt`; host transfer uses it, so the away setback never counts. Transfer runs on any member's room request and goes to the oldest online member by `joinedAt`.
 - Every published snapshot has a new `version`: joins of new members, away, and returns to online (ping or join after 45 s) bump it; plain pings do not.
 - Response shapes per the plan's Salas table: leave `{ ok: true }`, ping `{ serverTime }`, away 204 with no body and header auth (`platform/ard.md`). Target not a member on kick or host: a new code with its Spanish message, added in `shared/src/api.ts`.
+- Ping answers `{ room }` instead of the plan's `{ serverTime }` (the snapshot carries `serverTime`), so quiet members stay green without an extra GET every tick; asked by the om-developer before round 1. The client applies a snapshot when its `version` is greater, or equal with a newer `serverTime`.
 - `currentMatch` is typed `null` in 0002; 0003 widens it. Score shows 0.
 - Screenshots in `.workspaces/0002_identity_and_rooms/screenshots/`; the realtime client must not break when its env vars are absent.
 
@@ -127,3 +128,52 @@ Review beyond the Pipeline:
 clearance: repo, plus the read-only Events API connect and subscribe test by the om-reviewer with `AWS_PROFILE=fless-family-night`.
 
 ## om-developer notes
+
+### Round 1
+
+Done:
+
+- shared: `domain.ts`, `events.ts`, `constants.ts` (limits plus pure `isRoomCode`, `normalizeRoomCode`, `roomChannel`, `roomUrl`, `isOnline`), `api.ts` with every request and response and `API_ERRORS` (code, status, Spanish message). Ping answers `{ room }` per the om-reviewer's answer.
+- api: `createApp(deps)` with injected repos, publisher, clock and random; repos per table; services players, rooms, presence and `room-state.ts`, the one write path for every room request; events authorizer; SigV4 publisher; DynamoDB Local from a vitest `globalSetup` (`amazon/dynamodb-local:3.3.1`, random port, one set of tables per test file).
+- web: identity bootstrap in `__root.tsx`, typed client with the body hash on every POST, `RoomChannel` WebSocket client, home, `$code` session (join, subscription, ping, visibility, kicked handling) and lobby.
+- Screenshots: 8 states at 390, 768 and 1280 in `.workspaces/0002_identity_and_rooms/screenshots/` (home, lobby host alone, host with members online and away, host menu open, member, leave confirmation, room not found, room full).
+
+Decisions not recorded in the plan:
+
+- Version bump is computed, not flagged: `changesSnapshot` compares host, membership, name, score and online status before and after at the same instant; any difference bumps and publishes, so plain pings and online rejoins never do.
+- Bumping writes are one `TransactWriteItems` (room conditional on `version`, member puts and deletes); non-bumping writes are a conditional put of the caller's row plus a room `ttl` renewal. Four attempts with jitter, then `CONFLICT`.
+- `lastActiveAt` on RoomMembers is the real-activity timestamp; `touch` sets it with `lastSeenAt`, away moves only `lastSeenAt`. Away does not run the host transfer; every other member request does.
+- A host-only command evaluates the host after the lazy transfer; when it then fails (`NOT_HOST`, `TARGET_NOT_MEMBER`) the transfer is not written and the next ping does it.
+- Kick of oneself is `VALIDATION_ERROR`; handing the crown to oneself is a no-op. `TARGET_NOT_MEMBER` is 409.
+- An invalid room code in the path is 400 `VALIDATION_ERROR`; the web never sends one. Unknown routes answer 404 `NOT_FOUND` in the envelope; unhandled errors 500 `INTERNAL_ERROR`, logged.
+- `POST /players` answers 200 (the plan marks 201 only for rooms). `GET /players/me` renews `Players.lastSeenAt`.
+- Authorizer token is `playerId:playerToken`; subscribe accepts only the exact channel `/rooms/{CODE}` (no wildcard). A thrown error denies.
+- Web cache holds `{ snapshot, clockOffsetMs }`; the offset is taken when a snapshot is applied. The join on `/{CODE}` is a query with `gcTime: 0`, so opening or reloading joins and nothing else does.
+- Identity falls back to memory when localStorage throws, so a private tab still works for the session.
+- `routeFileIgnorePattern: '\.test\.'` in the router plugin, so route tests next to routes are not treated as routes.
+- Request log line per request (method, path, status, ms, playerId).
+
+Pending: nothing in scope.
+
+Deferred:
+
+- The palette is always dark; the plan asks for dark mode by `prefers-color-scheme`, which implies a light theme too. Out of this task.
+- `index.html` `og:description` reads "Juegos para la familia, cada uno desde su celular." instead of the plan's "Únete a la sala y juguemos"; left as 0001 shipped it.
+
+### Round 2
+
+Applied all 6 findings:
+
+1. The non-bump write is `RoomMembersRepo.updatePresence`, an `UpdateExpression` on `lastSeenAt`, `lastActiveAt` and `ttl` with `attribute_exists`; `putExisting` is gone. Integration test: a `totalScore` written between the read and the ping survives.
+2. Bodyless POSTs send the constant empty-body hash with no `await` before `fetch`; only requests with a body await the digest. Tests: `api.away` has reached `fetch` before it returns, and the lobby's away call is in the mock right after the `visibilitychange` dispatch.
+3. `src/routes/$code/realtime.test.tsx` runs the route with a realtime config and `FakeSocket` (now shared in `src/test/fake-socket.ts`): subscription credentials, `member.kicked` for self goes home with "Te sacaron de la sala" (and for someone else does not), `room.updated` applied only when newer, and every `subscribe_success`, after a reconnect too, refetches the room.
+4. The room code and the home code field get a left padding equal to their tracking, so they center optically.
+5. When the list shows menus, rows without one reserve the 48 px slot; scores align.
+6. `window.scrollTo` is stubbed in `test-setup.ts`; the web run has no jsdom noise. `vi.unstubAllEnvs()` joins the cleanup.
+
+Screenshots refreshed. No disagreements, nothing deferred this round.
+
+### Documentation
+
+Platform `prd.md`, `trd.md`, `database.md`, `flows.md` and `ard.md` (six entries) updated; deploy `trd.md` notes that the api tests need Docker on the runner; the `Debt index` of `docs/ARD.md` gains three platform rows.
+Infra docs unchanged: they already describe the authorizer as built, and no resource changed.

@@ -1,6 +1,6 @@
 ---
 updated: 2026-10-17
-source: 0001_scaffold_and_infra
+source: 0002_identity_and_rooms
 ---
 
 # Deploy: technical
@@ -17,6 +17,7 @@ All code lives in `.github/workflows/`.
 
 Both deploys also run on `workflow_dispatch`.
 Their path filters also include the root workspace files (`package.json`, lockfile, `pnpm-workspace.yaml`, base configs), `.nvmrc` and their own workflow file.
+The api tests start DynamoDB Local in Docker, which `ubuntu-latest` provides; a runner without Docker fails them.
 The job names of `checks.yml` are the required checks of `main`; renaming one means changing `required_checks` in `infra/environments/prd/locals.tf`.
 There is no e2e workflow in phase 1: the end-to-end pass is manual, per [the plan](../../implementation-plan.md#testing).
 

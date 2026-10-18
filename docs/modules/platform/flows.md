@@ -1,6 +1,6 @@
 ---
 updated: 2026-10-17
-source: setup
+source: 0002_identity_and_rooms
 ---
 
 # Platform: flows
@@ -29,7 +29,7 @@ sequenceDiagram
 ```
 
 If the publish fails the request still succeeds, and phones resync on their next event or reconnect.
-On reconnect, return to foreground or rejoin, a phone refetches `GET /api/rooms/{code}` instead.
+On every subscription, the first and each after a reconnect, a phone refetches `GET /api/rooms/{code}`; on return to the foreground it pings, and the ping answers the room.
 
 ## Presence states
 
@@ -41,7 +41,7 @@ stateDiagram-v2
   Online --> Online: ping every 20 s while visible
   Online --> Absent: 45 s without ping (computed by clients)
   Online --> Absent: tab hidden, away call, event published
-  Absent --> Online: tab visible, join + snapshot + resubscribe, event published
+  Absent --> Online: tab visible, ping answers the room, resubscribe, event published
   Absent --> Absent: host silent for more than 60 s, next request of an online member transfers the role
   Online --> [*]: leave or kick
   Absent --> [*]: leave or kick
