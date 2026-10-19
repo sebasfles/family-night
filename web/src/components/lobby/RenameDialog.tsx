@@ -5,6 +5,8 @@ import {
   type RoomMember,
 } from '@family-night/shared';
 import { useEffect, useId, useRef, useState } from 'react';
+import { Pop } from '../../motion/motion';
+import { Backdrop } from '../Backdrop';
 import { Button } from '../Button';
 
 interface RenameDialogProps {
@@ -46,51 +48,53 @@ export function RenameDialog({ current, others, onRename, onCancel }: RenameDial
   }, []);
 
   return (
-    <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/60 p-4 sm:items-center">
-      <form
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        className="flex w-full max-w-sm flex-col gap-4 rounded-3xl bg-night-soft p-6 ring-1 ring-cream/10"
-        onSubmit={(event) => {
-          event.preventDefault();
-          if (name === null || taken) return;
-          if (name === current) onCancel();
-          else onRename(name);
-        }}
-      >
-        <h2 id={titleId} className="text-center text-xl font-bold">
-          Tu nombre
-        </h2>
-        <input
-          ref={input}
+    <Backdrop>
+      <Pop className="w-full max-w-sm">
+        <form
+          role="dialog"
+          aria-modal="true"
           aria-labelledby={titleId}
-          aria-describedby={hintId}
-          aria-invalid={problem !== null}
-          value={draft}
-          maxLength={PLAYER_NAME_MAX + 10}
-          autoComplete="nickname"
-          enterKeyHint="done"
-          onChange={(event) => {
-            setDraft(event.target.value);
+          className="flex flex-col gap-4 surface p-6"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (name === null || taken) return;
+            if (name === current) onCancel();
+            else onRename(name);
           }}
-          className="min-h-14 rounded-2xl bg-cream px-4 text-xl text-night focus-visible:ring-2 focus-visible:ring-moon focus-visible:outline-none"
-        />
-        <p
-          id={hintId}
-          className={`text-base ${problem && draft.trim() !== '' ? 'text-orange-300' : 'text-cream/70'}`}
         >
-          {problem ?? 'Así te verán en todas las salas.'}
-        </p>
-        <div className="flex flex-col gap-3">
-          <Button type="submit" disabled={problem !== null}>
-            Guardar
-          </Button>
-          <Button variant="ghost" onClick={onCancel}>
-            Cancelar
-          </Button>
-        </div>
-      </form>
-    </div>
+          <h2 id={titleId} className="text-center text-xl font-bold">
+            Tu nombre
+          </h2>
+          <input
+            ref={input}
+            aria-labelledby={titleId}
+            aria-describedby={hintId}
+            aria-invalid={problem !== null}
+            value={draft}
+            maxLength={PLAYER_NAME_MAX + 10}
+            autoComplete="nickname"
+            enterKeyHint="done"
+            onChange={(event) => {
+              setDraft(event.target.value);
+            }}
+            className="min-h-14 rounded-2xl bg-night px-4 text-xl font-semibold text-cream ring-1 ring-cream/15 focus-visible:ring-2 focus-visible:ring-moon focus-visible:outline-none"
+          />
+          <p
+            id={hintId}
+            className={`text-base ${problem && draft.trim() !== '' ? 'text-ember' : 'text-cream/70'}`}
+          >
+            {problem ?? 'Así te verán en todas las salas.'}
+          </p>
+          <div className="flex flex-col gap-3">
+            <Button type="submit" disabled={problem !== null}>
+              Guardar
+            </Button>
+            <Button variant="ghost" onClick={onCancel}>
+              Cancelar
+            </Button>
+          </div>
+        </form>
+      </Pop>
+    </Backdrop>
   );
 }

@@ -26,6 +26,7 @@ import { useToast } from '../../components/useToast';
 import { useNow } from '../../components/useNow';
 import { LobbyPanel as ImpostorPanel } from '../../games/impostor/LobbyPanel';
 import { useIdentity } from '../../identity/identity';
+import { Enter } from '../../motion/motion';
 import { saveIdentity, type Identity } from '../../identity/storage';
 
 export const Route = createFileRoute('/$code/')({
@@ -111,44 +112,57 @@ function Lobby() {
   const Panel = panels[snapshot.selectedGame];
 
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-8 py-8 md:max-w-2xl">
-      <InviteCard code={code} />
+    <Enter
+      as="main"
+      className="mx-auto grid w-full max-w-md flex-1 content-start gap-8 py-8 md:max-w-2xl lg:max-w-5xl lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-10 lg:py-12"
+    >
+      <div className="flex flex-col gap-8">
+        <InviteCard code={code} />
 
-      <MemberList
-        members={snapshot.members}
-        hostId={snapshot.hostId}
-        selfId={identity.playerId}
-        nowMs={now + clockOffsetMs}
-        onMakeHost={(member) => {
-          makeHost.mutate(member);
-        }}
-        onKick={(member) => {
-          kick.mutate(member);
-        }}
-        onRename={() => {
-          setRenaming(true);
-        }}
-      />
+        <MemberList
+          members={snapshot.members}
+          hostId={snapshot.hostId}
+          selfId={identity.playerId}
+          nowMs={now + clockOffsetMs}
+          onMakeHost={(member) => {
+            makeHost.mutate(member);
+          }}
+          onKick={(member) => {
+            kick.mutate(member);
+          }}
+          onRename={() => {
+            setRenaming(true);
+          }}
+        />
+      </div>
 
-      <GamePicker
-        selected={snapshot.selectedGame}
-        editable={isHost}
-        onSelect={(game: GameType) => {
-          pick.mutate({ gameType: game, config: snapshot.configs[game] } as GameConfigRequest);
-        }}
-      />
+      <div className="flex flex-col gap-8">
+        <GamePicker
+          selected={snapshot.selectedGame}
+          editable={isHost}
+          onSelect={(game: GameType) => {
+            pick.mutate({ gameType: game, config: snapshot.configs[game] } as GameConfigRequest);
+          }}
+        />
 
-      <Panel code={code} snapshot={snapshot} isHost={isHost} nowMs={now + clockOffsetMs} />
+        <Panel
+          key={snapshot.selectedGame}
+          code={code}
+          snapshot={snapshot}
+          isHost={isHost}
+          nowMs={now + clockOffsetMs}
+        />
 
-      <Button
-        variant="ghost"
-        className="self-center"
-        onClick={() => {
-          setConfirmLeave(true);
-        }}
-      >
-        Salir de la sala
-      </Button>
+        <Button
+          variant="ghost"
+          className="self-center"
+          onClick={() => {
+            setConfirmLeave(true);
+          }}
+        >
+          Salir de la sala
+        </Button>
+      </div>
 
       {renaming && (
         <RenameDialog
@@ -177,6 +191,6 @@ function Lobby() {
           }}
         />
       )}
-    </main>
+    </Enter>
   );
 }

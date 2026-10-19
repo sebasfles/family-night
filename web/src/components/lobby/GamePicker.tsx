@@ -1,19 +1,38 @@
 import type { GameType } from '@family-night/shared';
+import type { ComponentType } from 'react';
+import { Stagger, StaggerItem } from '../../motion/motion';
+import { CheckIcon, CluesIcon, DialIcon, MaskIcon } from '../icons';
 
 interface Game {
   id: GameType;
   name: string;
   description: string;
+  Icon: ComponentType<{ className?: string }>;
+  tone: string;
 }
 
 const GAMES: Game[] = [
-  { id: 'IMPOSTOR', name: 'Impostor', description: 'Todos tienen la palabra, menos el impostor.' },
+  {
+    id: 'IMPOSTOR',
+    name: 'Impostor',
+    description: 'Todos tienen la palabra, menos el impostor.',
+    Icon: MaskIcon,
+    tone: 'text-ember bg-ember/14',
+  },
   {
     id: 'WAVELENGTH',
     name: 'Wavelength',
     description: 'Lee la mente de tu familia en una escala.',
+    Icon: DialIcon,
+    tone: 'text-moon bg-moon/14',
   },
-  { id: 'JUST_ONE', name: 'Just One', description: 'Pistas de una palabra para adivinar juntos.' },
+  {
+    id: 'JUST_ONE',
+    name: 'Just One',
+    description: 'Pistas de una palabra para adivinar juntos.',
+    Icon: CluesIcon,
+    tone: 'text-orchid bg-orchid/14',
+  },
 ];
 
 interface GamePickerProps {
@@ -25,45 +44,56 @@ interface GamePickerProps {
 export function GamePicker({ selected, editable, onSelect }: GamePickerProps) {
   return (
     <section aria-labelledby="games-title" className="flex flex-col gap-3">
-      <h2 id="games-title" className="text-xl font-bold">
+      <h2 id="games-title" className="text-2xl font-bold">
         Juegos
       </h2>
-      <ul className="grid gap-3 sm:grid-cols-3">
-        {GAMES.map((game) => {
-          const { id } = game;
-          const chosen = id === selected;
-          return (
-            <li
-              key={id}
-              aria-current={chosen ? 'true' : undefined}
-              className={`relative flex flex-col gap-2 rounded-3xl bg-night-soft p-4 ${
-                chosen ? 'ring-2 ring-moon' : 'ring-1 ring-cream/15'
-              }`}
-            >
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <h3 className="text-lg font-bold">{game.name}</h3>
-                {chosen && (
-                  <span className="rounded-full bg-moon px-3 py-1 text-sm font-semibold text-night">
-                    Elegido
-                  </span>
+      <Stagger>
+        <ul className="grid gap-3 sm:grid-cols-3">
+          {GAMES.map((game) => {
+            const { id, Icon } = game;
+            const chosen = id === selected;
+            return (
+              <StaggerItem
+                as="li"
+                key={id}
+                aria-current={chosen ? 'true' : undefined}
+                className={`relative flex gap-4 surface p-4 sm:flex-col sm:gap-3 ${
+                  chosen ? 'bg-night-raised ring-2 ring-moon' : ''
+                }`}
+              >
+                <span
+                  className={`flex size-14 shrink-0 items-center justify-center rounded-2xl ${game.tone}`}
+                >
+                  <Icon className="size-9" />
+                </span>
+                <div className="flex min-w-0 flex-1 flex-col gap-1">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h3 className="text-xl font-bold">{game.name}</h3>
+                    {chosen && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-moon py-0.5 pr-3 pl-2 text-sm font-bold text-night sm:absolute sm:top-4 sm:right-4">
+                        <CheckIcon className="size-4" />
+                        Elegido
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-base text-cream/75">{game.description}</p>
+                </div>
+                {editable && (
+                  <button
+                    type="button"
+                    aria-label={`Jugar ${game.name}`}
+                    aria-pressed={chosen}
+                    onClick={() => {
+                      if (!chosen) onSelect(id);
+                    }}
+                    className="absolute inset-0 rounded-3xl focus-visible:ring-2 focus-visible:ring-moon focus-visible:outline-none"
+                  />
                 )}
-              </div>
-              <p className="text-base text-cream/80">{game.description}</p>
-              {editable && (
-                <button
-                  type="button"
-                  aria-label={`Jugar ${game.name}`}
-                  aria-pressed={chosen}
-                  onClick={() => {
-                    if (!chosen) onSelect(id);
-                  }}
-                  className="absolute inset-0 rounded-3xl focus-visible:ring-2 focus-visible:ring-moon focus-visible:outline-none"
-                />
-              )}
-            </li>
-          );
-        })}
-      </ul>
+              </StaggerItem>
+            );
+          })}
+        </ul>
+      </Stagger>
     </section>
   );
 }

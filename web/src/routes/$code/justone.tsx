@@ -10,6 +10,7 @@ import { api } from '../../api/client';
 import { useMatchSecret, useRoomMutation, useRoomView } from '../../api/match';
 import { useRoom } from '../../api/room';
 import { MatchHeader } from '../../components/MatchHeader';
+import { SpectatorNotice } from '../../components/SpectatorNotice';
 import { nameOf, usePhaseVibration, useRoundDraft } from '../../components/match';
 import { useNow } from '../../components/useNow';
 import { CluePhase } from '../../games/justone/CluePhase';
@@ -20,6 +21,7 @@ import { RevealPhase } from '../../games/justone/RevealPhase';
 import { ReviewPhase } from '../../games/justone/ReviewPhase';
 import { SkipGuesser } from '../../games/justone/SkipGuesser';
 import { useIdentity } from '../../identity/identity';
+import { Enter } from '../../motion/motion';
 
 export const Route = createFileRoute('/$code/justone')({
   component: JustOneScreen,
@@ -113,7 +115,7 @@ function JustOneMatch({ code, snapshot, match, clockOffsetMs, servedStep }: Just
   const canSkip = isHost && playing && hidden && seat !== 'GUESSER' && !guesserOnline;
 
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 py-6">
+    <Enter as="main" className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 py-6">
       <MatchHeader
         round={round}
         finished={phase === 'FINISHED'}
@@ -132,112 +134,107 @@ function JustOneMatch({ code, snapshot, match, clockOffsetMs, servedStep }: Just
         }}
       />
 
-      {seat === 'SPECTATOR' && playing && (
-        <p
-          role="status"
-          className="rounded-3xl bg-night-soft p-4 text-center text-lg ring-1 ring-cream/10"
-        >
-          Partida en curso, juegas en la siguiente
-        </p>
-      )}
+      {seat === 'SPECTATOR' && playing && <SpectatorNotice />}
 
-      {phase === 'CLUE' && (
-        <CluePhase
-          key={round}
-          match={match}
-          members={snapshot.members}
-          seat={seat}
-          word={word?.word}
-          committed={match.committedPlayerIds.includes(selfId)}
-          myClue={word?.clue ?? clue.variables ?? null}
-          isHost={isHost}
-          draft={clueDraft}
-          closing={close.isPending}
-          onDraft={setClueDraft}
-          onClue={(text) => {
-            clue.mutate(text);
-          }}
-          onClose={() => {
-            close.mutate();
-          }}
-        />
-      )}
+      <Enter key={`${phase}-${String(round)}`} className="flex flex-col gap-6">
+        {phase === 'CLUE' && (
+          <CluePhase
+            key={round}
+            match={match}
+            members={snapshot.members}
+            seat={seat}
+            word={word?.word}
+            committed={match.committedPlayerIds.includes(selfId)}
+            myClue={word?.clue ?? clue.variables ?? null}
+            isHost={isHost}
+            draft={clueDraft}
+            closing={close.isPending}
+            onDraft={setClueDraft}
+            onClue={(text) => {
+              clue.mutate(text);
+            }}
+            onClose={() => {
+              close.mutate();
+            }}
+          />
+        )}
 
-      {phase === 'REVIEW' && (
-        <ReviewPhase
-          match={match}
-          members={snapshot.members}
-          seat={seat}
-          word={word?.word}
-          clues={word?.clues}
-          isHost={isHost}
-          showing={show.isPending}
-          onToggle={(authorId, cancelled) => {
-            toggle.mutate({ authorId, cancelled });
-          }}
-          onShow={() => {
-            show.mutate();
-          }}
-        />
-      )}
+        {phase === 'REVIEW' && (
+          <ReviewPhase
+            match={match}
+            members={snapshot.members}
+            seat={seat}
+            word={word?.word}
+            clues={word?.clues}
+            isHost={isHost}
+            showing={show.isPending}
+            onToggle={(authorId, cancelled) => {
+              toggle.mutate({ authorId, cancelled });
+            }}
+            onShow={() => {
+              show.mutate();
+            }}
+          />
+        )}
 
-      {phase === 'GUESS' && (
-        <GuessPhase
-          key={round}
-          match={match}
-          members={snapshot.members}
-          seat={seat}
-          word={word?.word}
-          draft={guessDraft}
-          sent={guess.isPending ? (guess.variables ?? null) : undefined}
-          onDraft={setGuessDraft}
-          onGuess={(text) => {
-            guess.mutate(text);
-          }}
-        />
-      )}
+        {phase === 'GUESS' && (
+          <GuessPhase
+            key={round}
+            match={match}
+            members={snapshot.members}
+            seat={seat}
+            word={word?.word}
+            draft={guessDraft}
+            sent={guess.isPending ? (guess.variables ?? null) : undefined}
+            onDraft={setGuessDraft}
+            onGuess={(text) => {
+              guess.mutate(text);
+            }}
+          />
+        )}
 
-      {canSkip && (
-        <SkipGuesser
-          guesser={guesserName}
-          skipping={skip.isPending}
-          onSkip={() => {
-            skip.mutate();
-          }}
-        />
-      )}
+        {canSkip && (
+          <SkipGuesser
+            guesser={guesserName}
+            skipping={skip.isPending}
+            onSkip={() => {
+              skip.mutate();
+            }}
+          />
+        )}
 
-      {phase === 'REVEAL' && (
-        <RevealPhase
-          match={match}
-          members={snapshot.members}
-          selfId={selfId}
-          isHost={isHost}
-          accepting={accept.isPending}
-          advancing={next.isPending}
-          onAccept={() => {
-            accept.mutate();
-          }}
-          onNext={() => {
-            next.mutate();
-          }}
-        />
-      )}
+        {phase === 'REVEAL' && (
+          <RevealPhase
+            match={match}
+            members={snapshot.members}
+            selfId={selfId}
+            isHost={isHost}
+            accepting={accept.isPending}
+            advancing={next.isPending}
+            onAccept={() => {
+              accept.mutate();
+            }}
+            onNext={() => {
+              next.mutate();
+            }}
+          />
+        )}
 
-      {phase === 'FINISHED' && (
-        <Final
-          match={match}
-          isHost={isHost}
-          rematching={rematch.isPending}
-          leaving={lobby.isPending}
-          onRematch={() => {
-            rematch.mutate();
-          }}
-          onLobby={() => {
-            lobby.mutate();
-          }}
-        />
-      )}
-    </main>
+        {phase === 'FINISHED' && (
+          <Final
+            match={match}
+            isHost={isHost}
+            rematching={rematch.isPending}
+            leaving={lobby.isPending}
+            onRematch={() => {
+              rematch.mutate();
+            }}
+            onLobby={() => {
+              lobby.mutate();
+            }}
+          />
+        )}
+      </Enter>
+    </Enter>
   );
 }

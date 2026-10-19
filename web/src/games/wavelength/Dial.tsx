@@ -183,7 +183,11 @@ export function Dial({
             dragging.current = false;
           }}
         >
-          <path d={wedge(0, DIAL_MAX)} fill="#241f55" stroke="#fdf6e3" strokeOpacity={0.15} />
+          <path
+            d={wedge(0, DIAL_MAX)}
+            className="fill-night-soft stroke-cream"
+            strokeOpacity={0.15}
+          />
           {target !== null &&
             DIAL_BANDS.map((band, index) => ({ band, index }))
               .toReversed()
@@ -206,7 +210,7 @@ export function Dial({
                   dominantBaseline="central"
                   fontSize={11}
                   fontWeight={700}
-                  fill="#16133a"
+                  className="fill-night"
                 >
                   {points}
                 </text>
@@ -222,7 +226,7 @@ export function Dial({
                 y1={y1}
                 x2={x2}
                 y2={y2}
-                stroke="#fdf6e3"
+                className="stroke-cream"
                 strokeOpacity={0.4}
                 strokeWidth={1.5}
               />
@@ -237,8 +241,7 @@ export function Dial({
                   cx={x}
                   cy={y}
                   r={5}
-                  fill={marker.highlight ? '#ffd166' : '#fdf6e3'}
-                  stroke="#16133a"
+                  className={`stroke-night ${marker.highlight ? 'fill-moon' : 'fill-cream'}`}
                   strokeWidth={2}
                 />
                 <text
@@ -248,7 +251,7 @@ export function Dial({
                   dominantBaseline="middle"
                   fontSize={10}
                   fontWeight={marker.highlight ? 700 : 600}
-                  fill={marker.highlight ? '#ffd166' : '#fdf6e3'}
+                  className={marker.highlight ? 'fill-moon' : 'fill-cream'}
                 >
                   {marker.label}
                 </text>
@@ -262,14 +265,14 @@ export function Dial({
                 y1={CY}
                 x2={needle[0]}
                 y2={needle[1]}
-                stroke="#ffd166"
+                className="stroke-moon"
                 strokeWidth={4}
                 strokeLinecap="round"
               />
-              <circle cx={needle[0]} cy={needle[1]} r={8} fill="#ffd166" />
+              <circle cx={needle[0]} cy={needle[1]} r={8} className="fill-moon" />
             </>
           )}
-          <circle cx={CX} cy={CY} r={7} fill="#ffd166" />
+          <circle cx={CX} cy={CY} r={7} className="fill-moon" />
         </svg>
       </div>
       <div className="flex items-start justify-between gap-3 text-lg font-bold">

@@ -14,7 +14,7 @@ export default defineConfig({
   fullyParallel: false,
   reporter: 'list',
   outputDir: 'test-results/screenshots',
-  use: { baseURL: `http://localhost:${String(PORT)}` },
+  use: { baseURL: `http://localhost:${String(PORT)}`, reducedMotion: 'reduce' },
   webServer: {
     command: `pnpm exec vite --port ${String(PORT)} --strictPort`,
     url: `http://localhost:${String(PORT)}`,

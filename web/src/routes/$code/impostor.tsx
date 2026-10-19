@@ -7,12 +7,14 @@ import { usePhaseVibration } from '../../components/match';
 import { Card } from '../../games/impostor/Card';
 import { Final } from '../../games/impostor/Final';
 import { MatchHeader } from '../../components/MatchHeader';
+import { SpectatorNotice } from '../../components/SpectatorNotice';
 import { impostorCountLabel, seatOf, type Seat } from '../../games/impostor/model';
 import { useMyVote } from '../../games/impostor/myVote';
 import { Reveal } from '../../games/impostor/Reveal';
 import { TurnOrder } from '../../games/impostor/TurnOrder';
 import { Voting } from '../../games/impostor/Voting';
 import { useIdentity } from '../../identity/identity';
+import { Enter } from '../../motion/motion';
 
 export const Route = createFileRoute('/$code/impostor')({
   component: ImpostorScreen,
@@ -84,7 +86,7 @@ function ImpostorMatch({ code, snapshot, match, servedStep }: ImpostorMatchProps
   const selection = chosen !== null && match.order.includes(chosen) ? chosen : null;
 
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 py-6">
+    <Enter as="main" className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 py-6">
       <MatchHeader
         round={match.round}
         finished={match.phase === 'FINISHED'}
@@ -101,69 +103,64 @@ function ImpostorMatch({ code, snapshot, match, servedStep }: ImpostorMatchProps
         }}
       />
 
-      {seat === 'SPECTATOR' && playing && (
-        <p
-          role="status"
-          className="rounded-3xl bg-night-soft p-4 text-center text-lg ring-1 ring-cream/10"
-        >
-          Partida en curso, juegas en la siguiente
-        </p>
-      )}
+      {seat === 'SPECTATOR' && playing && <SpectatorNotice />}
 
       {seat !== 'SPECTATOR' && match.phase !== 'FINISHED' && <Card secret={impostorSecret} />}
 
-      {match.phase === 'VOTING' && (
-        <>
-          <TurnOrder order={match.order} members={snapshot.members} />
-          <Voting
+      <Enter key={`${match.phase}-${String(match.round)}`} className="flex flex-col gap-6">
+        {match.phase === 'VOTING' && (
+          <>
+            <TurnOrder order={match.order} members={snapshot.members} />
+            <Voting
+              match={match}
+              members={snapshot.members}
+              selfId={selfId}
+              canVote={seat === 'PLAYER'}
+              selection={selection}
+              selectionGone={chosen !== null && selection === null}
+              isHost={isHost}
+              closing={close.isPending}
+              onSelect={(targetId) => {
+                select.mutate(targetId);
+              }}
+              onConfirm={(targetId) => {
+                confirm.mutate(targetId);
+              }}
+              onClose={() => {
+                close.mutate();
+              }}
+            />
+          </>
+        )}
+
+        {match.phase === 'REVEAL' && (
+          <Reveal
             match={match}
             members={snapshot.members}
-            selfId={selfId}
-            canVote={seat === 'PLAYER'}
-            selection={selection}
-            selectionGone={chosen !== null && selection === null}
             isHost={isHost}
-            closing={close.isPending}
-            onSelect={(targetId) => {
-              select.mutate(targetId);
-            }}
-            onConfirm={(targetId) => {
-              confirm.mutate(targetId);
-            }}
-            onClose={() => {
-              close.mutate();
+            busy={next.isPending}
+            onNext={() => {
+              next.mutate();
             }}
           />
-        </>
-      )}
+        )}
 
-      {match.phase === 'REVEAL' && (
-        <Reveal
-          match={match}
-          members={snapshot.members}
-          isHost={isHost}
-          busy={next.isPending}
-          onNext={() => {
-            next.mutate();
-          }}
-        />
-      )}
-
-      {match.phase === 'FINISHED' && (
-        <Final
-          match={match}
-          members={snapshot.members}
-          isHost={isHost}
-          rematching={rematch.isPending}
-          leaving={lobby.isPending}
-          onRematch={() => {
-            rematch.mutate();
-          }}
-          onLobby={() => {
-            lobby.mutate();
-          }}
-        />
-      )}
-    </main>
+        {match.phase === 'FINISHED' && (
+          <Final
+            match={match}
+            members={snapshot.members}
+            isHost={isHost}
+            rematching={rematch.isPending}
+            leaving={lobby.isPending}
+            onRematch={() => {
+              rematch.mutate();
+            }}
+            onLobby={() => {
+              lobby.mutate();
+            }}
+          />
+        )}
+      </Enter>
+    </Enter>
   );
 }

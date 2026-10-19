@@ -611,7 +611,9 @@ describe('my name', () => {
 
     expect(await screen.findByText('Tía')).toBeVisible();
     expect(screen.queryByRole('dialog')).toBeNull();
-    expect(body(mock, 'PATCH /api/players/me')).toEqual({ name: 'Tía Marta', roomCode: 'ABCD' });
+    await waitFor(() => {
+      expect(body(mock, 'PATCH /api/players/me')).toEqual({ name: 'Tía Marta', roomCode: 'ABCD' });
+    });
 
     const renamed = room({
       version: 4,

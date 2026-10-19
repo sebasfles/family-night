@@ -1,6 +1,7 @@
 import { isOnline, type GameConfigs, type GameType, type RoomSnapshot } from '@family-night/shared';
 import { api } from '../../api/client';
 import { useRoomMutation } from '../../api/match';
+import { ConfigSection, Segmented } from './ConfigSection';
 import { StartSection } from './StartSection';
 
 export type CyclesGame = {
@@ -44,42 +45,19 @@ export function CyclesPanel({
 
   return (
     <>
-      <section
-        aria-labelledby={titleId}
-        className="flex flex-col gap-5 rounded-3xl bg-night-soft p-5 ring-1 ring-cream/10"
-      >
-        <div className="flex flex-col gap-1">
-          <h2 id={titleId} className="text-xl font-bold">
-            Configuración
-          </h2>
-          {locked && <p className="text-base text-cream/70">Solo el host puede cambiarla.</p>}
-        </div>
-
+      <ConfigSection titleId={titleId} locked={locked}>
         <div className="flex flex-col gap-2">
-          <p id="cycles-label" className="font-semibold">
-            Vueltas
-          </p>
-          <div role="radiogroup" aria-labelledby="cycles-label" className="grid grid-cols-3 gap-2">
-            {choices.map((cycles) => (
-              <button
-                key={cycles}
-                type="button"
-                role="radio"
-                aria-checked={config.cycles === cycles}
-                disabled={locked}
-                onClick={() => {
-                  if (config.cycles !== cycles) update.mutate(cycles);
-                }}
-                className={`min-h-12 rounded-2xl px-3 text-lg font-semibold focus-visible:ring-2 focus-visible:ring-moon focus-visible:outline-none disabled:cursor-default ${
-                  config.cycles === cycles
-                    ? 'bg-moon text-night'
-                    : 'bg-night text-cream/80 ring-1 ring-cream/15'
-                }`}
-              >
-                {cycles}
-              </button>
-            ))}
-          </div>
+          <Segmented
+            labelId={`${titleId}-cycles`}
+            label="Vueltas"
+            options={choices.map((cycles) => [cycles, String(cycles)] as const)}
+            value={config.cycles}
+            disabled={locked}
+            onChange={(cycles) => {
+              update.mutate(cycles);
+            }}
+            className="grid-cols-3"
+          />
           <p className="text-base text-cream/70">
             Cada jugador {turn} {config.cycles === 1 ? 'una vez' : `${String(config.cycles)} veces`}
             {players.length > 0 &&
@@ -87,7 +65,7 @@ export function CyclesPanel({
             .
           </p>
         </div>
-      </section>
+      </ConfigSection>
 
       <StartSection
         players={players}

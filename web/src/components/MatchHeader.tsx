@@ -1,4 +1,5 @@
 import { AbortMatchMenu } from './AbortMatchMenu';
+import { EyeIcon } from './icons';
 
 interface MatchHeaderProps {
   round: number;
@@ -21,15 +22,16 @@ export function MatchHeader({
 }: MatchHeaderProps) {
   return (
     <header className="flex items-center justify-between gap-3">
-      <div className="flex min-w-0 flex-col">
-        <h1 className="text-2xl font-bold">
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <h1 className="text-3xl font-bold">
           {finished ? 'Fin de la partida' : `Ronda ${String(round)}`}
         </h1>
         <p className="text-base break-words text-cream/70">{subtitle}</p>
       </div>
       <div className="flex shrink-0 items-center gap-2">
         {badge && (
-          <span className="rounded-full bg-cream/15 px-3 py-1 text-base font-semibold">
+          <span className="flex items-center gap-1.5 rounded-full bg-lagoon/14 py-1 pr-3 pl-2.5 text-base font-bold text-lagoon">
+            <EyeIcon className="size-4" />
             {badge}
           </span>
         )}

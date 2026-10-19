@@ -16,6 +16,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { api, isApiError } from '../../api/client';
 import { applyRoom, roomKey, useRoom } from '../../api/room';
 import { Button } from '../../components/Button';
+import { Loading } from '../../components/Loading';
 import { RoomNotFound } from '../../components/RoomNotFound';
 import { RoomSessionContext } from '../../components/roomSession';
 import { Screen } from '../../components/Screen';
@@ -59,13 +60,7 @@ function RoomRoute() {
   });
 
   if (join.isPending) {
-    return (
-      <Screen>
-        <p role="status" className="text-cream/80">
-          Entrando a la sala {code}…
-        </p>
-      </Screen>
-    );
+    return <Loading text={`Entrando a la sala ${code}…`} />;
   }
 
   if (join.isError) {

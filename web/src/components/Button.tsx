@@ -3,10 +3,11 @@ import type { ButtonHTMLAttributes, Ref } from 'react';
 type Variant = 'primary' | 'secondary' | 'danger' | 'ghost';
 
 const variants: Record<Variant, string> = {
-  primary: 'bg-moon text-night hover:bg-moon/90',
-  secondary: 'bg-night-soft text-cream ring-1 ring-cream/15 hover:bg-night-soft/70',
-  danger: 'bg-red-500 text-white hover:bg-red-500/90',
-  ghost: 'text-cream/80 hover:bg-cream/10',
+  primary:
+    'bg-linear-to-b from-moon-bright to-moon text-night shadow-glow inset-ring inset-ring-white/25 hover:brightness-105',
+  secondary: 'bg-night-raised text-cream ring-1 ring-cream/12 hover:bg-night-raised/80',
+  danger: 'bg-ember text-night hover:brightness-105',
+  ghost: 'text-cream/80 hover:bg-cream/8',
 };
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -31,7 +32,7 @@ export function Button({
       type={type}
       disabled={disabled === true || busy}
       aria-busy={busy || undefined}
-      className={`inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl px-5 text-lg font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-moon focus-visible:ring-offset-2 focus-visible:ring-offset-night focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${variants[variant]} ${className}`}
+      className={`inline-flex min-h-12 items-center justify-center gap-2 rounded-full px-6 text-lg font-bold transition-[transform,filter,background-color] duration-150 ease-soft focus-visible:ring-2 focus-visible:ring-moon focus-visible:ring-offset-2 focus-visible:ring-offset-night focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-45 disabled:shadow-none disabled:active:scale-100 motion-safe:active:scale-[0.97] ${variants[variant]} ${className}`}
       {...props}
     >
       {busy && (

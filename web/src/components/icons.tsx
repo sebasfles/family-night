@@ -136,3 +136,106 @@ export function SoundIcon({ className, muted }: IconProps & { muted: boolean }) 
     </svg>
   );
 }
+
+export function MaskIcon({ className }: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 32 32"
+      fill="none"
+      className={`shrink-0 ${className ?? ''}`}
+    >
+      <path
+        d="M4 9c4-2 8-2.5 12-2.5S24 7 28 9c0 8-3.5 15-8.5 15-1.8 0-2.6-2-3.5-2s-1.7 2-3.5 2C7.5 24 4 17 4 9z"
+        fill="currentColor"
+        fillOpacity="0.2"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M8.5 13.5c1.5-1.4 3.7-1.4 5 0M18.5 13.5c1.3-1.4 3.5-1.4 5 0"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+export function DialIcon({ className }: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 32 32"
+      fill="none"
+      className={`shrink-0 ${className ?? ''}`}
+    >
+      <path d="M4 23a12 12 0 0 1 24 0z" fill="currentColor" fillOpacity="0.2" />
+      <path d="M13 11.4a12 12 0 0 1 6 0L16 23z" fill="currentColor" fillOpacity="0.55" />
+      <path
+        d="M4 23a12 12 0 0 1 24 0M16 23l6-8.5"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+      />
+      <circle cx="16" cy="23" r="2.2" fill="currentColor" />
+    </svg>
+  );
+}
+
+export function CluesIcon({ className }: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 32 32"
+      fill="none"
+      className={`shrink-0 ${className ?? ''}`}
+    >
+      <rect
+        x="4"
+        y="7"
+        width="15"
+        height="11"
+        rx="3.5"
+        transform="rotate(-8 11.5 12.5)"
+        fill="currentColor"
+        fillOpacity="0.2"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+      <rect
+        x="13"
+        y="13"
+        width="15"
+        height="11"
+        rx="3.5"
+        transform="rotate(6 20.5 18.5)"
+        fill="currentColor"
+        fillOpacity="0.45"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+      <path d="M17.5 18.5h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function EyeIcon({ className }: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      fill="none"
+      className={`shrink-0 ${className ?? ''}`}
+    >
+      <path
+        d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      <circle cx="12" cy="12" r="3" fill="currentColor" />
+    </svg>
+  );
+}

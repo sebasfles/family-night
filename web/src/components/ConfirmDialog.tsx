@@ -1,4 +1,6 @@
 import { useEffect, useId, useRef } from 'react';
+import { Pop } from '../motion/motion';
+import { Backdrop } from './Backdrop';
 import { Button } from './Button';
 
 interface ConfirmDialogProps {
@@ -36,12 +38,12 @@ export function ConfirmDialog({
   }, []);
 
   return (
-    <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/60 p-4 sm:items-center">
-      <div
+    <Backdrop>
+      <Pop
         role="alertdialog"
-        aria-modal="true"
+        aria-modal
         aria-labelledby={titleId}
-        className="flex w-full max-w-sm flex-col gap-5 rounded-3xl bg-night-soft p-6 ring-1 ring-cream/10"
+        className="flex w-full max-w-sm flex-col gap-5 surface p-6"
       >
         <h2 id={titleId} className="text-center text-xl font-bold">
           {title}
@@ -54,7 +56,7 @@ export function ConfirmDialog({
             Cancelar
           </Button>
         </div>
-      </div>
-    </div>
+      </Pop>
+    </Backdrop>
   );
 }

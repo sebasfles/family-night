@@ -1,5 +1,12 @@
 import type { ImpostorConfig, TieRule, WordCategory } from '@family-night/shared';
 import type { ReactNode } from 'react';
+import {
+  chosen,
+  ConfigSection,
+  control,
+  Segmented,
+  unchosen,
+} from '../../components/lobby/ConfigSection';
 
 interface ConfigPanelProps {
   config: ImpostorConfig;
@@ -10,8 +17,10 @@ interface ConfigPanelProps {
   onChange: (config: ImpostorConfig) => void;
 }
 
-const control =
-  'focus-visible:ring-2 focus-visible:ring-moon focus-visible:outline-none disabled:cursor-default';
+const TIE_RULES = [
+  ['RANDOM', 'Sorteo'],
+  ['SKIP', 'Nadie sale'],
+] as const satisfies readonly (readonly [TieRule, string])[];
 
 export function ConfigPanel({
   config,
@@ -27,17 +36,7 @@ export function ConfigPanel({
   };
 
   return (
-    <section
-      aria-labelledby="impostor-config-title"
-      className="flex flex-col gap-5 rounded-3xl bg-night-soft p-5 ring-1 ring-cream/10"
-    >
-      <div className="flex flex-col gap-1">
-        <h2 id="impostor-config-title" className="text-xl font-bold">
-          Configuración
-        </h2>
-        {!editable && <p className="text-base text-cream/70">Solo el host puede cambiarla.</p>}
-      </div>
-
+    <ConfigSection titleId="impostor-config-title" locked={locked}>
       <Row
         label="Impostores"
         hint={`Hasta ${String(maxImpostors)} con ${String(playerCount)} ${playerCount === 1 ? 'jugador' : 'jugadores'}`}
@@ -54,7 +53,7 @@ export function ConfigPanel({
           </StepButton>
           <output
             aria-label="Impostores"
-            className="w-8 text-center text-2xl font-bold tabular-nums"
+            className="w-10 text-center font-display text-3xl font-bold text-moon tabular-nums"
           >
             {config.impostorCount}
           </output>
@@ -80,37 +79,17 @@ export function ConfigPanel({
         }}
       />
 
-      <div className="flex flex-col gap-2">
-        <p id="tie-rule-label" className="font-semibold">
-          Si hay empate
-        </p>
-        <div role="radiogroup" aria-labelledby="tie-rule-label" className="grid grid-cols-2 gap-2">
-          {(
-            [
-              ['RANDOM', 'Sorteo'],
-              ['SKIP', 'Nadie sale'],
-            ] as const satisfies readonly (readonly [TieRule, string])[]
-          ).map(([rule, label]) => (
-            <button
-              key={rule}
-              type="button"
-              role="radio"
-              aria-checked={config.tieRule === rule}
-              disabled={locked}
-              onClick={() => {
-                set({ tieRule: rule });
-              }}
-              className={`min-h-12 rounded-2xl px-3 text-base font-semibold ${control} ${
-                config.tieRule === rule
-                  ? 'bg-moon text-night'
-                  : 'bg-night text-cream/80 ring-1 ring-cream/15'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      </div>
+      <Segmented
+        labelId="tie-rule-label"
+        label="Si hay empate"
+        options={TIE_RULES}
+        value={config.tieRule}
+        disabled={locked}
+        onChange={(tieRule) => {
+          set({ tieRule });
+        }}
+        className="grid-cols-2"
+      />
 
       <Switch
         label="Mostrar la categoría al impostor"
@@ -122,7 +101,7 @@ export function ConfigPanel({
       />
 
       <div className="flex flex-col gap-2">
-        <p id="categories-label" className="font-semibold">
+        <p id="categories-label" className="font-bold">
           Categorías
         </p>
         {categories ? (
@@ -143,8 +122,8 @@ export function ConfigPanel({
                           : [...config.categories, category.id],
                       });
                     }}
-                    className={`min-h-12 rounded-full px-4 text-base font-semibold ${control} ${
-                      on ? 'bg-moon text-night' : 'bg-night text-cream/70 ring-1 ring-cream/15'
+                    className={`min-h-12 rounded-full px-4 text-base font-bold ${control} ${
+                      on ? chosen : `${unchosen} hover:enabled:bg-cream/6`
                     }`}
                   >
                     {category.name}
@@ -157,7 +136,7 @@ export function ConfigPanel({
           <p className="text-base text-cream/60">Cargando categorías…</p>
         )}
       </div>
-    </section>
+    </ConfigSection>
   );
 }
 
@@ -165,7 +144,7 @@ function Row({ label, hint, children }: { label: string; hint?: string; children
   return (
     <div className="flex items-center justify-between gap-4">
       <div className="flex min-w-0 flex-col">
-        <p className="font-semibold">{label}</p>
+        <p className="font-bold">{label}</p>
         {hint && <p className="text-sm text-cream/60">{hint}</p>}
       </div>
       {children}
@@ -190,7 +169,7 @@ function StepButton({
       aria-label={label}
       disabled={disabled}
       onClick={onClick}
-      className={`flex size-12 items-center justify-center rounded-full bg-night text-2xl font-bold ring-1 ring-cream/15 disabled:opacity-40 ${control}`}
+      className={`flex size-12 items-center justify-center rounded-full text-2xl font-bold disabled:opacity-35 ${unchosen} hover:enabled:bg-night-raised motion-safe:active:enabled:scale-95 ${control}`}
     >
       {children}
     </button>
@@ -222,15 +201,15 @@ function Switch({
       className={`flex min-h-12 w-full items-center justify-between gap-4 rounded-2xl text-left ${control}`}
     >
       <span className="flex min-w-0 flex-col">
-        <span className="font-semibold">{label}</span>
+        <span className="font-bold">{label}</span>
         {hint && <span className="text-sm text-cream/60">{hint}</span>}
       </span>
       <span
         aria-hidden="true"
-        className={`relative h-8 w-14 shrink-0 rounded-full transition-colors ${checked ? 'bg-moon' : 'bg-cream/20'}`}
+        className={`relative h-8 w-14 shrink-0 rounded-full transition-colors duration-200 ${checked ? 'bg-moon shadow-glow' : 'bg-cream/18'}`}
       >
         <span
-          className={`absolute top-1 size-6 rounded-full bg-night transition-all ${checked ? 'left-7' : 'left-1'}`}
+          className={`absolute top-1 left-1 size-6 rounded-full bg-night shadow-md transition-transform duration-200 ease-soft ${checked ? 'translate-x-6' : 'translate-x-0'}`}
         />
       </span>
     </button>

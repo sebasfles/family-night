@@ -9,6 +9,7 @@ import { api } from '../../api/client';
 import { useMatchSecret, useRoomMutation, useRoomView } from '../../api/match';
 import { useRoom } from '../../api/room';
 import { MatchHeader } from '../../components/MatchHeader';
+import { SpectatorNotice } from '../../components/SpectatorNotice';
 import { nameOf, usePhaseVibration, useRoundDraft } from '../../components/match';
 import { useNow } from '../../components/useNow';
 import { CluePhase } from '../../games/wavelength/CluePhase';
@@ -18,6 +19,7 @@ import { seatOf } from '../../games/wavelength/model';
 import { useMyGuess } from '../../games/wavelength/myGuess';
 import { RevealPhase } from '../../games/wavelength/RevealPhase';
 import { useIdentity } from '../../identity/identity';
+import { Enter } from '../../motion/motion';
 
 export const Route = createFileRoute('/$code/wavelength')({
   component: WavelengthScreen,
@@ -96,7 +98,7 @@ function WavelengthMatch({
   const rounds = match.round === 1 ? '1 ronda' : `${String(match.round)} rondas`;
 
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 py-6">
+    <Enter as="main" className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 py-6">
       <MatchHeader
         round={round}
         finished={phase === 'FINISHED'}
@@ -115,85 +117,80 @@ function WavelengthMatch({
         }}
       />
 
-      {seat === 'SPECTATOR' && playing && (
-        <p
-          role="status"
-          className="rounded-3xl bg-night-soft p-4 text-center text-lg ring-1 ring-cream/10"
-        >
-          Partida en curso, juegas en la siguiente
-        </p>
-      )}
+      {seat === 'SPECTATOR' && playing && <SpectatorNotice />}
 
-      {phase === 'CLUE' && (
-        <CluePhase
-          key={round}
-          match={match}
-          members={snapshot.members}
-          seat={seat}
-          target={target}
-          isHost={isHost}
-          psychicOnline={psychicOnline}
-          draft={clueDraft}
-          skipping={skip.isPending}
-          onDraft={setClueDraft}
-          onClue={(text) => {
-            clue.mutate(text);
-          }}
-          onSkip={() => {
-            skip.mutate();
-          }}
-        />
-      )}
+      <Enter key={`${phase}-${String(round)}`} className="flex flex-col gap-6">
+        {phase === 'CLUE' && (
+          <CluePhase
+            key={round}
+            match={match}
+            members={snapshot.members}
+            seat={seat}
+            target={target}
+            isHost={isHost}
+            psychicOnline={psychicOnline}
+            draft={clueDraft}
+            skipping={skip.isPending}
+            onDraft={setClueDraft}
+            onClue={(text) => {
+              clue.mutate(text);
+            }}
+            onSkip={() => {
+              skip.mutate();
+            }}
+          />
+        )}
 
-      {phase === 'GUESS' && (
-        <GuessPhase
-          key={round}
-          match={match}
-          members={snapshot.members}
-          seat={seat}
-          selfId={selfId}
-          target={target}
-          myGuess={commit.variables ?? myGuess}
-          isHost={isHost}
-          closing={close.isPending}
-          onCommit={(value) => {
-            commit.mutate(value);
-          }}
-          onClose={() => {
-            close.mutate();
-          }}
-        />
-      )}
+        {phase === 'GUESS' && (
+          <GuessPhase
+            key={round}
+            match={match}
+            members={snapshot.members}
+            seat={seat}
+            selfId={selfId}
+            target={target}
+            myGuess={commit.variables ?? myGuess}
+            isHost={isHost}
+            closing={close.isPending}
+            onCommit={(value) => {
+              commit.mutate(value);
+            }}
+            onClose={() => {
+              close.mutate();
+            }}
+          />
+        )}
 
-      {phase === 'REVEAL' && (
-        <RevealPhase
-          match={match}
-          members={snapshot.members}
-          selfId={selfId}
-          isHost={isHost}
-          busy={next.isPending}
-          onNext={() => {
-            next.mutate();
-          }}
-        />
-      )}
+        {phase === 'REVEAL' && (
+          <RevealPhase
+            match={match}
+            members={snapshot.members}
+            selfId={selfId}
+            isHost={isHost}
+            busy={next.isPending}
+            onNext={() => {
+              next.mutate();
+            }}
+          />
+        )}
 
-      {phase === 'FINISHED' && (
-        <Final
-          match={match}
-          members={snapshot.members}
-          selfId={selfId}
-          isHost={isHost}
-          rematching={rematch.isPending}
-          leaving={lobby.isPending}
-          onRematch={() => {
-            rematch.mutate();
-          }}
-          onLobby={() => {
-            lobby.mutate();
-          }}
-        />
-      )}
-    </main>
+        {phase === 'FINISHED' && (
+          <Final
+            match={match}
+            members={snapshot.members}
+            selfId={selfId}
+            isHost={isHost}
+            rematching={rematch.isPending}
+            leaving={lobby.isPending}
+            onRematch={() => {
+              rematch.mutate();
+            }}
+            onLobby={() => {
+              lobby.mutate();
+            }}
+          />
+        )}
+      </Enter>
+    </Enter>
   );
 }
