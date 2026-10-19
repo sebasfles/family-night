@@ -46,4 +46,13 @@ Deferred: none.
 
 Pending: none.
 
+### Round 2
+
+Applied both findings, none disputed:
+
+1. The three malformed `verify.log` blocks of round 1 rewritten in the verify-task shape from the same run's artefacts (the test count had landed in the header through zsh not splitting `set -- $t`).
+2. The room code placeholder is `cream/50` (4.86:1 on `night`); `src/theme.test.ts` checks that pair.
+
+Screenshots refreshed in `screenshots/phase_2/`.
+
 ## Result

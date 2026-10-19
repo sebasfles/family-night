@@ -83,7 +83,7 @@ function Home() {
               spellCheck={false}
               enterKeyHint="go"
               placeholder="ABCD"
-              className="min-h-14 w-0 flex-1 rounded-2xl bg-night pr-4 pl-[calc(1rem+0.25em)] text-center font-display text-2xl font-bold tracking-[0.25em] text-moon uppercase ring-1 ring-cream/12 placeholder:text-cream/20 focus:ring-2 focus:ring-moon focus:outline-none"
+              className="min-h-14 w-0 flex-1 rounded-2xl bg-night pr-4 pl-[calc(1rem+0.25em)] text-center font-display text-2xl font-bold tracking-[0.25em] text-moon uppercase ring-1 ring-cream/12 placeholder:text-cream/50 focus:ring-2 focus:ring-moon focus:outline-none"
             />
             <Button type="submit" variant="secondary" disabled={!valid} className="min-h-14 px-5">
               Unirme

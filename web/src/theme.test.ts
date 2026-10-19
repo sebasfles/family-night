@@ -53,6 +53,12 @@ describe('palette', () => {
     ).toBeGreaterThanOrEqual(4.5);
   });
 
+  test('the room code placeholder reads on night', () => {
+    expect(
+      contrast(over(color('cream'), 0.5, color('night')), color('night')),
+    ).toBeGreaterThanOrEqual(4.5);
+  });
+
   test.each([
     ['night', 'moon'],
     ['night', 'moon-bright'],
