@@ -7,6 +7,7 @@ import {
 } from 'motion/react';
 import * as m from 'motion/react-m';
 import type { ReactNode } from 'react';
+import { COUNT_DELAY_MS, COUNT_MS } from './timing';
 import { useReducedMotion } from './useReducedMotion';
 
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -124,5 +125,17 @@ export function Fade({ className, children }: { className?: string; children: Re
     >
       {children}
     </m.div>
+  );
+}
+
+export function Meter({ fraction, className }: { fraction: number; className?: string }) {
+  const reduced = useReducedMotion();
+  return (
+    <m.span
+      className={className}
+      initial={reduced ? false : { width: '0%' }}
+      animate={{ width: `${String(Math.round(fraction * 1000) / 10)}%` }}
+      transition={{ ...SOFT, duration: COUNT_MS / 1000, delay: COUNT_DELAY_MS / 1000 }}
+    />
   );
 }

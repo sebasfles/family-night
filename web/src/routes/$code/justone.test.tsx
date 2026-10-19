@@ -16,6 +16,8 @@ import {
   snapshot,
   type Handler,
 } from '../../test/app';
+import { stubReducedMotion } from '../../test/motion';
+import { spokenText } from '../../test/text';
 import { JUST_ONE_MATCH_ID, justOneMatch } from '../../test/justone-match';
 
 const zorro = member({ playerId: '22222222-2222-4222-8222-222222222222', name: 'Zorro Astuto' });
@@ -360,11 +362,7 @@ describe('guess and reveal', () => {
     );
 
     const list = await screen.findByRole('list', { name: 'Pistas' });
-    expect(
-      within(list)
-        .getAllByRole('listitem')
-        .map((item) => item.textContent),
-    ).toEqual(['Guacamole']);
+    expect(within(list).getAllByRole('listitem').map(spokenText)).toEqual(['Guacamole']);
     expect(screen.getByRole('button', { name: 'Adivinar' })).toBeDisabled();
     fireEvent.change(screen.getByLabelText('¿Cuál es la palabra?'), {
       target: { value: ' Aguacate ' },
@@ -469,6 +467,17 @@ describe('guess and reveal', () => {
     expect(screen.getByText(/^Esta ronda:/)).toHaveTextContent('Esta ronda: +1');
     expect(screen.queryByRole('button', { name: 'Contar como acierto' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Siguiente ronda' })).toBeVisible();
+  });
+
+  test('the word card turns over in 3D with the word and the guess', async () => {
+    stubReducedMotion(false);
+    play(room(revealed('WRONG')));
+
+    expect(await screen.findByRole('button', { name: 'Siguiente ronda' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Palta' })).toBeNull();
+    const word = await screen.findByRole('heading', { name: 'Palta' });
+    expect(screen.getByText('Dijiste «Aguacate». No era')).toBeInTheDocument();
+    expect(word.closest('[data-flip]')).toHaveStyle({ transform: 'rotateY(180deg)' });
   });
 
   test('members wait for the host, and the last round leads to the result', async () => {

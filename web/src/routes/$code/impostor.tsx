@@ -149,6 +149,7 @@ function ImpostorMatch({ code, snapshot, match, servedStep }: ImpostorMatchProps
           <Final
             match={match}
             members={snapshot.members}
+            selfId={selfId}
             isHost={isHost}
             rematching={rematch.isPending}
             leaving={lobby.isPending}

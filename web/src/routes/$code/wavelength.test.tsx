@@ -16,6 +16,8 @@ import {
   snapshot,
   type Handler,
 } from '../../test/app';
+import { stubReducedMotion } from '../../test/motion';
+import { spokenText } from '../../test/text';
 import { WAVELENGTH_MATCH_ID, wavelengthMatch } from '../../test/wavelength-match';
 
 const zorro = member({ playerId: '22222222-2222-4222-8222-222222222222', name: 'Zorro Astuto' });
@@ -428,9 +430,7 @@ describe('the reveal and the end', () => {
     ).toBeVisible();
 
     const round = screen.getByRole('list', { name: 'Puntos de la ronda' });
-    const rows = within(round)
-      .getAllByRole('listitem')
-      .map((row) => row.textContent);
+    const rows = within(round).getAllByRole('listitem').map(spokenText);
     expect(rows).toEqual([
       'Zorro Astuto (psíquico)+3',
       'Cóndor Veloz marcó 60+4',
@@ -438,16 +438,30 @@ describe('the reveal and the end', () => {
       'Colibrí Risueño no respondió+0',
     ]);
     const totals = screen.getByRole('list', { name: 'Puntaje' });
-    expect(
-      within(totals)
-        .getAllByRole('listitem')
-        .map((row) => row.textContent),
-    ).toEqual(['1Cóndor Veloz(tú)4', '2Zorro Astuto3', '3Oso Sabio2', '4Colibrí Risueño0']);
+    expect(within(totals).getAllByRole('listitem').map(spokenText)).toEqual([
+      '1Cóndor Veloz(tú)4',
+      '2Zorro Astuto3',
+      '3Oso Sabio2',
+      '4Colibrí Risueño0',
+    ]);
 
     fireEvent.click(screen.getByRole('button', { name: 'Siguiente ronda' }));
     await waitFor(() => {
       expect(sent(mock, `POST ${base}/next-round`)).toEqual({ round: 1 });
     });
+  });
+
+  test('the target zone turns over in 3D on the dial', async () => {
+    stubReducedMotion(false);
+    play(room(revealed()));
+
+    await screen.findByRole('heading', { name: 'El objetivo era 62' });
+    const bands = () => document.querySelector('[data-layer="bands"]');
+    expect(bands()?.querySelector('path[data-points]')).toBeNull();
+    await waitFor(() => {
+      expect(bands()?.querySelectorAll('path[data-points]')).toHaveLength(3);
+    });
+    expect(bands()?.querySelector('[data-flip]')).toHaveStyle({ transform: 'rotateY(180deg)' });
   });
 
   test('players with equal points share a rank', async () => {
@@ -465,11 +479,12 @@ describe('the reveal and the end', () => {
     );
 
     const totals = await screen.findByRole('list', { name: 'Puntaje' });
-    expect(
-      within(totals)
-        .getAllByRole('listitem')
-        .map((row) => row.textContent),
-    ).toEqual(['1Cóndor Veloz(tú)4', '2Zorro Astuto2', '2Oso Sabio2', '4Colibrí Risueño0']);
+    expect(within(totals).getAllByRole('listitem').map(spokenText)).toEqual([
+      '1Cóndor Veloz(tú)4',
+      '2Zorro Astuto2',
+      '2Oso Sabio2',
+      '4Colibrí Risueño0',
+    ]);
   });
 
   test('on the last turn the host sees Ver resultado', async () => {

@@ -1,4 +1,10 @@
-import { isWavelengthPlayer, wavelengthPlayers, type WavelengthPublic } from '@family-night/shared';
+import {
+  isWavelengthPlayer,
+  wavelengthPlayers,
+  type WavelengthPublic,
+  type WavelengthResult,
+} from '@family-night/shared';
+import type { ScoreRow } from '../../components/scores';
 
 export type Seat = 'PSYCHIC' | 'GUESSER' | 'SPECTATOR';
 
@@ -15,14 +21,16 @@ export function pointsLabel(points: number): string {
   return points === 1 ? '1 punto' : `${String(points)} puntos`;
 }
 
-export function ranking(
-  match: WavelengthPublic,
-): { playerId: string; points: number; rank: number }[] {
-  const rows = wavelengthPlayers(match)
-    .map((playerId) => ({ playerId, points: match.totals[playerId] ?? 0 }))
-    .toSorted((a, b) => b.points - a.points);
-  return rows.map((row) => ({
-    ...row,
-    rank: 1 + rows.filter((other) => other.points > row.points).length,
-  }));
+function roundPoints(result: WavelengthResult, playerId: string): number {
+  if (playerId === result.psychicId) return result.psychicPoints;
+  return result.guesses.find((guess) => guess.playerId === playerId)?.points ?? 0;
+}
+
+export function scoreRows(match: WavelengthPublic, counting: 'round' | 'match'): ScoreRow[] {
+  const result = match.lastResult;
+  return wavelengthPlayers(match).map((playerId) => {
+    const to = match.totals[playerId] ?? 0;
+    const from = counting === 'round' && result ? to - roundPoints(result, playerId) : 0;
+    return { playerId, from, to };
+  });
 }

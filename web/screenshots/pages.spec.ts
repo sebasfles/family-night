@@ -824,3 +824,48 @@ test('just one spectator', async ({ page }) => {
   await expect(page.getByText('Partida en curso, juegas en la siguiente')).toBeVisible();
   await capture(page, 'justone-spectator');
 });
+
+test.describe('in motion', () => {
+  test.use({ reducedMotion: 'no-preference' });
+
+  async function snap(page: Page, name: string) {
+    const width = String(page.viewportSize()?.width ?? 0);
+    await page.screenshot({
+      path: join(process.env.SCREENSHOTS_DIR ?? '', `${width}-motion-${name}.png`),
+      animations: 'allow',
+    });
+  }
+
+  async function midFlip(page: Page, name: string) {
+    const flip = page.locator('[data-flip]').first();
+    await flip.scrollIntoViewIfNeeded();
+    await page.locator('[data-flip="front"]').first().waitFor();
+    await page.waitForTimeout(110);
+    await snap(page, name);
+  }
+
+  test('impostor reveal, the eliminated card flipping', async ({ page }) => {
+    await serveMatch(page, revealed(zorro, true));
+    await midFlip(page, 'impostor-reveal-flip');
+  });
+
+  test('wavelength reveal, the target flipping and the scores counting', async ({ page }) => {
+    await serveWavelength(page, wavelengthRevealed());
+    await midFlip(page, 'wavelength-reveal-flip');
+    await page.getByRole('list', { name: 'Puntaje' }).scrollIntoViewIfNeeded();
+    await page.waitForTimeout(1100);
+    await snap(page, 'wavelength-reveal-counting');
+  });
+
+  test('just one reveal, the word flipping', async ({ page }) => {
+    await serveJustOne(page, joRevealed('CORRECT'), null, { hostId: zorro });
+    await midFlip(page, 'justone-reveal-flip');
+  });
+
+  test('impostor final, the points counting', async ({ page }) => {
+    await serveMatch(page, finished('CIVILIANS'));
+    await page.getByRole('list', { name: 'Puntos de esta partida' }).scrollIntoViewIfNeeded();
+    await page.waitForTimeout(1300);
+    await snap(page, 'impostor-final-counting');
+  });
+});

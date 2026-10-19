@@ -8,16 +8,28 @@
   --color-moon-bright: #ffc65c;
   --color-ember: #ff7a5c;
   --color-sage: #8fd49e;
+  --color-sage-deep: #6dbb80;
   --color-orchid: #f2b4dc;
+  --color-orchid-deep: #e597c8;
   --color-lagoon: #a3d6ee;
   --color-sand: #e6cda6;
   --color-cream: #fbf1e2;
+  --color-paper-deep: #f3e2c9;
+  --color-wine: #4a1c16;
+  --color-wine-deep: #2c100d;
 
   --font-sans: 'Nunito Variable', ui-rounded, system-ui, sans-serif;
   --font-display: 'Fraunces Variable', ui-serif, Georgia, serif;
 
   --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
   --animate-float: float 6s ease-in-out infinite;
+  --animate-fade-in: fade-in 0.35s ease-out both;
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+  }
 
   @keyframes float {
     0%,
@@ -28,6 +40,8 @@
       transform: translateY(-6px) rotate(-4deg);
     }
   }
+
+  --radius-card: 1.75rem;
 
   --shadow-glow: 0 10px 30px -12px rgb(246 178 60 / 0.55);
   --shadow-lift: 0 24px 48px -28px rgb(0 0 0 / 0.85);
@@ -49,6 +63,50 @@
   box-shadow:
     0 0 0 1px rgb(251 241 226 / 0.12),
     0 20px 40px -12px rgb(0 0 0 / 0.8);
+}
+
+@utility card-paper {
+  color: var(--color-night);
+  background:
+    radial-gradient(120% 80% at 50% 0%, #fffaf3, transparent 70%),
+    linear-gradient(180deg, var(--color-cream), var(--color-paper-deep));
+  box-shadow:
+    inset 0 0 0 1px rgb(26 18 16 / 0.06),
+    inset 0 -14px 28px -18px rgb(150 96 40 / 0.45),
+    var(--shadow-lift);
+}
+
+@utility card-wine {
+  color: var(--color-cream);
+  background:
+    radial-gradient(110% 80% at 50% 0%, rgb(255 122 92 / 0.32), transparent 70%),
+    linear-gradient(180deg, var(--color-wine), var(--color-wine-deep));
+  box-shadow:
+    inset 0 0 0 1px rgb(255 122 92 / 0.35),
+    inset 0 0 0 9px #3a1611,
+    inset 0 0 0 10px rgb(255 122 92 / 0.28),
+    var(--shadow-lift);
+}
+
+@utility card-back {
+  --card-accent: var(--color-moon);
+  background-color: var(--color-night-raised);
+  background-image:
+    repeating-linear-gradient(
+      45deg,
+      color-mix(in srgb, var(--card-accent) 14%, transparent) 0 2px,
+      transparent 2px 16px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      color-mix(in srgb, var(--card-accent) 14%, transparent) 0 2px,
+      transparent 2px 16px
+    );
+  box-shadow:
+    inset 0 0 0 1px rgb(251 241 226 / 0.12),
+    inset 0 0 0 10px var(--color-night-raised),
+    inset 0 0 0 11px color-mix(in srgb, var(--card-accent) 45%, transparent),
+    var(--shadow-lift);
 }
 
 @layer base {

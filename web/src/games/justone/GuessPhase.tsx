@@ -1,7 +1,11 @@
 import { JUST_ONE_GUESS_MAX, type JustOnePublic, type RoomMember } from '@family-night/shared';
 import { useId } from 'react';
 import { Button } from '../../components/Button';
+import { field } from '../../components/field';
 import { nameOf } from '../../components/match';
+import { Waiting } from '../../components/Waiting';
+import { Stagger, StaggerItem } from '../../motion/motion';
+import { ClueCard } from './ClueCard';
 import type { Seat } from './model';
 import { WordCard } from './WordCard';
 
@@ -33,41 +37,36 @@ export function GuessPhase({
     <section aria-labelledby="guess-title" className="flex flex-col gap-5">
       {seat === 'CLUE_GIVER' && <WordCard word={word} />}
 
-      <div className="flex flex-col gap-3 rounded-3xl bg-night-soft p-5 ring-1 ring-cream/10">
-        <h2 id="guess-title" className="text-center text-lg font-semibold text-cream/80">
+      <div className="flex flex-col gap-4 surface p-5">
+        <h2 id="guess-title" className="text-center text-xl font-bold">
           {seat === 'GUESSER' ? 'Tus pistas' : `Pistas para ${guesser}`}
         </h2>
         {clues.length === 0 ? (
-          <p className="text-center text-xl font-semibold">No quedó ninguna pista</p>
+          <p className="text-center text-xl font-semibold text-cream/80">No quedó ninguna pista</p>
         ) : (
-          <ul aria-label="Pistas" className="flex flex-wrap justify-center gap-2">
-            {clues.map((clue) => (
-              <li
-                key={clue.authorId}
-                className="rounded-2xl bg-cream px-4 py-2 text-2xl font-bold break-words text-night"
-              >
-                {clue.clue}
-              </li>
-            ))}
-          </ul>
+          <Stagger>
+            <ul aria-label="Pistas" className="flex flex-wrap justify-center gap-3 pb-1">
+              {clues.map((clue, index) => (
+                <StaggerItem as="li" key={clue.authorId} className="flex w-[calc(50%-0.375rem)]">
+                  <ClueCard clue={clue.clue} index={index} />
+                </StaggerItem>
+              ))}
+            </ul>
+          </Stagger>
         )}
       </div>
 
       {seat === 'GUESSER' && sent !== undefined && (
-        <p role="status" className="text-center text-xl font-semibold text-balance break-words">
+        <Waiting>
           {sent === null
             ? 'Pasaste. Viendo el resultado…'
             : `Dijiste «${sent}». Viendo el resultado…`}
-        </p>
+        </Waiting>
       )}
       {seat === 'GUESSER' && sent === undefined && (
         <GuessForm guess={draft} onDraft={onDraft} onGuess={onGuess} />
       )}
-      {seat !== 'GUESSER' && (
-        <p role="status" className="text-center text-xl font-semibold text-balance">
-          {guesser} está adivinando…
-        </p>
-      )}
+      {seat !== 'GUESSER' && <Waiting>{guesser} está adivinando…</Waiting>}
     </section>
   );
 }
@@ -92,7 +91,7 @@ function GuessForm({
         if (trimmed) onGuess(trimmed);
       }}
     >
-      <label htmlFor={inputId} className="text-lg font-semibold">
+      <label htmlFor={inputId} className="text-xl font-bold">
         ¿Cuál es la palabra?
       </label>
       <input
@@ -106,7 +105,7 @@ function GuessForm({
         onChange={(event) => {
           onDraft(event.target.value);
         }}
-        className="min-h-14 rounded-2xl bg-cream px-4 text-xl text-night placeholder:text-night/50 focus-visible:ring-2 focus-visible:ring-moon focus-visible:outline-none disabled:opacity-70"
+        className={field}
         placeholder="Tu respuesta"
       />
       <Button type="submit" disabled={!trimmed}>

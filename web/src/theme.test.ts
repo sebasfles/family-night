@@ -69,7 +69,20 @@ describe('palette', () => {
     ['sage', 'night-soft'],
     ['lagoon', 'night-soft'],
     ['orchid', 'night-soft'],
+    ['night', 'sage'],
+    ['night', 'sage-deep'],
+    ['night', 'sand'],
+    ['night', 'orchid'],
+    ['night', 'orchid-deep'],
+    ['ember', 'wine'],
+    ['cream', 'wine'],
   ])('%s text on %s passes AA', (text, background) => {
     expect(contrast(color(text), color(background))).toBeGreaterThanOrEqual(4.5);
+  });
+
+  test.each(['cream', 'paper-deep'])('the small labels on a paper card read on %s', (paper) => {
+    expect(contrast(over(color('night'), 0.65, color(paper)), color(paper))).toBeGreaterThanOrEqual(
+      4.5,
+    );
   });
 });

@@ -11,6 +11,8 @@ import {
   snapshot,
   type Handler,
 } from '../../test/app';
+import { stubReducedMotion } from '../../test/motion';
+import { spokenText } from '../../test/text';
 import { applyRoom } from '../../api/room';
 import { impostorMatch, MATCH_ID } from '../../test/impostor-match';
 
@@ -393,6 +395,16 @@ function revealed(
 }
 
 describe('the reveal', () => {
+  test('the eliminated card turns over in 3D before telling what they were', async () => {
+    stubReducedMotion(false);
+    play(room(revealed(zorro.playerId, { wasImpostor: true })));
+
+    await screen.findByRole('heading', { name: 'Zorro Astuto fue eliminado' });
+    expect(screen.queryByText('Era impostor')).toBeNull();
+    const verdict = await screen.findByText('Era impostor');
+    expect(verdict.closest('[data-flip]')).toHaveStyle({ transform: 'rotateY(180deg)' });
+  });
+
   test('ranks the votes and says the eliminated was an impostor', async () => {
     play(room(revealed(zorro.playerId, { wasImpostor: true })));
 
@@ -401,7 +413,7 @@ describe('the reveal', () => {
     ).toBeVisible();
     expect(screen.getByText('Era impostor')).toBeVisible();
     const rows = within(screen.getByRole('list', { name: 'Votos' })).getAllByRole('listitem');
-    expect(rows.map((row) => row.textContent)).toEqual([
+    expect(rows.map(spokenText)).toEqual([
       'Zorro Astuto2 votos',
       'Oso Sabio1 voto',
       'Cóndor Veloz0 votos',

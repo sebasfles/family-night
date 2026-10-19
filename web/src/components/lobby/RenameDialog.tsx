@@ -8,6 +8,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { Pop } from '../../motion/motion';
 import { Backdrop } from '../Backdrop';
 import { Button } from '../Button';
+import { field } from '../field';
 
 interface RenameDialogProps {
   current: string;
@@ -77,7 +78,7 @@ export function RenameDialog({ current, others, onRename, onCancel }: RenameDial
             onChange={(event) => {
               setDraft(event.target.value);
             }}
-            className="min-h-14 rounded-2xl bg-night px-4 text-xl font-semibold text-cream ring-1 ring-cream/15 focus-visible:ring-2 focus-visible:ring-moon focus-visible:outline-none"
+            className={field}
           />
           <p
             id={hintId}

@@ -20,7 +20,7 @@ function Controlled({ disabled = false }: { disabled?: boolean }) {
 
 function renderDial(disabled = false) {
   render(<Controlled disabled={disabled} />);
-  const svg = document.querySelector('svg');
+  const svg = document.querySelector<SVGSVGElement>('svg[data-layer="hand"]');
   if (!svg) throw new Error('no dial');
   svg.getBoundingClientRect = () => DOMRect.fromRect({ x: 0, y: 0, width: 520, height: 240 });
   svg.setPointerCapture = vi.fn();
@@ -65,14 +65,17 @@ describe('the dial', () => {
   });
 });
 
-function bandLabels(target: number): { points: number; value: number }[] {
+function renderTarget(target: number) {
   render(<Dial label="El objetivo" left="Frío" right="Caliente" target={target} />);
-  const svg = document.querySelector('svg');
-  const hub = svg?.querySelector('circle[r="7"]');
-  if (!svg || !hub) throw new Error('no dial');
-  const cx = Number(hub.getAttribute('cx'));
-  const cy = Number(hub.getAttribute('cy'));
-  return Array.from(svg.querySelectorAll('text')).map((text) => {
+  const bands = document.querySelector('[data-layer="bands"]');
+  const hub = document.querySelector('[data-layer="hand"] [data-hub]');
+  if (!bands || !hub) throw new Error('no dial');
+  return { bands, cx: Number(hub.getAttribute('cx')), cy: Number(hub.getAttribute('cy')) };
+}
+
+function bandLabels(target: number): { points: number; value: number }[] {
+  const { bands, cx, cy } = renderTarget(target);
+  return Array.from(bands.querySelectorAll('text')).map((text) => {
     const angle = Math.atan2(
       cy - Number(text.getAttribute('y')),
       Number(text.getAttribute('x')) - cx,
@@ -99,21 +102,14 @@ describe('the scoring zones', () => {
   );
 
   test('each zone spans half a point past the last whole value it scores', () => {
-    render(<Dial label="El objetivo" left="Frío" right="Caliente" target={50} />);
-    const svg = document.querySelector('svg');
-    const hub = svg?.querySelector('circle[r="7"]');
-    if (!svg || !hub) throw new Error('no dial');
-    const cx = Number(hub.getAttribute('cx'));
-    const cy = Number(hub.getAttribute('cy'));
+    const { bands, cx, cy } = renderTarget(50);
     const valueAt = (x: number, y: number) => (1 - Math.atan2(cy - y, x - cx) / Math.PI) * DIAL_MAX;
-    const zones = Array.from(svg.querySelectorAll('path'))
-      .slice(1)
-      .map((path) => {
-        const numbers = (path.getAttribute('d') ?? '').match(/-?\d+(\.\d+)?/g)?.map(Number) ?? [];
-        const [, , x1 = 0, y1 = 0] = numbers;
-        const [x2 = 0, y2 = 0] = numbers.slice(-2);
-        return [valueAt(x1, y1), valueAt(x2, y2)].map((value) => Number(value.toFixed(1)));
-      });
+    const zones = Array.from(bands.querySelectorAll('path[data-points]')).map((path) => {
+      const numbers = (path.getAttribute('d') ?? '').match(/-?\d+(\.\d+)?/g)?.map(Number) ?? [];
+      const [, , x1 = 0, y1 = 0] = numbers;
+      const [x2 = 0, y2 = 0] = numbers.slice(-2);
+      return [valueAt(x1, y1), valueAt(x2, y2)].map((value) => Number(value.toFixed(1)));
+    });
 
     expect(zones).toEqual([
       [37.5, 62.5],

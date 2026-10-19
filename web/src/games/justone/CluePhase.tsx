@@ -7,7 +7,12 @@ import {
 import { useId, useState } from 'react';
 import { Button } from '../../components/Button';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { field } from '../../components/field';
+import { CluesIcon } from '../../components/icons';
 import { nameOf } from '../../components/match';
+import { Notice } from '../../components/Notice';
+import { Waiting } from '../../components/Waiting';
+import { ClueCard } from './ClueCard';
 import type { Seat } from './model';
 import { WordCard } from './WordCard';
 
@@ -55,13 +60,10 @@ export function CluePhase({
   return (
     <section aria-labelledby="clue-title" className="flex flex-col gap-5">
       {match.skipped && (
-        <p
-          role="status"
-          className="rounded-2xl bg-cream/10 px-4 py-3 text-center text-base text-cream/90"
-        >
+        <Notice>
           {nameOf(members, match.skipped.guesserId)} {skipReasons[match.skipped.reason]}, ahora le
           toca a {guesser}
-        </p>
+        </Notice>
       )}
 
       {seat === 'CLUE_GIVER' ? (
@@ -71,14 +73,16 @@ export function CluePhase({
           </h2>
           <WordCard word={word} />
           {committed ? (
-            <div className="flex flex-col items-center gap-1 text-center">
+            <div className="flex flex-col items-center gap-4 text-center">
               {myClue !== null && (
-                <>
-                  <p className="text-lg text-cream/80">Tu pista</p>
-                  <p className="text-2xl font-bold break-words">{myClue}</p>
-                </>
+                <div className="flex w-48 max-w-full flex-col gap-2">
+                  <p className="font-sans text-sm font-bold tracking-[0.18em] text-cream/70 uppercase">
+                    Tu pista
+                  </p>
+                  <ClueCard clue={myClue} index={1} />
+                </div>
               )}
-              <p className="text-lg text-cream/80">Listo. Esperando a los demás…</p>
+              <Waiting>Listo. Esperando a los demás…</Waiting>
             </div>
           ) : (
             <ClueForm guesser={guesser} clue={draft} onDraft={onDraft} onClue={onClue} />
@@ -86,14 +90,20 @@ export function CluePhase({
         </>
       ) : (
         <div className="flex flex-col items-center gap-2 text-center">
-          <h2 id="clue-title" className="text-2xl font-bold text-balance">
+          <span className="flex size-16 items-center justify-center rounded-2xl bg-orchid/14 text-orchid">
+            <CluesIcon className="size-10" />
+          </span>
+          <h2 id="clue-title" className="text-3xl font-bold text-balance">
             {seat === 'GUESSER' ? 'Te toca adivinar' : `Adivina ${guesser}`}
           </h2>
-          <p className="text-xl font-semibold text-balance">Están escribiendo pistas…</p>
+          <Waiting>Están escribiendo pistas…</Waiting>
         </div>
       )}
 
-      <p role="status" className="text-center text-lg text-cream/80">
+      <p
+        role="status"
+        className="self-center rounded-full bg-cream/8 px-4 py-1 text-lg font-semibold text-cream/85 tabular-nums"
+      >
         Pistas listas: {done} de {total}
       </p>
 
@@ -151,10 +161,10 @@ function ClueForm({
       }}
     >
       <div className="flex items-baseline justify-between gap-3">
-        <label htmlFor={inputId} className="text-lg font-semibold">
+        <label htmlFor={inputId} className="text-xl font-bold">
           Tu pista
         </label>
-        <span className="text-base text-cream/60 tabular-nums">
+        <span className="text-base text-cream/70 tabular-nums">
           {clue.length}/{JUST_ONE_CLUE_MAX}
         </span>
       </div>
@@ -173,7 +183,7 @@ function ClueForm({
         onChange={(event) => {
           onDraft(event.target.value.replace(/\s/gu, ''));
         }}
-        className="min-h-14 rounded-2xl bg-cream px-4 text-xl text-night placeholder:text-night/50 focus-visible:ring-2 focus-visible:ring-moon focus-visible:outline-none disabled:opacity-70"
+        className={field}
         placeholder="Una palabra"
       />
       <Button type="submit" disabled={!clue}>
