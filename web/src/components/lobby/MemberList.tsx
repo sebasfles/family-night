@@ -85,7 +85,7 @@ function MemberRow({
   return (
     <StaggerItem
       as="li"
-      className={`flex min-h-16 items-center gap-3 rounded-2xl py-2 pr-1 pl-2 ${self ? 'bg-cream/5' : ''}`}
+      className={`flex min-h-16 items-center gap-2 rounded-2xl py-2 pr-1 pl-2 sm:gap-3 ${self ? 'bg-cream/5' : ''}`}
     >
       <span className="relative shrink-0">
         <Avatar
@@ -115,9 +115,11 @@ function MemberRow({
         </p>
         <p className="text-sm text-cream/60">{online ? 'en línea' : 'ausente'}</p>
       </div>
-      <p className="shrink-0 rounded-full bg-night px-3 py-1 font-display text-lg font-bold text-moon tabular-nums">
-        {member.totalScore}{' '}
-        <span className="font-sans text-sm font-semibold text-cream/60">pts</span>
+      <p className="flex min-w-11 shrink-0 flex-col items-center rounded-2xl bg-night px-2 py-1.5 font-display text-lg leading-none font-bold text-moon tabular-nums sm:flex-row sm:items-baseline sm:gap-1 sm:rounded-full sm:px-3 sm:py-1 sm:leading-normal">
+        {member.totalScore}
+        <span className="mt-0.5 font-sans text-xs font-semibold text-cream/60 sm:mt-0 sm:text-sm">
+          <span className="sr-only"> </span>pts
+        </span>
       </p>
       {canManage && (
         <Menu

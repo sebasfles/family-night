@@ -39,9 +39,10 @@ interface GamePickerProps {
   selected: GameType;
   editable: boolean;
   onSelect: (game: GameType) => void;
+  onHowToPlay: (game: GameType, name: string) => void;
 }
 
-export function GamePicker({ selected, editable, onSelect }: GamePickerProps) {
+export function GamePicker({ selected, editable, onSelect, onHowToPlay }: GamePickerProps) {
   return (
     <section aria-labelledby="games-title" className="flex flex-col gap-3">
       <h2 id="games-title" className="text-2xl font-bold">
@@ -77,6 +78,16 @@ export function GamePicker({ selected, editable, onSelect }: GamePickerProps) {
                     )}
                   </div>
                   <p className="text-base text-cream/75">{game.description}</p>
+                  <button
+                    type="button"
+                    aria-label={`¿Cómo jugar ${game.name}?`}
+                    onClick={() => {
+                      onHowToPlay(id, game.name);
+                    }}
+                    className="relative z-10 -mx-3 -mb-2 inline-flex min-h-12 items-center self-start rounded-full px-3 text-base font-bold text-moon underline decoration-moon/40 underline-offset-4 transition-colors hover:bg-moon/10 hover:decoration-moon focus-visible:ring-2 focus-visible:ring-moon focus-visible:outline-none sm:mt-auto"
+                  >
+                    ¿Cómo jugar?
+                  </button>
                 </div>
                 {editable && (
                   <button

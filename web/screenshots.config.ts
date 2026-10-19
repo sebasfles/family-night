@@ -22,6 +22,16 @@ export default defineConfig({
   },
   projects: [
     {
+      name: '360',
+      use: {
+        ...desktop,
+        viewport: { width: 360, height: 780 },
+        deviceScaleFactor: 2,
+        isMobile: true,
+        hasTouch: true,
+      },
+    },
+    {
       name: '390',
       use: {
         ...desktop,

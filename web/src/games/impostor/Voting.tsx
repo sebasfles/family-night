@@ -59,68 +59,16 @@ export function Voting({
           style={{ width: `${String(total ? (voted / total) * 100 : 0)}%` }}
         />
       </span>
-      <ul className="flex flex-col gap-1.5 surface p-2">
-        {match.order.map((playerId) => {
-          const name = nameOf(members, playerId);
-          const hasVoted = match.votedPlayerIds.includes(playerId);
-          const selected = canVote && selection === playerId;
-          const check = hasVoted && (
-            <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-sage/16 text-sage">
-              <CheckIcon className="size-5" />
-              <span className="sr-only">ya votó</span>
-            </span>
-          );
-          const avatar = <Avatar playerId={playerId} name={name} className="size-10 text-sm" />;
-          if (canVote && playerId !== selfId) {
-            return (
-              <li key={playerId}>
-                <button
-                  type="button"
-                  aria-pressed={selected}
-                  disabled={confirmed}
-                  onClick={() => {
-                    if (!selected) onSelect(playerId);
-                  }}
-                  className={`flex min-h-14 w-full items-center gap-3 rounded-2xl px-3 py-2 text-left text-lg font-semibold transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-moon focus-visible:outline-none disabled:cursor-default ${
-                    selected
-                      ? 'bg-moon/14 ring-2 ring-moon'
-                      : `hover:bg-cream/6 ${confirmed ? 'text-cream/55' : ''}`
-                  }`}
-                >
-                  {avatar}
-                  <span className="min-w-0 flex-1 break-words">
-                    {name}
-                    {selected && ' '}
-                    {selected && (
-                      <span
-                        className={`ml-1 inline-block rounded-full px-2.5 py-0.5 align-middle text-sm font-bold ${
-                          confirmed ? 'bg-moon text-night' : 'bg-moon/20 text-moon'
-                        }`}
-                      >
-                        {confirmed ? 'tu voto' : 'tu elección'}
-                      </span>
-                    )}
-                  </span>
-                  {check}
-                </button>
-              </li>
-            );
-          }
-          return (
-            <li
-              key={playerId}
-              className="flex min-h-14 items-center gap-3 rounded-2xl px-3 py-2 text-lg"
-            >
-              {avatar}
-              <span className="min-w-0 flex-1 break-words">
-                {name}
-                {playerId === selfId && <span className="ml-1.5 text-cream/60">(tú)</span>}
-              </span>
-              {check}
-            </li>
-          );
-        })}
-      </ul>
+      <VoteList
+        order={match.order}
+        votedPlayerIds={match.votedPlayerIds}
+        members={members}
+        selfId={selfId}
+        canVote={canVote}
+        selection={selection}
+        confirmed={confirmed}
+        onSelect={onSelect}
+      />
 
       {canVote &&
         (confirmed ? (
@@ -175,5 +123,92 @@ export function Voting({
         />
       )}
     </section>
+  );
+}
+
+interface VoteListProps {
+  order: string[];
+  votedPlayerIds: string[];
+  members: RoomMember[];
+  selfId: string;
+  canVote: boolean;
+  selection: string | null;
+  confirmed: boolean;
+  onSelect: (targetId: string) => void;
+}
+
+export function VoteList({
+  order,
+  votedPlayerIds,
+  members,
+  selfId,
+  canVote,
+  selection,
+  confirmed,
+  onSelect,
+}: VoteListProps) {
+  return (
+    <ul className="flex flex-col gap-1.5 surface p-2">
+      {order.map((playerId) => {
+        const name = nameOf(members, playerId);
+        const hasVoted = votedPlayerIds.includes(playerId);
+        const selected = canVote && selection === playerId;
+        const check = hasVoted && (
+          <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-sage/16 text-sage">
+            <CheckIcon className="size-5" />
+            <span className="sr-only">ya votó</span>
+          </span>
+        );
+        const avatar = <Avatar playerId={playerId} name={name} className="size-10 text-sm" />;
+        if (canVote && playerId !== selfId) {
+          return (
+            <li key={playerId}>
+              <button
+                type="button"
+                aria-pressed={selected}
+                disabled={confirmed}
+                onClick={() => {
+                  if (!selected) onSelect(playerId);
+                }}
+                className={`flex min-h-14 w-full items-center gap-3 rounded-2xl px-3 py-2 text-left text-lg font-semibold transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-moon focus-visible:outline-none disabled:cursor-default ${
+                  selected
+                    ? 'bg-moon/14 ring-2 ring-moon'
+                    : `hover:bg-cream/6 ${confirmed ? 'text-cream/55' : ''}`
+                }`}
+              >
+                {avatar}
+                <span className="min-w-0 flex-1 break-words">
+                  {name}
+                  {selected && ' '}
+                  {selected && (
+                    <span
+                      className={`ml-1 inline-block rounded-full px-2.5 py-0.5 align-middle text-sm font-bold ${
+                        confirmed ? 'bg-moon text-night' : 'bg-moon/20 text-moon'
+                      }`}
+                    >
+                      {confirmed ? 'tu voto' : 'tu elección'}
+                    </span>
+                  )}
+                </span>
+                {check}
+              </button>
+            </li>
+          );
+        }
+        return (
+          <li
+            key={playerId}
+            className="flex min-h-14 items-center gap-3 rounded-2xl px-3 py-2 text-lg"
+          >
+            {avatar}
+            <span className="min-w-0 flex-1 break-words">
+              {name}
+              {playerId === selfId && <span className="ml-1.5 text-cream/60">(tú)</span>}
+            </span>
+            {check}
+          </li>
+        );
+      })}
+    </ul>
   );
 }

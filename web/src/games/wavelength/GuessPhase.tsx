@@ -5,6 +5,7 @@ import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { SoundIcon } from '../../components/icons';
 import { nameOf } from '../../components/match';
 import { Waiting } from '../../components/Waiting';
+import { ClueBanner } from './ClueBanner';
 import { Dial } from './Dial';
 import type { Seat } from './model';
 import { useDialSound } from './tick';
@@ -46,27 +47,11 @@ export function GuessPhase({
 
   return (
     <section aria-labelledby="guess-title" className="flex flex-col gap-5">
-      <div className="relative flex flex-col items-center gap-2 overflow-hidden rounded-card px-6 pt-8 pb-6 text-center card-paper">
-        <span
-          aria-hidden="true"
-          className="absolute inset-x-0 top-0 h-2 bg-linear-to-r from-lagoon via-sand to-ember"
-        />
-        <h2
-          id="guess-title"
-          className="font-sans text-sm font-bold tracking-[0.18em] text-night/65 uppercase"
-        >
-          {seat === 'PSYCHIC' ? 'Tu pista' : `La pista de ${psychic}`}
-        </h2>
-        <p className="font-display text-4xl leading-tight font-bold text-balance break-words">
-          <span aria-hidden="true" className="text-night/30">
-            «
-          </span>
-          {match.clue}
-          <span aria-hidden="true" className="text-night/30">
-            »
-          </span>
-        </p>
-      </div>
+      <ClueBanner
+        titleId="guess-title"
+        title={seat === 'PSYCHIC' ? 'Tu pista' : `La pista de ${psychic}`}
+        clue={match.clue}
+      />
 
       {seat === 'GUESSER' ? (
         <div className="flex flex-col gap-2">

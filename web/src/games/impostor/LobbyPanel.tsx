@@ -15,9 +15,20 @@ interface LobbyPanelProps {
   snapshot: RoomSnapshot;
   isHost: boolean;
   nowMs: number;
+  openSections: ReadonlySet<string>;
+  onToggleSection: (section: string) => void;
 }
 
-export function LobbyPanel({ code, snapshot, isHost, nowMs }: LobbyPanelProps) {
+const CATEGORIES = 'impostor-categories';
+
+export function LobbyPanel({
+  code,
+  snapshot,
+  isHost,
+  nowMs,
+  openSections,
+  onToggleSection,
+}: LobbyPanelProps) {
   const categories = useWordCategories();
   const players = snapshot.members.filter((member) => isOnline(member.lastSeenAt, nowMs));
   const cap = Math.max(1, maxImpostors(players.length));
@@ -39,6 +50,10 @@ export function LobbyPanel({ code, snapshot, isHost, nowMs }: LobbyPanelProps) {
         playerCount={players.length}
         categories={categories.data}
         editable={isHost}
+        categoriesOpen={openSections.has(CATEGORIES)}
+        onToggleCategories={() => {
+          onToggleSection(CATEGORIES);
+        }}
         onChange={(next) => {
           update.mutate(next);
         }}

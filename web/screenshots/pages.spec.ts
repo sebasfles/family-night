@@ -94,11 +94,34 @@ async function serveRoom(page: Page, snapshot: RoomSnapshot) {
 }
 
 async function capture(page: Page, name: string, fullPage = true) {
-  const overflow = await page.evaluate(
-    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
-  );
-  expect(overflow, `${name} overflows horizontally`).toBe(0);
-  const width = String(page.viewportSize()?.width ?? 0);
+  const viewport = page.viewportSize()?.width ?? 0;
+  const offenders = await page.evaluate((limit) => {
+    const found: string[] = [];
+    if (document.documentElement.scrollWidth > limit) {
+      found.push(`page is ${String(document.documentElement.scrollWidth)} px wide`);
+    }
+    for (const input of document.querySelectorAll('input, textarea')) {
+      if (input.scrollWidth > input.clientWidth + 1) {
+        found.push(`input "${(input as HTMLInputElement).value}" scrolls`);
+      }
+    }
+    for (const element of document.querySelectorAll('body *')) {
+      if (element.closest('[aria-hidden="true"], .sr-only')) continue;
+      const text = [...element.childNodes]
+        .filter((node) => node.nodeType === Node.TEXT_NODE)
+        .map((node) => node.textContent?.trim() ?? '')
+        .join('');
+      if (!text) continue;
+      const { left, right, width } = element.getBoundingClientRect();
+      const cut =
+        element.scrollWidth > element.clientWidth + 1 &&
+        getComputedStyle(element).overflowX !== 'visible';
+      if (width > 0 && (left < -0.5 || right > limit + 0.5 || cut)) found.push(text);
+    }
+    return found;
+  }, viewport);
+  expect(offenders, `${name} overflows or clips text horizontally`).toEqual([]);
+  const width = String(viewport);
   await page.screenshot({
     path: join(process.env.SCREENSHOTS_DIR ?? '', `${width}-${name}.png`),
     fullPage,
@@ -112,6 +135,25 @@ test('home', async ({ page }) => {
   await expect(page.getByText('Hola,')).toBeVisible();
   await page.getByLabel('Código de sala').fill('kxpr');
   await capture(page, 'home');
+});
+
+test('home, renaming myself', async ({ page }) => {
+  await signIn(page);
+  await page.route('**/api/players/me', (route) =>
+    route.request().method() === 'PATCH'
+      ? route.fulfill({
+          json: { player: { playerId: me.playerId, name: 'Hipopótamo Valiente' } },
+        })
+      : route.fulfill({ json: { playerId: me.playerId, name: me.name } }),
+  );
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Cambiar tu nombre' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Tu nombre' });
+  await dialog.getByRole('textbox').fill('Hipopótamo Valiente');
+  await capture(page, 'home-rename', false);
+  await dialog.getByRole('button', { name: 'Guardar' }).click();
+  await expect(page.getByText('Hola,')).toContainText('Hipopótamo Valiente');
+  await capture(page, 'home-renamed');
 });
 
 test('lobby as host, alone', async ({ page }) => {
@@ -258,9 +300,34 @@ test('lobby as host with the Impostor config', async ({ page }) => {
   await serveRoom(page, room({ members: online }));
   await page.goto('/KXPR');
   await expect(page.getByRole('button', { name: 'Iniciar' })).toBeEnabled();
-  await expect(page.getByRole('button', { name: 'Animales' })).toBeVisible();
+  const categoriesToggle = page.getByRole('button', { name: /Categorías/ });
+  await expect(categoriesToggle).toContainText('5 de 10');
   await capture(page, 'lobby-host-config');
+  await categoriesToggle.click();
+  await expect(page.getByRole('button', { name: 'Animales' })).toBeVisible();
+  await capture(page, 'lobby-host-config-categories');
 });
+
+for (const game of ['Impostor', 'Wavelength', 'Just One']) {
+  test(`how to play ${game}, every step`, async ({ page }) => {
+    await signIn(page);
+    await serveRoom(page, room({ members: online }));
+    await page.goto('/KXPR');
+    await page.getByRole('button', { name: `¿Cómo jugar ${game}?` }).click();
+    const dialog = page.getByRole('dialog', { name: game });
+    const label = (await dialog.getByRole('group').getAttribute('aria-label')) ?? '';
+    const total = Number(/de (\d+)$/.exec(label)?.[1] ?? 0);
+    const slug = game.toLowerCase().replace(' ', '');
+    for (let step = 1; step <= total; step++) {
+      await expect(dialog.getByRole('group')).toHaveAttribute(
+        'aria-label',
+        `Paso ${String(step)} de ${String(total)}`,
+      );
+      await capture(page, `howto-${slug}-${String(step)}`, false);
+      if (step < total) await dialog.getByRole('button', { name: 'Siguiente' }).click();
+    }
+  });
+}
 
 test('lobby as host missing players', async ({ page }) => {
   await signIn(page);

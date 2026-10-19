@@ -36,7 +36,7 @@ export function Card({ secret }: { secret: ImpostorSecret | undefined }) {
             <CardBackHint />
           </CardBack>
         }
-        front={<Face secret={secret} />}
+        front={<CardFace secret={secret} />}
       />
     </button>
   );
@@ -64,7 +64,7 @@ function CardBackHint() {
   );
 }
 
-function Face({ secret }: { secret: ImpostorSecret }) {
+export function CardFace({ secret }: { secret: ImpostorSecret }) {
   if (secret.role === 'CIVILIAN') {
     return (
       <span className={`${CARD} rounded-card card-paper`}>

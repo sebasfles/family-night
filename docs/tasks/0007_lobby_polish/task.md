@@ -100,3 +100,35 @@ Consolidated 2026-10-18 by the om-reviewer; answers by the om-manager on Sebasti
 - clearance: repo
 
 ## om-developer notes
+
+### Round 1
+
+Done:
+
+- Roomless rename: `RenamePlayerRequest.roomCode` is optional; `RenamePlayerResponse` is `{ player }` and `RenameInRoomResponse` adds `room`.
+  The api runs the same writes (player conditional on the old name, claim, release), shared with the room path through `renameWrites`, with its own retry loop (4 attempts, jitter, then `CONFLICT`) and no room write or publish.
+  A malformed `roomCode` is still `VALIDATION_ERROR`, never a silent roomless rename.
+- Web client: `api.rename(name)` for home and `api.renameInRoom(code, name)` for the lobby; `storeIdentity` in `identity/identity.ts` is the one place that saves the identity and the `['identity']` query data.
+- Home: pencil inline after the greeting, reusing `RenameDialog` with no room members; optimistic through `useRenameFromHome` (rollback plus toast on refusal).
+  Crear sala and Unirme queue behind the in-flight rename and show busy meanwhile; the pencil ignores taps while a rename is in flight, so two renames never race their rollbacks.
+- Categories: collapsed by default behind a chevron, summary "Todas", "N de M" or "Cargando categorías…"; open sections live in the lobby route as `openSections`, a generic set passed to every panel, so the state survives game switches and resets when the lobby remounts.
+- How to play: `components/HowToPlay.tsx` (drawer under 768 px via `useWideScreen`, modal from 768 px, carousel, swipe on Pointer Events with `touch-pan-y`, Escape and arrow keys, focus to close and back to the opener on close); steps in `games/{game}/howToPlay.tsx` (Impostor 6, Wavelength 5, Just One 5); mocked family in `components/demoFamily.ts`.
+  Scenes render inert (no taps inside a step), so the only gestures are swipe and the handle.
+  New motion primitives `SlideUp` (drawer enter) and `SlideIn` (step enter, direction aware), enter only.
+- Thin decoupling for the steps, no behavior change: `VoteList` extracted from `Voting`, `Verdict` and `Tally` exported from impostor `Reveal` (`Tally` takes `participants`), `CardFace` exported from `Card`, `ClueBanner` extracted from wavelength `GuessPhase`, `RevealedWord` and `TeamScore` extracted from justone `RevealPhase`.
+  Demo points and cancellations come from the shared rules (`dialPoints`, `psychicPoints`, `autoCancelled`), so the steps cannot drift from the games.
+- 360 px: project added to `screenshots.config.ts`; `capture` now fails on a page wider than the configured viewport (the old check compared against `innerWidth`, which a mobile viewport widens to fit overflowing content), on any text element outside the viewport or clipped by its own overflow, and on any input whose value scrolls.
+  Fixed what it found: the lobby grid column grew to the longest unbreakable name (`grid-cols-1`); member rows stack "pts" under the score below `sm` so names and the crown fit; the room code input clipped "KXPR" (tighter tracking and padding below `sm`, Unirme `px-4`).
+- Screenshots: `{{workspace}}/screenshots/`, 360, 390, 768 and 1280, including `home-rename`, `home-renamed`, `lobby-host-config` (collapsed), `lobby-host-config-categories` (expanded) and `howto-{impostor,wavelength,justone}-{n}` for every step (drawer at 360 and 390, modal at 768 and 1280).
+
+Decisions not in the plan:
+
+- Separate response types (`RenamePlayerResponse`, `RenameInRoomResponse`) over one type with an optional `room`, so the lobby keeps a non-null snapshot by type.
+- The tutorial scenes are inert illustrations rather than interactive copies, so a step never competes with the swipe and no tap can reach a component's callbacks.
+- The game card link carries `aria-label` "¿Cómo jugar {game}?" so every card's link has a distinct name; visible text stays "¿Cómo jugar?".
+
+Pending: none.
+
+Deferred:
+
+- Names with one word longer than about 11 letters still break mid-word in member rows at 360 (`break-words` fallback); only a layout change of the row would avoid it.

@@ -2,6 +2,7 @@ import { ONLINE_WINDOW_MS, PRESENCE_RECOMPUTE_MS, type RoomSnapshot } from '@fam
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, onTestFinished, test, vi } from 'vitest';
 import { apiError, me, member, mockApi, renderApp, signIn, snapshot } from '../../test/app';
+import { applyRoom } from '../../api/room';
 import { loadIdentity } from '../../identity/storage';
 import { impostorMatch } from '../../test/impostor-match';
 
@@ -446,6 +447,7 @@ describe('the Impostor panel', () => {
       });
     });
 
+    fireEvent.click(await screen.findByRole('button', { name: /Categorías/ }));
     expect(await screen.findByRole('button', { name: 'Animales' })).toBeDisabled();
     fireEvent.click(screen.getByRole('button', { name: 'Comida' }));
     await waitFor(() => {
@@ -455,6 +457,75 @@ describe('the Impostor panel', () => {
     });
   });
 
+  test('categories open collapsed with a summary and expand and collapse on tap', async () => {
+    lobby(room({ members: players(3) }));
+
+    const toggle = await screen.findByRole('button', { name: /Categorías/ });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await waitFor(() => {
+      expect(toggle).toHaveTextContent('Categorías1 de 2');
+    });
+    expect(screen.queryByRole('button', { name: 'Comida' })).toBeNull();
+
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('button', { name: 'Comida', pressed: false })).toBeEnabled();
+
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByRole('button', { name: 'Comida' })).toBeNull();
+  });
+
+  test('the summary reads Todas with every category, and says it is loading before they arrive', async () => {
+    const served = room({
+      members: players(3),
+      configs: {
+        ...room().configs,
+        IMPOSTOR: { ...room().configs.IMPOSTOR, categories: ['animales', 'comida'] },
+      },
+    });
+    const entered = enterRoom('/ABCD', served);
+    let answer: (response: Response) => void = () => undefined;
+    entered.mock.on(
+      'GET /api/words/categories',
+      () =>
+        new Promise<Response>((resolve) => {
+          answer = resolve;
+        }),
+    );
+
+    const toggle = await screen.findByRole('button', { name: /Categorías/ });
+    expect(toggle).toHaveTextContent('Cargando categorías…');
+
+    await waitFor(() => {
+      expect(entered.mock.calls.map((call) => call.route)).toContain('GET /api/words/categories');
+    });
+    answer(Response.json({ categories }));
+    await waitFor(() => {
+      expect(toggle).toHaveTextContent('CategoríasTodas');
+    });
+  });
+
+  test('the categories stay open across game switches while the lobby is open', async () => {
+    const served = room({ members: players(3) });
+    const { queryClient } = lobby(served);
+
+    fireEvent.click(await screen.findByRole('button', { name: /Categorías/ }));
+    act(() => {
+      applyRoom(queryClient, { ...served, version: 20, selectedGame: 'WAVELENGTH' });
+    });
+    expect(await screen.findByText('Vueltas')).toBeVisible();
+    expect(screen.queryByRole('button', { name: /Categorías/ })).toBeNull();
+    act(() => {
+      applyRoom(queryClient, { ...served, version: 21, selectedGame: 'IMPOSTOR' });
+    });
+
+    expect(await screen.findByRole('button', { name: /Categorías/ })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
+  });
+
   test('members see the config read-only and wait for the host', async () => {
     lobby(room({ members: players(3), hostId: `${'2'.repeat(8)}-0000-4000-8000-000000000000` }));
 
@@ -462,6 +533,9 @@ describe('the Impostor panel', () => {
     expect(screen.getByText('Solo el host puede cambiarla.')).toBeVisible();
     expect(screen.getByRole('switch', { name: /Orden aleatorio/ })).toBeDisabled();
     expect(screen.queryByRole('button', { name: 'Iniciar' })).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: /Categorías/ }));
+    expect(await screen.findByRole('button', { name: 'Comida' })).toBeDisabled();
   });
 
   test('a refused start shows the server message', async () => {
@@ -536,7 +610,7 @@ describe('the Wavelength panel', () => {
     enterRoom('/ABCD', wavelengthRoom({ hostId: guest.playerId }));
 
     const games = await screen.findByRole('region', { name: 'Juegos' });
-    expect(within(games).queryByRole('button')).toBeNull();
+    expect(within(games).queryByRole('button', { name: /^Jugar/ })).toBeNull();
     expect(within(games).getByText('Elegido').closest('li')).toHaveTextContent('Wavelength');
     expect(screen.getByText('Solo el host puede cambiarla.')).toBeVisible();
     for (const radio of screen.getAllByRole('radio')) expect(radio).toBeDisabled();
@@ -590,6 +664,65 @@ describe('the Just One panel', () => {
       });
     });
   });
+});
+
+describe('how to play', () => {
+  test('every card offers it, for the host and for members, and it never selects the game', async () => {
+    const { mock } = enterRoom('/ABCD');
+    mock.on('GET /api/words/categories', () => Response.json({ categories: [] }));
+
+    const games = await screen.findByRole('region', { name: 'Juegos' });
+    for (const name of ['Impostor', 'Wavelength', 'Just One']) {
+      expect(within(games).getByRole('button', { name: `¿Cómo jugar ${name}?` })).toBeVisible();
+    }
+
+    fireEvent.click(within(games).getByRole('button', { name: '¿Cómo jugar Wavelength?' }));
+
+    expect(screen.getByRole('dialog', { name: 'Wavelength' })).toBeVisible();
+    expect(within(games).getByRole('button', { name: 'Jugar Wavelength' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+    expect(mock.calls.map((call) => call.route)).not.toContain('PUT /api/rooms/ABCD/config');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  test('a member who is not host can open it too', async () => {
+    enterRoom('/ABCD', room({ hostId: guest.playerId }));
+
+    fireEvent.click(await screen.findByRole('button', { name: '¿Cómo jugar Just One?' }));
+
+    expect(screen.getByRole('dialog', { name: 'Just One' })).toBeVisible();
+  });
+
+  test.each(['Impostor', 'Wavelength', 'Just One'])(
+    '%s walks through 4 to 6 steps, each with its scene',
+    async (game) => {
+      enterRoom('/ABCD');
+
+      fireEvent.click(await screen.findByRole('button', { name: `¿Cómo jugar ${game}?` }));
+      const dialog = screen.getByRole('dialog', { name: game });
+      const total = Number(
+        /de (\d+)$/.exec(within(dialog).getByRole('group').ariaLabel ?? '')?.[1],
+      );
+      expect(total).toBeGreaterThanOrEqual(4);
+      expect(total).toBeLessThanOrEqual(6);
+
+      for (let index = 1; index <= total; index++) {
+        const step = within(dialog).getByRole('group');
+        expect(step).toHaveAccessibleName(`Paso ${String(index)} de ${String(total)}`);
+        expect(within(step).getByRole('heading', { level: 3 })).toBeVisible();
+        expect(step.nextElementSibling?.childElementCount).toBeGreaterThan(0);
+        if (index < total) {
+          fireEvent.click(within(dialog).getByRole('button', { name: 'Siguiente' }));
+        }
+      }
+      fireEvent.click(within(dialog).getByRole('button', { name: '¡A jugar!' }));
+      expect(screen.queryByRole('dialog')).toBeNull();
+    },
+  );
 });
 
 describe('my name', () => {

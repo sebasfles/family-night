@@ -13,6 +13,7 @@ import {
   type LeaveRoomResponse,
   type MatchSecretResponse,
   type MeResponse,
+  type RenameInRoomResponse,
   type RenamePlayerRequest,
   type RenamePlayerResponse,
   type RoomResponse,
@@ -107,8 +108,14 @@ const match = (code: string, matchId: string, action: string) =>
 export const api = {
   createPlayer: () => request<CreatePlayerResponse>('POST', '/players'),
   me: () => request<MeResponse>('GET', '/players/me'),
-  rename: (body: RenamePlayerRequest) =>
-    request<RenamePlayerResponse>('PATCH', '/players/me', { body }),
+  rename: (name: string) =>
+    request<RenamePlayerResponse>('PATCH', '/players/me', {
+      body: { name } satisfies RenamePlayerRequest,
+    }),
+  renameInRoom: (code: string, name: string) =>
+    request<RenameInRoomResponse>('PATCH', '/players/me', {
+      body: { name, roomCode: code } satisfies RenamePlayerRequest,
+    }),
   createRoom: () => request<RoomResponse>('POST', '/rooms'),
   getRoom: (code: string) => request<RoomResponse>('GET', room(code)),
   joinRoom: (code: string) => request<RoomResponse>('POST', room(code, '/join')),

@@ -62,7 +62,7 @@ export function Reveal({ match, members, isHost, busy, onNext }: RevealProps) {
         </FlipReveal>
       )}
 
-      <Tally match={match} result={result} members={members} />
+      <Tally participants={match.participants} result={result} members={members} />
 
       {isHost ? (
         <Button busy={busy} onClick={onNext}>
@@ -77,7 +77,15 @@ export function Reveal({ match, members, isHost, busy, onNext }: RevealProps) {
   );
 }
 
-function Verdict({ out, tie, members }: { out: Elimination; tie: boolean; members: RoomMember[] }) {
+export function Verdict({
+  out,
+  tie,
+  members,
+}: {
+  out: Elimination;
+  tie: boolean;
+  members: RoomMember[];
+}) {
   const name = nameOf(members, out.playerId);
   const impostor = out.wasImpostor;
   return (
@@ -110,19 +118,17 @@ function Verdict({ out, tie, members }: { out: Elimination; tie: boolean; member
   );
 }
 
-function Tally({
-  match,
+export function Tally({
+  participants,
   result,
   members,
 }: {
-  match: ImpostorPublic;
+  participants: string[];
   result: RoundResult;
   members: RoomMember[];
 }) {
   const list = useShuffleIn<HTMLOListElement>(
-    match.participants.filter((playerId) =>
-      result.tally.some((entry) => entry.playerId === playerId),
-    ),
+    participants.filter((playerId) => result.tally.some((entry) => entry.playerId === playerId)),
   );
   const top = result.tally[0]?.votes ?? 0;
 

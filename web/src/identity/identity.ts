@@ -1,3 +1,4 @@
+import type { QueryClient } from '@tanstack/react-query';
 import { createContext, use } from 'react';
 import { api, isApiError } from '../api/client';
 import { clearIdentity, loadIdentity, saveIdentity, type Identity } from './storage';
@@ -26,4 +27,9 @@ export function useIdentity(): Identity {
   const identity = use(IdentityContext);
   if (!identity) throw new Error('useIdentity must be used inside IdentityGate');
   return identity;
+}
+
+export function storeIdentity(queryClient: QueryClient, identity: Identity): void {
+  saveIdentity(identity);
+  queryClient.setQueryData(['identity'], identity);
 }

@@ -1,5 +1,6 @@
 import {
   nextJustOneTurn,
+  type JustOneOutcome,
   type JustOnePublic,
   type JustOneResult,
   type RoomMember,
@@ -51,46 +52,25 @@ export function RevealPhase({
   if (!result) return null;
   const guesser = result.guesserId === selfId ? null : nameOf(members, result.guesserId);
   const floored = result.outcome === 'WRONG' && result.scoreBefore === 0;
-  const won = result.outcome === 'CORRECT';
   const last = nextJustOneTurn(match) === null;
 
   return (
     <section aria-labelledby="reveal-title" className="flex flex-col gap-6">
       <FlipReveal back={<WordBack />}>
-        <div
-          className={`flex min-h-56 flex-col items-center justify-center gap-3 rounded-card px-6 py-7 text-center card-paper ${
-            won ? 'ring-4 ring-sage/70' : ''
-          }`}
-        >
-          <p className="font-sans text-sm font-bold tracking-[0.18em] text-night/65 uppercase">
-            La palabra era
-          </p>
-          <h2
-            id="reveal-title"
-            className="font-display text-5xl leading-tight font-bold break-words"
-          >
-            {result.word}
-          </h2>
-          <p
-            className={`rounded-2xl px-4 py-2 text-lg font-bold text-balance break-words ${verdictTones[result.outcome]}`}
-          >
-            {verdict(result, guesser)}
-          </p>
-        </div>
+        <RevealedWord
+          titleId="reveal-title"
+          word={result.word}
+          outcome={result.outcome}
+          verdict={verdict(result, guesser)}
+        />
       </FlipReveal>
 
-      <div role="status" className="flex flex-col items-center gap-2 text-center">
-        <p className="flex items-center gap-3 text-xl font-bold">
-          Puntaje del equipo:{' '}
-          <span className="flex size-16 items-center justify-center rounded-full bg-moon/14 font-display text-4xl text-moon tabular-nums ring-1 ring-moon/40">
-            <CountUp from={result.scoreBefore} to={result.score} />
-          </span>
-        </p>
-        <p className="text-lg text-cream/80">
-          Esta ronda: <span className="font-bold tabular-nums">{roundPoints[result.outcome]}</span>
-          {floored && ', el puntaje no baja de 0'}
-        </p>
-      </div>
+      <TeamScore
+        from={result.scoreBefore}
+        to={result.score}
+        outcome={result.outcome}
+        floored={floored}
+      />
 
       <section className="flex flex-col gap-3">
         <h3 className="text-xl font-bold">Pistas</h3>
@@ -130,5 +110,58 @@ export function RevealPhase({
         </p>
       )}
     </section>
+  );
+}
+
+interface RevealedWordProps {
+  titleId?: string;
+  word: string;
+  outcome: JustOneOutcome;
+  verdict: string;
+}
+
+export function RevealedWord({ titleId, word, outcome, verdict }: RevealedWordProps) {
+  return (
+    <div
+      className={`flex min-h-56 flex-col items-center justify-center gap-3 rounded-card px-6 py-7 text-center card-paper ${
+        outcome === 'CORRECT' ? 'ring-4 ring-sage/70' : ''
+      }`}
+    >
+      <p className="font-sans text-sm font-bold tracking-[0.18em] text-night/65 uppercase">
+        La palabra era
+      </p>
+      <h2 id={titleId} className="font-display text-5xl leading-tight font-bold break-words">
+        {word}
+      </h2>
+      <p
+        className={`rounded-2xl px-4 py-2 text-lg font-bold text-balance break-words ${verdictTones[outcome]}`}
+      >
+        {verdict}
+      </p>
+    </div>
+  );
+}
+
+interface TeamScoreProps {
+  from: number;
+  to: number;
+  outcome: JustOneOutcome;
+  floored: boolean;
+}
+
+export function TeamScore({ from, to, outcome, floored }: TeamScoreProps) {
+  return (
+    <div role="status" className="flex flex-col items-center gap-2 text-center">
+      <p className="flex items-center gap-3 text-xl font-bold">
+        Puntaje del equipo:{' '}
+        <span className="flex size-16 items-center justify-center rounded-full bg-moon/14 font-display text-4xl text-moon tabular-nums ring-1 ring-moon/40">
+          <CountUp from={from} to={to} />
+        </span>
+      </p>
+      <p className="text-lg text-cream/80">
+        Esta ronda: <span className="font-bold tabular-nums">{roundPoints[outcome]}</span>
+        {floored && ', el puntaje no baja de 0'}
+      </p>
+    </div>
   );
 }
