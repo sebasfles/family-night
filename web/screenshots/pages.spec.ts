@@ -280,19 +280,48 @@ function revealed(eliminatedId: string | null, wasImpostor: boolean, tie = false
   });
 }
 
-function finished(winner: 'CIVILIANS' | 'IMPOSTORS'): ImpostorPublic {
+function civiliansWin(): ImpostorPublic {
   return {
     ...revealed(zorro, true),
     round: 2,
     status: 'FINISHED',
     phase: 'FINISHED',
-    winner,
+    winner: 'CIVILIANS',
     eliminated: [
       { playerId: hipo, round: 1, wasImpostor: false, reason: 'VOTE' },
       { playerId: zorro, round: 2, wasImpostor: true, reason: 'VOTE' },
     ],
     reveal: { word: 'Palta', category: 'Comida', impostorIds: [zorro] },
   };
+}
+
+function impostorsWin(): ImpostorPublic {
+  const civiliansOut = [hipo, oso, colibri];
+  return impostorMatch(ids, {
+    round: 3,
+    status: 'FINISHED',
+    phase: 'FINISHED',
+    winner: 'IMPOSTORS',
+    order: ids.filter((id) => !civiliansOut.includes(id)),
+    votedPlayerIds: [me.playerId, zorro, colibri],
+    lastResult: {
+      round: 3,
+      tie: false,
+      eliminatedId: colibri,
+      tally: [
+        { playerId: colibri, votes: 2 },
+        { playerId: zorro, votes: 1 },
+        { playerId: me.playerId, votes: 0 },
+      ],
+    },
+    eliminated: civiliansOut.map((playerId, index) => ({
+      playerId,
+      round: index + 1,
+      wasImpostor: false,
+      reason: 'VOTE' as const,
+    })),
+    reveal: { word: 'Palta', category: 'Comida', impostorIds: [zorro] },
+  });
 }
 
 test('lobby as host with the Impostor config', async ({ page }) => {
@@ -438,13 +467,13 @@ test('impostor reveal, tie broken by lot', async ({ page }) => {
 });
 
 test('impostor final, civilians win', async ({ page }) => {
-  await serveMatch(page, finished('CIVILIANS'));
+  await serveMatch(page, civiliansWin());
   await expect(page.getByText('Ganaron los civiles')).toBeVisible();
   await capture(page, 'impostor-final-civilians');
 });
 
 test('impostor final, impostors win, member view', async ({ page }) => {
-  await serveMatch(page, finished('IMPOSTORS'), civilian, { hostId: zorro });
+  await serveMatch(page, impostorsWin(), civilian, { hostId: zorro });
   await expect(page.getByText('Ganaron los impostores')).toBeVisible();
   await capture(page, 'impostor-final-impostors');
 });
@@ -963,7 +992,7 @@ test.describe('in motion', () => {
   });
 
   test('impostor final, the points counting', async ({ page }) => {
-    await serveMatch(page, finished('CIVILIANS'));
+    await serveMatch(page, civiliansWin());
     await page.getByRole('list', { name: 'Puntos para la noche' }).scrollIntoViewIfNeeded();
     await page.waitForTimeout(1300);
     await snap(page, 'impostor-final-counting');

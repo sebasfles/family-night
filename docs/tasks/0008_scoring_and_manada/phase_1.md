@@ -52,4 +52,12 @@ Pending: none.
 
 Deferred: none.
 
+### Round 2
+
+- Finding 1 applied: the screenshot spec's impostor win is `impostorsWin()`, 5 players with Zorro the only impostor, Hipopótamo, Oso and Colibrí voted out in rounds 1 to 3, parity in round 3; the civilians fixture is `civiliansWin()`, unchanged in content. `impostor-final-impostors` refreshed at the four widths, along with the other impostor final shots.
+
+Pending: none.
+
+Deferred: none.
+
 ## Result
