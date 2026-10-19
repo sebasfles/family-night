@@ -1,6 +1,6 @@
 ---
 updated: 2026-10-18
-source: 0006_gameplay_and_redesign
+source: 0007_lobby_polish
 ---
 
 # Wavelength: technical
@@ -13,7 +13,7 @@ Stack, conventions and verification commands are in [docs/TRD.md](../../TRD.md);
 - `shared/src/schemas.ts`: `wavelengthConfigSchema`, imported only by the api.
 - `api/src/services/wavelength/`: the game module registered in `platform`'s registry (prepare, next round, departure, secret) and the clue, guess, close-guessing and skip-psychic commands.
 - `api/src/data/wavelength-spectra.json`: about 150 Spanish pairs with stable `{left}.{right}` ids; Sebastian reviews them in PRs.
-- `web/src/games/wavelength/`: `Dial` (three stacked layers: face, the scoring bands drawn from `DIAL_BANDS`, the hand with ticks, pins and needle), the four phase screens, `tick.ts` (the Web Audio tick and its mute in localStorage), `myGuess.ts` (the caller's committed value per match and round in `sessionStorage`).
+- `web/src/games/wavelength/`: `Dial` (three stacked layers: face, the scoring bands drawn from `DIAL_BANDS`, the hand with ticks, pins and needle), the four phase screens, `ClueBanner`, `howToPlay.tsx` (the lobby's how-to-play steps, points from the shared rules), `tick.ts` (the Web Audio tick and its mute in localStorage), `myGuess.ts` (the caller's committed value per match and round in `sessionStorage`).
 - `web/src/routes/$code/wavelength.tsx`: the screen; `platform` navigates here when the current match is Wavelength; the lobby uses `platform`'s cycles panel and the screen its match header.
 
 ## Endpoints owned

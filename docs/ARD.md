@@ -73,6 +73,8 @@ Rebuilt by `write-ard` on every run, kept current by `document-task` on every ta
 | platform | 2026-10-17 | A removed member can resubscribe within the 300 s authorizer cache | A removed member still receives events |
 | platform | 2026-10-17 | No light theme | A player asks for it |
 | platform | 2026-10-18 | A rename reaches other rooms only when the player opens them again | A stale name in another room matters |
+| platform | 2026-10-18 | A rename from home skips the room rule; a room can show "Ana" and "ana" after a rejoin | Two members differ only in case or accents |
+| platform | 2026-10-18 | One-word names over about 11 letters break mid-word in member rows at 360 px | A family uses such a name |
 | impostor | 2026-10-17 | A selection changed in the instant of the close answers 200 but counts the earlier choice | A changed selection reported as not counted |
 | impostor | 2026-10-18 | A match left in `IMPOSTOR_GUESS` at deploy shows only the header and card until the host aborts it | Such a match is seen after the deploy |
 | impostor | 2026-10-17 | Secrets and ballots expire 24 h after written, not renewed | A match runs past a day |

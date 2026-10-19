@@ -1,6 +1,6 @@
 ---
 updated: 2026-10-18
-source: 0006_gameplay_and_redesign
+source: 0007_lobby_polish
 ---
 
 # Platform: decisions
@@ -292,3 +292,30 @@ source: 0006_gameplay_and_redesign
 - Debt created: none
 - Revisit when: a list must animate while it changes, not only on mount.
 - Source: 0006_gameplay_and_redesign
+
+## 2026-10-18: A rename from home is the same transaction without a room
+
+- Decision: `PATCH /api/players/me` takes `roomCode` optionally; without it the api renames the player conditional on the old name, claims the new name and releases the old one, with no room write and no publish, retrying conflicts four times. The contract has two responses, `RenamePlayerResponse` (`{ player }`) and `RenameInRoomResponse` (also `room`), so the lobby keeps a snapshot by type. The web applies it optimistically and queues Crear sala and Unirme behind it. Extends "A rename is one room write, and the old name is released".
+- Alternatives rejected: a separate endpoint; one response with an optional `room`; an index of a player's rooms to check names there (infra, outside clearance).
+- Reason: Sebastian wants the name editable from home; one shared set of writes keeps global uniqueness exact on both paths.
+- Debt created: a rename from home skips the room rule (ignoring case and accents), and a rejoin copies the name unchecked, so a room can show "Ana" and "ana".
+- Revisit when: two members of one room show names that differ only in case or accents.
+- Source: 0007_lobby_polish
+
+## 2026-10-18: How to play is built from each game's leaf components
+
+- Decision: `components/HowToPlay.tsx` holds the drawer (under 768 px, closed from its handle, the close button or Escape), the modal and the carousel (Pointer Events swipe with `touch-action: pan-y`, enter-only step animation); each game exports its steps from `games/{game}/howToPlay.tsx`, composing leaf components (cards, turn order, vote list, dial, clue cards, scoreboard) on an example family, with points and cancellations computed by the shared rules. Scenes render inert. Leaves the games needed were extracted from their phase screens without behavior change.
+- Alternatives rejected: illustrations; a route per tutorial; reusing phase components that carry commands; interactive scenes.
+- Reason: the tutorial must match the real screens and rules; inert scenes cannot compete with the swipe or reach a command, and `components/` stays free of `games/`.
+- Debt created: none
+- Revisit when: a game wants an interactive step, or a how-to-play entry inside a running match.
+- Source: 0007_lobby_polish
+
+## 2026-10-18: Screenshots guard 360 px against the configured viewport
+
+- Decision: every screenshot fails when the page is wider than the configured viewport, when a text element lies outside it or is clipped by its own overflow, or when an input's value scrolls; 360 px is a permanent width. The lobby column is `grid-cols-1` and member rows stack "pts" under the score below `sm`.
+- Alternatives rejected: comparing against `innerWidth`, which a mobile viewport widens to fit overflowing content; a one-off audit.
+- Reason: the old check passed a lobby 369 px wide at 360.
+- Debt created: a name with one word longer than about 11 letters still breaks mid-word in a member row at 360.
+- Revisit when: a family uses such a name.
+- Source: 0007_lobby_polish
