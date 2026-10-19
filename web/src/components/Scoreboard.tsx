@@ -46,29 +46,25 @@ export function Scoreboard({
             <li
               key={playerId}
               data-row={playerId}
-              className={`flex items-center gap-3 rounded-2xl py-2.5 pr-3 pl-2.5 ${
+              className={`flex items-center gap-2.5 rounded-2xl py-2.5 pr-3 pl-2 ${
                 leader ? 'bg-moon/12 ring-1 ring-moon/45' : ''
               }`}
             >
-              <span className="relative shrink-0">
-                <Avatar
-                  playerId={playerId}
-                  name={nameOf(members, playerId)}
-                  className="size-11 text-sm"
-                />
-                <span
-                  className={`absolute -right-1.5 -bottom-1 flex size-6 items-center justify-center rounded-full font-display text-sm font-bold tabular-nums ring-2 ring-night-soft ${
-                    medals[rank - 1] ?? 'bg-night-raised text-cream/75'
-                  } ${reduced ? '' : 'animate-fade-in'}`}
-                  style={
-                    reduced
-                      ? undefined
-                      : { animationDelay: `${String(SHIFT_DELAY_MS + SHIFT_MS)}ms` }
-                  }
-                >
-                  {rank}
-                </span>
+              <span
+                className={`flex size-7 shrink-0 items-center justify-center rounded-full font-display text-sm font-bold tabular-nums ${
+                  medals[rank - 1] ?? 'bg-night-raised text-cream/75'
+                } ${reduced ? '' : 'animate-fade-in'}`}
+                style={
+                  reduced ? undefined : { animationDelay: `${String(SHIFT_DELAY_MS + SHIFT_MS)}ms` }
+                }
+              >
+                {rank}
               </span>
+              <Avatar
+                playerId={playerId}
+                name={nameOf(members, playerId)}
+                className="size-10 text-sm"
+              />
               <span
                 className={`min-w-0 flex-1 break-words ${leader ? 'font-bold' : 'font-semibold'}`}
               >

@@ -49,4 +49,10 @@ Deferred: none.
 
 Pending: none.
 
+### Round 2
+
+Applied the one finding, not disputed: the scoreboard rank is its own `size-7` column before a `size-10` avatar, so it no longer covers the initials (row gap 2.5, left padding 2 to keep the names' width). Screenshots refreshed in `screenshots/phase_3/`.
+
+Let pass by the om-reviewer, for the decisions: the Impostor final lists every participant still in the room, losers at +0; ranks stay competition ranks (1, 2, 2, 4) as in phase 1.
+
 ## Result
