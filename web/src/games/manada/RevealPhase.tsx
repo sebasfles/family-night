@@ -81,6 +81,10 @@ export function RevealPhase({
                       onSelect: () => {
                         select(group);
                       },
+                    }
+                  : {})}
+                {...(isHost
+                  ? {
                       onSplit: () => {
                         onSplit(group.id);
                       },

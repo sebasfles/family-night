@@ -56,4 +56,13 @@ Pending: none.
 
 Deferred: none.
 
+### Round 2
+
+- Finding 1 applied: "Separar" shows on a merged group whenever the caller is the host, whatever the number of groups; the two-tap merge stays for 2 or more groups. New web test: two tied groups merged into the only group, the host splits it back (it failed on round 1's code for the missing button). New screenshot `manada-reveal-merged-single`; every shot refreshed in `screenshots/phase_2/`.
+- Flaky test fixed: the lobby panel test answered both config writes with the same `version`, so the second snapshot was never applied and the assertion only passed while the optimistic overlay lasted; the mock now raises the version per write and the test asserts the served state after both.
+
+Pending: none.
+
+Deferred: none.
+
 ## Result

@@ -201,6 +201,21 @@ describe('the reveal', () => {
     });
   });
 
+  test('the host can split a merge that left a single group', async () => {
+    const tied = revealed(['Mango', 'mango', 'Piña', 'piña']);
+    const merged = mergeGroups(tied, me.playerId, oso.playerId);
+    const { mock } = play(room(merged), () => null, {
+      [`POST ${base}/split-group`]: () => Response.json({ room: room(tied, { version: 5 }) }),
+    });
+
+    expect(await screen.findByText('Suma la manada de «Mango / Piña»')).toBeVisible();
+    expect(screen.queryByRole('button', { name: /Elegir el grupo/ })).toBeNull();
+    fireEvent.click(within(groupNamed('Mango / Piña')).getByRole('button', { name: 'Separar' }));
+
+    expect(await screen.findByText('Empatan las manadas más grandes: nadie suma')).toBeVisible();
+    expect(sent(mock, `POST ${base}/split-group`)).toEqual({ round: 1, groupId: me.playerId });
+  });
+
   test('the host sees the result button when the goal is reached', async () => {
     const last = revealed(['Mango', 'mango', 'Piña'], { round: 10 });
     const { mock } = play(room(last), () => null, {
@@ -247,11 +262,13 @@ describe('the lobby', () => {
       members: everyone.slice(0, 2),
       selectedGame: 'MANADA',
     });
+    let version = lobby.version;
     const { mock } = play(lobby, () => null, {
       'PUT /api/rooms/ABCD/config': (init) => {
         const { config } = JSON.parse(init.body as string) as { config: ManadaConfig };
+        version += 1;
         return Response.json({
-          room: { ...lobby, version: 4, configs: { ...lobby.configs, MANADA: config } },
+          room: { ...lobby, version, configs: { ...lobby.configs, MANADA: config } },
         });
       },
     });
@@ -268,8 +285,11 @@ describe('the lobby', () => {
     expect(screen.getByLabelText('Rondas')).toHaveTextContent('11');
 
     fireEvent.click(screen.getByRole('radio', { name: '8 puntos' }));
+    await waitFor(() => {
+      expect(version).toBe(lobby.version + 2);
+    });
     expect(
-      await screen.findByText('Gana quien llegue primero a 8 puntos sin la vaca rosa.'),
+      screen.getByText('Gana quien llegue primero a 8 puntos sin la vaca rosa.'),
     ).toBeVisible();
     expect(screen.queryByLabelText('Rondas')).toBeNull();
   });

@@ -1111,6 +1111,13 @@ test('la manada reveal, merged by the host', async ({ page }) => {
   await capture(page, 'manada-reveal-merged');
 });
 
+test('la manada reveal, one group left after a merge, host', async ({ page }) => {
+  const tied = mmRevealed(['Mango', 'mango', 'Piña', 'piñas', null]);
+  await serveManada(page, mergeGroups(tied, me.playerId, oso));
+  await expect(page.getByRole('button', { name: 'Separar' })).toBeVisible();
+  await capture(page, 'manada-reveal-merged-single');
+});
+
 test('la manada final', async ({ page }) => {
   const finished = finishManada(
     mm({
