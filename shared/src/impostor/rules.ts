@@ -1,9 +1,4 @@
-import {
-  CIVILIAN_WIN_POINTS,
-  IMPOSTOR_CAPS,
-  IMPOSTOR_WIN_POINTS,
-  MIN_IMPOSTOR_PLAYERS,
-} from '../constants.ts';
+import { CIVILIAN_WIN_POINTS, IMPOSTOR_CAPS, MIN_IMPOSTOR_PLAYERS } from '../constants.ts';
 import type {
   Elimination,
   ImpostorConfig,
@@ -85,6 +80,7 @@ export function startMatch(input: {
       participants: [...participants],
       order: config.randomOrder ? shuffle(participants, randomInt) : [...participants],
       eliminated: [],
+      departedIds: [],
       votedPlayerIds: [],
       lastResult: null,
       winner: null,
@@ -243,10 +239,12 @@ export function removePlayer(input: {
   randomInt: RandomInt;
 }): { state: ImpostorPublic; dropped: Ballot[] } {
   const { state, playerId, reason, facts, ballots, randomInt } = input;
-  const unchanged = { state, dropped: [] };
-  if (state.status !== 'PLAYING' || !isLiving(state, playerId)) return unchanged;
+  const inMatch = state.participants.includes(playerId) && !state.departedIds.includes(playerId);
+  if (state.status !== 'PLAYING' || !inMatch) return { state, dropped: [] };
+  const departed = { ...state, departedIds: [...state.departedIds, playerId] };
+  if (!isLiving(state, playerId)) return { state: departed, dropped: [] };
 
-  const remaining = eliminate(state, playerId, reason, facts.impostorIds);
+  const remaining = eliminate(departed, playerId, reason, facts.impostorIds);
   const result = outcome(remaining);
   if (state.phase !== 'VOTING') {
     return { state: isWinner(result) ? finish(remaining, result, facts) : remaining, dropped: [] };
@@ -266,19 +264,19 @@ export function removePlayer(input: {
   };
 }
 
-export function matchScores(
-  state: ImpostorPublic,
-  impostorIds: readonly string[],
-): Record<string, number> {
-  if (state.winner === 'IMPOSTORS') {
-    return Object.fromEntries(impostorIds.map((id) => [id, IMPOSTOR_WIN_POINTS]));
-  }
-  if (state.winner === 'CIVILIANS') {
-    return Object.fromEntries(
-      state.participants
-        .filter((id) => !impostorIds.includes(id))
-        .map((id) => [id, CIVILIAN_WIN_POINTS]),
-    );
-  }
-  return {};
+export function impostorWinPoints(impostorCount: number, participantCount: number): number {
+  return Math.ceil((participantCount - impostorCount) / impostorCount);
+}
+
+export function impostorNightPoints(state: ImpostorPublic): Record<string, number> {
+  if (!state.reveal || !state.winner) return {};
+  const impostors = new Set(state.reveal.impostorIds);
+  const scorers = state.participants.filter(
+    (id) => !state.departedIds.includes(id) && impostors.has(id) === (state.winner === 'IMPOSTORS'),
+  );
+  const points =
+    state.winner === 'IMPOSTORS'
+      ? impostorWinPoints(state.config.impostorCount, state.participants.length)
+      : CIVILIAN_WIN_POINTS;
+  return Object.fromEntries(scorers.map((id) => [id, points]));
 }

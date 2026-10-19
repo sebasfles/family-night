@@ -19,6 +19,7 @@ export function sharedMatchRoutes(deps: Deps) {
     IMPOSTOR: {},
     WAVELENGTH: wavelengthRequests(deps),
     JUST_ONE: justOneRequests(deps),
+    MANADA: {},
   };
   const dispatch = (path: SharedPath) => async (c: Parameters<MatchRequest>[0]) => {
     const [code, matchId] = [roomCodeParam(c), matchIdParam(c)];

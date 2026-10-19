@@ -1,5 +1,5 @@
 import { GetCommand, UpdateCommand, type DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
-import type { MatchPublic } from '@family-night/shared';
+import type { ImpostorPublic, MatchPublic } from '@family-night/shared';
 import { epochSeconds } from '../lib/time.ts';
 import type { TransactItem } from './db.ts';
 
@@ -10,6 +10,12 @@ export interface MatchItem {
   createdAt: string;
   endedAt: string | null;
   ttl: number;
+}
+
+function withDefaults(state: MatchPublic): MatchPublic {
+  if (state.gameType !== 'IMPOSTOR') return state;
+  const stored: Partial<ImpostorPublic> = state;
+  return { ...state, departedIds: stored.departedIds ?? [] };
 }
 
 export class MatchesRepo {
@@ -26,7 +32,8 @@ export class MatchesRepo {
       new GetCommand({ TableName: this.table, Key: { roomCode, matchId }, ConsistentRead: true }),
     );
     const match = Item as MatchItem | undefined;
-    return match && match.ttl > epochSeconds(nowMs) ? match : null;
+    if (!match || match.ttl <= epochSeconds(nowMs)) return null;
+    return { ...match, publicState: withDefaults(match.publicState) };
   }
 
   putItem(match: MatchItem): TransactItem {

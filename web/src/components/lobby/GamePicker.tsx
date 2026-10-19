@@ -1,7 +1,7 @@
 import type { GameType } from '@family-night/shared';
 import type { ComponentType } from 'react';
 import { Stagger, StaggerItem } from '../../motion/motion';
-import { CheckIcon, CluesIcon, DialIcon, MaskIcon } from '../icons';
+import { CheckIcon, CluesIcon, CowIcon, DialIcon, MaskIcon } from '../icons';
 
 interface Game {
   id: GameType;
@@ -33,6 +33,13 @@ const GAMES: Game[] = [
     Icon: CluesIcon,
     tone: 'text-orchid bg-orchid/14',
   },
+  {
+    id: 'MANADA',
+    name: 'La manada',
+    description: 'Responde lo mismo que la mayoría.',
+    Icon: CowIcon,
+    tone: 'text-rose bg-rose/14',
+  },
 ];
 
 interface GamePickerProps {
@@ -49,7 +56,7 @@ export function GamePicker({ selected, editable, onSelect, onHowToPlay }: GamePi
         Juegos
       </h2>
       <Stagger>
-        <ul className="grid gap-3 sm:grid-cols-3">
+        <ul className="grid gap-3 sm:grid-cols-2">
           {GAMES.map((game) => {
             const { id, Icon } = game;
             const chosen = id === selected;

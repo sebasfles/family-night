@@ -12,8 +12,9 @@ import {
   recordCommits,
   revealRound,
   startWavelength,
-  wavelengthScores,
+  wavelengthNightPoints,
   wavelengthStartProblem,
+  MIN_WAVELENGTH_PLAYERS,
   WAVELENGTH_DEFAULTS,
   type ClueRequest,
   type CommittedGuess,
@@ -27,7 +28,7 @@ import {
 } from '@family-night/shared';
 import { wavelengthConfigSchema } from '@family-night/shared/schemas';
 import type { Deps } from '../../deps.ts';
-import { AppError } from '../../lib/errors.ts';
+import { AppError, notEnoughPlayers } from '../../lib/errors.ts';
 import { iso, ttlFrom } from '../../lib/time.ts';
 import type { DialGuessItem } from '../../repos/match-secrets.ts';
 import type { MatchItem } from '../../repos/matches.ts';
@@ -57,8 +58,7 @@ function parseWavelengthConfig(raw: unknown): WavelengthConfig {
 }
 
 function checkWavelengthStart(_config: WavelengthConfig, playerCount: number): void {
-  const problem = wavelengthStartProblem(playerCount);
-  if (problem) throw new AppError(problem);
+  if (wavelengthStartProblem(playerCount)) throw notEnoughPlayers(MIN_WAVELENGTH_PLAYERS);
 }
 
 function roundSecret(deps: Deps, state: WavelengthPublic, nowMs: number) {
@@ -90,7 +90,7 @@ function prepareWavelength(deps: Deps, input: PrepareInput<WavelengthConfig>): M
 
 function finished(before: WavelengthPublic, after: WavelengthPublic): MatchUpdate {
   const ended = before.status === 'PLAYING' && after.status === 'FINISHED';
-  return { publicState: after, ...(ended ? { scores: wavelengthScores(after) } : {}) };
+  return { publicState: after, ...(ended ? { scores: wavelengthNightPoints(after) } : {}) };
 }
 
 function advance(

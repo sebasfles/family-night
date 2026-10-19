@@ -1,6 +1,7 @@
 import {
   IMPOSTOR_DEFAULTS,
   JUST_ONE_DEFAULTS,
+  MANADA_DEFAULTS,
   ONLINE_WINDOW_MS,
   WAVELENGTH_DEFAULTS,
   type GameConfigs,
@@ -15,6 +16,7 @@ const configs: GameConfigs = {
   IMPOSTOR: { ...IMPOSTOR_DEFAULTS, categories: ['animales'] },
   WAVELENGTH: { ...WAVELENGTH_DEFAULTS },
   JUST_ONE: { ...JUST_ONE_DEFAULTS },
+  MANADA: { ...MANADA_DEFAULTS },
 };
 
 function member(playerId: string, joinedMsAgo: number, seenMsAgo: number): MemberItem {

@@ -14,6 +14,7 @@ import { Route as CodeRouteRouteImport } from './routes/$code/route'
 import { Route as CodeIndexRouteImport } from './routes/$code/index'
 import { Route as CodeImpostorRouteImport } from './routes/$code/impostor'
 import { Route as CodeJustoneRouteImport } from './routes/$code/justone'
+import { Route as CodeManadaRouteImport } from './routes/$code/manada'
 import { Route as CodeWavelengthRouteImport } from './routes/$code/wavelength'
 
 const IndexRoute = IndexRouteImport.update({
@@ -41,6 +42,11 @@ const CodeJustoneRoute = CodeJustoneRouteImport.update({
   path: '/justone',
   getParentRoute: () => CodeRouteRoute,
 } as any)
+const CodeManadaRoute = CodeManadaRouteImport.update({
+  id: '/manada',
+  path: '/manada',
+  getParentRoute: () => CodeRouteRoute,
+} as any)
 const CodeWavelengthRoute = CodeWavelengthRouteImport.update({
   id: '/wavelength',
   path: '/wavelength',
@@ -52,6 +58,7 @@ export interface FileRoutesByFullPath {
   '/$code': typeof CodeRouteRouteWithChildren
   '/$code/impostor': typeof CodeImpostorRoute
   '/$code/justone': typeof CodeJustoneRoute
+  '/$code/manada': typeof CodeManadaRoute
   '/$code/wavelength': typeof CodeWavelengthRoute
   '/$code/': typeof CodeIndexRoute
 }
@@ -59,6 +66,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$code/impostor': typeof CodeImpostorRoute
   '/$code/justone': typeof CodeJustoneRoute
+  '/$code/manada': typeof CodeManadaRoute
   '/$code/wavelength': typeof CodeWavelengthRoute
   '/$code': typeof CodeIndexRoute
 }
@@ -68,6 +76,7 @@ export interface FileRoutesById {
   '/$code': typeof CodeRouteRouteWithChildren
   '/$code/impostor': typeof CodeImpostorRoute
   '/$code/justone': typeof CodeJustoneRoute
+  '/$code/manada': typeof CodeManadaRoute
   '/$code/wavelength': typeof CodeWavelengthRoute
   '/$code/': typeof CodeIndexRoute
 }
@@ -78,17 +87,24 @@ export interface FileRouteTypes {
     | '/$code'
     | '/$code/impostor'
     | '/$code/justone'
+    | '/$code/manada'
     | '/$code/wavelength'
     | '/$code/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    '/' | '/$code/impostor' | '/$code/justone' | '/$code/wavelength' | '/$code'
+    | '/'
+    | '/$code/impostor'
+    | '/$code/justone'
+    | '/$code/manada'
+    | '/$code/wavelength'
+    | '/$code'
   id:
     | '__root__'
     | '/'
     | '/$code'
     | '/$code/impostor'
     | '/$code/justone'
+    | '/$code/manada'
     | '/$code/wavelength'
     | '/$code/'
   fileRoutesById: FileRoutesById
@@ -135,6 +151,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CodeJustoneRouteImport
       parentRoute: typeof CodeRouteRoute
     }
+    '/$code/manada': {
+      id: '/$code/manada'
+      path: '/manada'
+      fullPath: '/$code/manada'
+      preLoaderRoute: typeof CodeManadaRouteImport
+      parentRoute: typeof CodeRouteRoute
+    }
     '/$code/wavelength': {
       id: '/$code/wavelength'
       path: '/wavelength'
@@ -148,6 +171,7 @@ declare module '@tanstack/react-router' {
 interface CodeRouteRouteChildren {
   CodeImpostorRoute: typeof CodeImpostorRoute
   CodeJustoneRoute: typeof CodeJustoneRoute
+  CodeManadaRoute: typeof CodeManadaRoute
   CodeWavelengthRoute: typeof CodeWavelengthRoute
   CodeIndexRoute: typeof CodeIndexRoute
 }
@@ -155,6 +179,7 @@ interface CodeRouteRouteChildren {
 const CodeRouteRouteChildren: CodeRouteRouteChildren = {
   CodeImpostorRoute: CodeImpostorRoute,
   CodeJustoneRoute: CodeJustoneRoute,
+  CodeManadaRoute: CodeManadaRoute,
   CodeWavelengthRoute: CodeWavelengthRoute,
   CodeIndexRoute: CodeIndexRoute,
 }

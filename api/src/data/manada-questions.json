@@ -1,0 +1,840 @@
+{
+  "questions": [
+    {
+      "id": "fruta-amarilla",
+      "text": "Una fruta amarilla"
+    },
+    {
+      "id": "animal-granja",
+      "text": "Un animal de la granja"
+    },
+    {
+      "id": "mejor-sabor-helado",
+      "text": "El mejor sabor de helado"
+    },
+    {
+      "id": "color-no-sea-primario",
+      "text": "Un color que no sea primario"
+    },
+    {
+      "id": "algo-llevas-playa",
+      "text": "Algo que llevas a la playa"
+    },
+    {
+      "id": "plato-tipico-peruano",
+      "text": "Un plato típico peruano"
+    },
+    {
+      "id": "deporte-juega-pelota",
+      "text": "Un deporte que se juega con pelota"
+    },
+    {
+      "id": "algo-cocina",
+      "text": "Algo que hay en una cocina"
+    },
+    {
+      "id": "superheroe",
+      "text": "Un superhéroe"
+    },
+    {
+      "id": "princesa-disney",
+      "text": "Una princesa de Disney"
+    },
+    {
+      "id": "animal-vive-mar",
+      "text": "Un animal que vive en el mar"
+    },
+    {
+      "id": "algo-le-echa-cebiche",
+      "text": "Algo que se le echa al cebiche"
+    },
+    {
+      "id": "fruta-roja",
+      "text": "Una fruta roja"
+    },
+    {
+      "id": "postre-peruano",
+      "text": "Un postre peruano"
+    },
+    {
+      "id": "instrumento-musical",
+      "text": "Un instrumento musical"
+    },
+    {
+      "id": "marca-gaseosa",
+      "text": "Una marca de gaseosa"
+    },
+    {
+      "id": "algo-hace-navidad",
+      "text": "Algo que se hace en Navidad"
+    },
+    {
+      "id": "regalo-dia-madre",
+      "text": "Un regalo para el Día de la Madre"
+    },
+    {
+      "id": "animal-rayas",
+      "text": "Un animal con rayas"
+    },
+    {
+      "id": "juguete-cuando-eras-ninyo",
+      "text": "Un juguete de cuando eras niño"
+    },
+    {
+      "id": "verdura-verde",
+      "text": "Una verdura verde"
+    },
+    {
+      "id": "algo-banyo",
+      "text": "Algo que hay en un baño"
+    },
+    {
+      "id": "pais-sudamerica",
+      "text": "Un país de Sudamérica"
+    },
+    {
+      "id": "ciudad-peru",
+      "text": "Una ciudad del Perú"
+    },
+    {
+      "id": "mueble-sala",
+      "text": "Un mueble de la sala"
+    },
+    {
+      "id": "prenda-vestir-frio",
+      "text": "Una prenda de vestir para el frío"
+    },
+    {
+      "id": "algo-compra-bodega",
+      "text": "Algo que se compra en la bodega"
+    },
+    {
+      "id": "ave",
+      "text": "Un ave"
+    },
+    {
+      "id": "insecto",
+      "text": "Un insecto"
+    },
+    {
+      "id": "algo-lleva-mochila-colegio",
+      "text": "Algo que se lleva en la mochila del colegio"
+    },
+    {
+      "id": "curso-colegio",
+      "text": "Un curso del colegio"
+    },
+    {
+      "id": "personaje-dibujos-animados",
+      "text": "Un personaje de dibujos animados"
+    },
+    {
+      "id": "pelicula-pixar",
+      "text": "Una película de Pixar"
+    },
+    {
+      "id": "cuento-infantil",
+      "text": "Un cuento infantil"
+    },
+    {
+      "id": "algo-da-miedo-noche",
+      "text": "Algo que da miedo de noche"
+    },
+    {
+      "id": "animal-selva",
+      "text": "Un animal de la selva"
+    },
+    {
+      "id": "comida-desayuno",
+      "text": "Una comida para el desayuno"
+    },
+    {
+      "id": "tipo-pan",
+      "text": "Un tipo de pan"
+    },
+    {
+      "id": "algo-pone-pan",
+      "text": "Algo que se pone en el pan"
+    },
+    {
+      "id": "algo-hace-domingos",
+      "text": "Algo que se hace los domingos"
+    },
+    {
+      "id": "juego-mesa",
+      "text": "Un juego de mesa"
+    },
+    {
+      "id": "lugar-ir-vacaciones",
+      "text": "Un lugar para ir de vacaciones"
+    },
+    {
+      "id": "medio-transporte",
+      "text": "Un medio de transporte"
+    },
+    {
+      "id": "algo-usa-cuando-llueve",
+      "text": "Algo que se usa cuando llueve"
+    },
+    {
+      "id": "sabor-torta",
+      "text": "Un sabor de torta"
+    },
+    {
+      "id": "fruta-jugo",
+      "text": "Una fruta para el jugo"
+    },
+    {
+      "id": "algo-celebra-julio-peru",
+      "text": "Algo que se celebra en julio en el Perú"
+    },
+    {
+      "id": "mes-anyo",
+      "text": "Un mes del año"
+    },
+    {
+      "id": "mejor-dia-semana",
+      "text": "El mejor día de la semana"
+    },
+    {
+      "id": "estacion-anyo",
+      "text": "Una estación del año"
+    },
+    {
+      "id": "algo-cielo",
+      "text": "Algo que hay en el cielo"
+    },
+    {
+      "id": "planeta",
+      "text": "Un planeta"
+    },
+    {
+      "id": "parte-cara",
+      "text": "Una parte de la cara"
+    },
+    {
+      "id": "dedo-mano",
+      "text": "Un dedo de la mano"
+    },
+    {
+      "id": "algo-hace-antes-dormir",
+      "text": "Algo que se hace antes de dormir"
+    },
+    {
+      "id": "algo-pierde-mucho-casa",
+      "text": "Algo que se pierde mucho en casa"
+    },
+    {
+      "id": "electrodomestico",
+      "text": "Un electrodoméstico"
+    },
+    {
+      "id": "algo-tiene-botones",
+      "text": "Algo que tiene botones"
+    },
+    {
+      "id": "algo-tiene-ruedas",
+      "text": "Algo que tiene ruedas"
+    },
+    {
+      "id": "algo-redondo",
+      "text": "Algo que es redondo"
+    },
+    {
+      "id": "algo-frio",
+      "text": "Algo que es frío"
+    },
+    {
+      "id": "algo-caliente",
+      "text": "Algo que es caliente"
+    },
+    {
+      "id": "algo-pica",
+      "text": "Algo que pica"
+    },
+    {
+      "id": "algo-dulce",
+      "text": "Algo dulce"
+    },
+    {
+      "id": "algo-salado",
+      "text": "Algo salado"
+    },
+    {
+      "id": "algo-amargo",
+      "text": "Algo amargo"
+    },
+    {
+      "id": "algo-suena-fuerte",
+      "text": "Algo que suena fuerte"
+    },
+    {
+      "id": "algo-huele-rico",
+      "text": "Algo que huele rico"
+    },
+    {
+      "id": "algo-huele-feo",
+      "text": "Algo que huele feo"
+    },
+    {
+      "id": "algo-pegajoso",
+      "text": "Algo pegajoso"
+    },
+    {
+      "id": "algo-brilla",
+      "text": "Algo que brilla"
+    },
+    {
+      "id": "algo-blando",
+      "text": "Algo blando"
+    },
+    {
+      "id": "algo-rompe-facil",
+      "text": "Algo que se rompe fácil"
+    },
+    {
+      "id": "numero-suerte",
+      "text": "Un número de la suerte"
+    },
+    {
+      "id": "numero-entre-1-10",
+      "text": "Un número entre 1 y 10"
+    },
+    {
+      "id": "letra-abecedario",
+      "text": "Una letra del abecedario"
+    },
+    {
+      "id": "forma-geometrica",
+      "text": "Una forma geométrica"
+    },
+    {
+      "id": "color-carro",
+      "text": "Un color de carro"
+    },
+    {
+      "id": "marca-carro",
+      "text": "Una marca de carro"
+    },
+    {
+      "id": "nombre-perro",
+      "text": "Un nombre para un perro"
+    },
+    {
+      "id": "nombre-gato",
+      "text": "Un nombre para un gato"
+    },
+    {
+      "id": "animal-hace-mascota",
+      "text": "Un animal que hace de mascota"
+    },
+    {
+      "id": "animal-da-leche",
+      "text": "Un animal que da leche"
+    },
+    {
+      "id": "animal-muy-grande",
+      "text": "Un animal muy grande"
+    },
+    {
+      "id": "animal-muy-pequenyo",
+      "text": "Un animal muy pequeño"
+    },
+    {
+      "id": "animal-vuela",
+      "text": "Un animal que vuela"
+    },
+    {
+      "id": "animal-salta",
+      "text": "Un animal que salta"
+    },
+    {
+      "id": "animal-lento",
+      "text": "Un animal lento"
+    },
+    {
+      "id": "animal-rapido",
+      "text": "Un animal rápido"
+    },
+    {
+      "id": "animal-andes",
+      "text": "Un animal de los Andes"
+    },
+    {
+      "id": "dinosaurio",
+      "text": "Un dinosaurio"
+    },
+    {
+      "id": "animal-vive-desierto",
+      "text": "Un animal que vive en el desierto"
+    },
+    {
+      "id": "algo-comen-conejos",
+      "text": "Algo que comen los conejos"
+    },
+    {
+      "id": "comida-cumpleanyos",
+      "text": "Una comida de cumpleaños"
+    },
+    {
+      "id": "juego-infancia",
+      "text": "Un juego de la infancia"
+    },
+    {
+      "id": "algo-hace-parque",
+      "text": "Algo que se hace en un parque"
+    },
+    {
+      "id": "algo-lleva-picnic",
+      "text": "Algo que se lleva a un pícnic"
+    },
+    {
+      "id": "sabor-caramelo",
+      "text": "Un sabor de caramelo"
+    },
+    {
+      "id": "tipo-sandwich",
+      "text": "Un tipo de sándwich"
+    },
+    {
+      "id": "comida-rapida",
+      "text": "Una comida rápida"
+    },
+    {
+      "id": "algo-le-echa-papas",
+      "text": "Algo que se le echa a las papas fritas"
+    },
+    {
+      "id": "salsa",
+      "text": "Una salsa"
+    },
+    {
+      "id": "tipo-papa",
+      "text": "Un tipo de papa"
+    },
+    {
+      "id": "ingrediente-pizza",
+      "text": "Un ingrediente de la pizza"
+    },
+    {
+      "id": "tipo-sopa",
+      "text": "Un tipo de sopa"
+    },
+    {
+      "id": "bebida-caliente",
+      "text": "Una bebida caliente"
+    },
+    {
+      "id": "bebida-fria",
+      "text": "Una bebida fría"
+    },
+    {
+      "id": "sabor-mermelada",
+      "text": "Un sabor de mermelada"
+    },
+    {
+      "id": "fruto-seco",
+      "text": "Un fruto seco"
+    },
+    {
+      "id": "algo-hace-huevo",
+      "text": "Algo que se hace con huevo"
+    },
+    {
+      "id": "algo-hace-choclo",
+      "text": "Algo que se hace con choclo"
+    },
+    {
+      "id": "algo-hace-arroz",
+      "text": "Algo que se hace con arroz"
+    },
+    {
+      "id": "tipo-pescado",
+      "text": "Un tipo de pescado"
+    },
+    {
+      "id": "comida-no-le-gusta",
+      "text": "Una comida que no le gusta a los niños"
+    },
+    {
+      "id": "comida-encanta-ninyos",
+      "text": "Una comida que encanta a los niños"
+    },
+    {
+      "id": "algo-come-cuchara",
+      "text": "Algo que se come con cuchara"
+    },
+    {
+      "id": "algo-come-mano",
+      "text": "Algo que se come con la mano"
+    },
+    {
+      "id": "golosina",
+      "text": "Una golosina"
+    },
+    {
+      "id": "cereal-desayuno",
+      "text": "Un cereal del desayuno"
+    },
+    {
+      "id": "tipo-queso",
+      "text": "Un tipo de queso"
+    },
+    {
+      "id": "algo-refrigeradora",
+      "text": "Algo que hay en la refrigeradora"
+    },
+    {
+      "id": "lugar-casa",
+      "text": "Un lugar de la casa"
+    },
+    {
+      "id": "algo-dormitorio",
+      "text": "Algo que hay en el dormitorio"
+    },
+    {
+      "id": "algo-jardin",
+      "text": "Algo que hay en el jardín"
+    },
+    {
+      "id": "flor",
+      "text": "Una flor"
+    },
+    {
+      "id": "arbol",
+      "text": "Un árbol"
+    },
+    {
+      "id": "algo-crece-chacra",
+      "text": "Algo que crece en la chacra"
+    },
+    {
+      "id": "herramienta",
+      "text": "Una herramienta"
+    },
+    {
+      "id": "algo-caja-herramientas",
+      "text": "Algo que hay en una caja de herramientas"
+    },
+    {
+      "id": "algo-oficina",
+      "text": "Algo que hay en una oficina"
+    },
+    {
+      "id": "util-escolar",
+      "text": "Un útil escolar"
+    },
+    {
+      "id": "algo-escribe-mano",
+      "text": "Algo que se escribe a mano"
+    },
+    {
+      "id": "profesion",
+      "text": "Una profesión"
+    },
+    {
+      "id": "trabajo-hace-noche",
+      "text": "Un trabajo que se hace de noche"
+    },
+    {
+      "id": "alguien-usa-uniforme",
+      "text": "Alguien que usa uniforme"
+    },
+    {
+      "id": "trabajo-animales",
+      "text": "Un trabajo con animales"
+    },
+    {
+      "id": "trabajo-hospital",
+      "text": "Un trabajo en un hospital"
+    },
+    {
+      "id": "lugar-donde-mucha-gente",
+      "text": "Un lugar donde hay mucha gente"
+    },
+    {
+      "id": "lugar-silencioso",
+      "text": "Un lugar silencioso"
+    },
+    {
+      "id": "tienda-centro-comercial",
+      "text": "Una tienda del centro comercial"
+    },
+    {
+      "id": "algo-compra-mercado",
+      "text": "Algo que se compra en el mercado"
+    },
+    {
+      "id": "algo-hace-mar",
+      "text": "Algo que se hace en el mar"
+    },
+    {
+      "id": "algo-encuentra-arena",
+      "text": "Algo que se encuentra en la arena"
+    },
+    {
+      "id": "deporte-invierno",
+      "text": "Un deporte de invierno"
+    },
+    {
+      "id": "deporte-agua",
+      "text": "Un deporte en el agua"
+    },
+    {
+      "id": "deporte-olimpico",
+      "text": "Un deporte olímpico"
+    },
+    {
+      "id": "equipo-futbol-peruano",
+      "text": "Un equipo de fútbol peruano"
+    },
+    {
+      "id": "posicion-futbol",
+      "text": "Una posición en el fútbol"
+    },
+    {
+      "id": "algo-usa-hacer-ejercicio",
+      "text": "Algo que se usa para hacer ejercicio"
+    },
+    {
+      "id": "baile",
+      "text": "Un baile"
+    },
+    {
+      "id": "baile-tipico-peruano",
+      "text": "Un baile típico peruano"
+    },
+    {
+      "id": "red-social",
+      "text": "Una red social"
+    },
+    {
+      "id": "aplicacion-celular",
+      "text": "Una aplicación del celular"
+    },
+    {
+      "id": "algo-hace-celular",
+      "text": "Algo que se hace con el celular"
+    },
+    {
+      "id": "algo-tiene-pantalla",
+      "text": "Algo que tiene pantalla"
+    },
+    {
+      "id": "videojuego",
+      "text": "Un videojuego"
+    },
+    {
+      "id": "programa-television-ninyos",
+      "text": "Un programa de televisión para niños"
+    },
+    {
+      "id": "personaje-cuento-hadas",
+      "text": "Un personaje de cuento de hadas"
+    },
+    {
+      "id": "villano-famoso",
+      "text": "Un villano famoso"
+    },
+    {
+      "id": "mago-famoso",
+      "text": "Un mago famoso"
+    },
+    {
+      "id": "personaje-navidad",
+      "text": "Un personaje de Navidad"
+    },
+    {
+      "id": "algo-pone-arbol-navidad",
+      "text": "Algo que se pone en el árbol de Navidad"
+    },
+    {
+      "id": "algo-come-navidad",
+      "text": "Algo que se come en Navidad"
+    },
+    {
+      "id": "algo-hace-anyo-nuevo",
+      "text": "Algo que se hace en Año Nuevo"
+    },
+    {
+      "id": "disfraz-halloween",
+      "text": "Un disfraz de Halloween"
+    },
+    {
+      "id": "algo-regala-san-valentin",
+      "text": "Algo que se regala en San Valentín"
+    },
+    {
+      "id": "algo-pide-ninyo-papa",
+      "text": "Algo que pide un niño a Papá Noel"
+    },
+    {
+      "id": "color-pintar-cuarto",
+      "text": "Un color para pintar el cuarto"
+    },
+    {
+      "id": "algo-colecciona",
+      "text": "Algo que se colecciona"
+    },
+    {
+      "id": "pasatiempo-abuelos",
+      "text": "Un pasatiempo de los abuelos"
+    },
+    {
+      "id": "algo-hace-reir-bebe",
+      "text": "Algo que hace reír a un bebé"
+    },
+    {
+      "id": "sonido-animal",
+      "text": "Un sonido de animal"
+    },
+    {
+      "id": "algo-hace-carro-viaje",
+      "text": "Algo que se hace en el carro en un viaje largo"
+    },
+    {
+      "id": "algo-olvida-viajar",
+      "text": "Algo que se olvida al viajar"
+    },
+    {
+      "id": "algo-lleva-campamento",
+      "text": "Algo que se lleva a un campamento"
+    },
+    {
+      "id": "lugar-turistico-peru",
+      "text": "Un lugar turístico del Perú"
+    },
+    {
+      "id": "maravilla-mundo",
+      "text": "Una maravilla del mundo"
+    },
+    {
+      "id": "pais-europa",
+      "text": "Un país de Europa"
+    },
+    {
+      "id": "idioma",
+      "text": "Un idioma"
+    },
+    {
+      "id": "comida-otro-pais",
+      "text": "Una comida de otro país"
+    },
+    {
+      "id": "algo-tiene-alas-pero",
+      "text": "Algo que tiene alas pero no es un ave"
+    },
+    {
+      "id": "algo-tiene-patas-pero",
+      "text": "Algo que tiene patas pero no es un animal"
+    },
+    {
+      "id": "algo-tiene-dientes-pero",
+      "text": "Algo que tiene dientes pero no muerde"
+    },
+    {
+      "id": "algo-abre-cierra",
+      "text": "Algo que se abre y se cierra"
+    },
+    {
+      "id": "algo-enciende",
+      "text": "Algo que se enciende"
+    },
+    {
+      "id": "algo-infla",
+      "text": "Algo que se infla"
+    },
+    {
+      "id": "algo-dobla",
+      "text": "Algo que se dobla"
+    },
+    {
+      "id": "algo-va-pareja",
+      "text": "Algo que va en pareja"
+    },
+    {
+      "id": "algo-tiene-numeros",
+      "text": "Algo que tiene números"
+    },
+    {
+      "id": "algo-mide-tiempo",
+      "text": "Algo que mide el tiempo"
+    },
+    {
+      "id": "algo-hace-ducha",
+      "text": "Algo que se hace en la ducha"
+    },
+    {
+      "id": "palabra-saludar",
+      "text": "Una palabra para saludar"
+    },
+    {
+      "id": "palabra-dicen-peruanos",
+      "text": "Una palabra que dicen los peruanos"
+    },
+    {
+      "id": "apodo-carinyoso",
+      "text": "Un apodo cariñoso"
+    },
+    {
+      "id": "peor-quehacer-casa",
+      "text": "El peor quehacer de la casa"
+    },
+    {
+      "id": "mejor-momento-dia",
+      "text": "El mejor momento del día"
+    },
+    {
+      "id": "razon-llegar-tarde",
+      "text": "Una razón para llegar tarde"
+    },
+    {
+      "id": "miedo-comun",
+      "text": "Un miedo común"
+    },
+    {
+      "id": "algo-hace-perro",
+      "text": "Algo que hace un perro"
+    },
+    {
+      "id": "algo-hace-gato",
+      "text": "Algo que hace un gato"
+    },
+    {
+      "id": "superpoder",
+      "text": "Un superpoder"
+    },
+    {
+      "id": "algo-harias-millon-soles",
+      "text": "Algo que harías con un millón de soles"
+    },
+    {
+      "id": "algo-lleva-fiesta",
+      "text": "Algo que se lleva a una fiesta"
+    },
+    {
+      "id": "algo-hace-boda",
+      "text": "Algo que se hace en una boda"
+    },
+    {
+      "id": "sabor-gelatina",
+      "text": "Un sabor de gelatina"
+    },
+    {
+      "id": "algo-comes-cine",
+      "text": "Algo que comes en el cine"
+    },
+    {
+      "id": "genero-pelicula",
+      "text": "Un género de película"
+    },
+    {
+      "id": "cantante-famoso",
+      "text": "Un cantante famoso"
+    },
+    {
+      "id": "banda-rock",
+      "text": "Una banda de rock"
+    }
+  ]
+}

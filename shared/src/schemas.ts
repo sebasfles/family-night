@@ -1,6 +1,11 @@
 import { z } from 'zod';
-import { JUST_ONE_MAX_CYCLES, WAVELENGTH_MAX_CYCLES } from './constants.ts';
-import type { ImpostorConfig, JustOneConfig, WavelengthConfig } from './domain.ts';
+import {
+  JUST_ONE_MAX_CYCLES,
+  MANADA_MAX_ROUNDS,
+  MANADA_MIN_ROUNDS,
+  WAVELENGTH_MAX_CYCLES,
+} from './constants.ts';
+import type { ImpostorConfig, JustOneConfig, ManadaConfig, WavelengthConfig } from './domain.ts';
 
 function withoutRemovedKeys(raw: unknown): unknown {
   if (typeof raw !== 'object' || raw === null || !('impostorLastGuess' in raw)) return raw;
@@ -29,3 +34,8 @@ export const wavelengthConfigSchema = z.strictObject({
 export const justOneConfigSchema = z.strictObject({
   cycles: z.int().min(1).max(JUST_ONE_MAX_CYCLES),
 }) satisfies z.ZodType<JustOneConfig>;
+
+export const manadaConfigSchema = z.strictObject({
+  goal: z.enum(['ROUNDS', 'POINTS']),
+  rounds: z.int().min(MANADA_MIN_ROUNDS).max(MANADA_MAX_ROUNDS),
+}) satisfies z.ZodType<ManadaConfig>;

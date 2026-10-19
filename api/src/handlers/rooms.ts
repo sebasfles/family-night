@@ -15,6 +15,7 @@ import {
 import { parseBody, requirePlayer, roomCodeParam, type AppEnv } from './context.ts';
 import { impostorRoutes } from './impostor.ts';
 import { justOneRoutes } from './justone.ts';
+import { manadaRoutes } from './manada.ts';
 import { matchesRoutes } from './matches.ts';
 import { sharedMatchRoutes } from './shared-match.ts';
 import { wavelengthRoutes } from './wavelength.ts';
@@ -62,5 +63,6 @@ export function roomsRoutes(deps: Deps) {
     .route('/', sharedMatchRoutes(deps))
     .route('/', impostorRoutes(deps))
     .route('/', wavelengthRoutes(deps))
-    .route('/', justOneRoutes(deps));
+    .route('/', justOneRoutes(deps))
+    .route('/', manadaRoutes(deps));
 }

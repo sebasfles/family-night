@@ -26,7 +26,6 @@ export const IMPOSTOR_CAPS = [
   { minPlayers: 3, maxImpostors: 1 },
 ] as const;
 export const CIVILIAN_WIN_POINTS = 1;
-export const IMPOSTOR_WIN_POINTS = 2;
 export const IMPOSTOR_DEFAULTS = {
   impostorCount: 1,
   randomOrder: true,
@@ -34,8 +33,9 @@ export const IMPOSTOR_DEFAULTS = {
   showCategoryToImpostor: false,
 } as const;
 
-export const MIN_WAVELENGTH_PLAYERS = 3;
+export const MIN_WAVELENGTH_PLAYERS = 2;
 export const MIN_WAVELENGTH_ACTIVE = 2;
+export const WAVELENGTH_UNSCORED_PLAYERS = 2;
 export const WAVELENGTH_MAX_CYCLES = 3;
 export const WAVELENGTH_CLUE_MAX = 40;
 export const DIAL_MAX = 100;
@@ -46,12 +46,22 @@ export const DIAL_BANDS = [
 ] as const;
 export const WAVELENGTH_DEFAULTS = { cycles: 1 } as const;
 
-export const MIN_JUST_ONE_PLAYERS = 3;
+export const MIN_JUST_ONE_PLAYERS = 4;
 export const MIN_JUST_ONE_ACTIVE = 2;
 export const JUST_ONE_MAX_CYCLES = 3;
 export const JUST_ONE_CLUE_MAX = 30;
 export const JUST_ONE_GUESS_MAX = 30;
 export const JUST_ONE_DEFAULTS = { cycles: 1 } as const;
+
+export const MIN_MANADA_PLAYERS = 3;
+export const MIN_MANADA_ACTIVE = 2;
+export const MANADA_MIN_ROUNDS = 5;
+export const MANADA_MAX_ROUNDS = 15;
+export const MANADA_ROUND_LIMIT = 99;
+export const MANADA_WIN_POINTS = 8;
+export const MANADA_ANSWER_MAX = 30;
+export const MANADA_ANSWER_MAX_WORDS = 3;
+export const MANADA_DEFAULTS = { goal: 'ROUNDS', rounds: 10 } as const;
 
 const roomCodePattern = new RegExp(`^[${ROOM_CODE_ALPHABET}]{${String(ROOM_CODE_LENGTH)}}$`);
 

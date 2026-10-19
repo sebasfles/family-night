@@ -255,7 +255,7 @@ describe('the lobby', () => {
     enterRoom('/ABCD');
 
     const games = await screen.findByRole('region', { name: 'Juegos' });
-    for (const name of ['Impostor', 'Just One', 'Wavelength']) {
+    for (const name of ['Impostor', 'Just One', 'Wavelength', 'La manada']) {
       expect(within(games).getByRole('heading', { name })).toBeVisible();
     }
     expect(within(games).getByText('Elegido')).toBeVisible();
@@ -263,7 +263,7 @@ describe('the lobby', () => {
       'aria-pressed',
       'true',
     );
-    for (const name of ['Jugar Wavelength', 'Jugar Just One']) {
+    for (const name of ['Jugar Wavelength', 'Jugar Just One', 'Jugar La manada']) {
       expect(within(games).getByRole('button', { name })).toHaveAttribute('aria-pressed', 'false');
     }
     expect(within(games).queryByText('Próximamente')).toBeNull();
@@ -381,7 +381,7 @@ describe('the Impostor panel', () => {
   test('with fewer than 3 online the host cannot start', async () => {
     lobby(room());
 
-    expect(await screen.findByRole('button', { name: 'Faltan 1 jugador' })).toBeDisabled();
+    expect(await screen.findByRole('button', { name: 'Falta 1 jugador' })).toBeDisabled();
     expect(screen.getByRole('heading', { name: 'Juegan 2' })).toBeVisible();
   });
 
@@ -618,9 +618,34 @@ describe('the Wavelength panel', () => {
   });
 });
 
+describe('the minimum of the selected game', () => {
+  test.each([
+    ['IMPOSTOR', 2, 'Falta 1 jugador'],
+    ['WAVELENGTH', 1, 'Falta 1 jugador'],
+    ['JUST_ONE', 2, 'Faltan 2 jugadores'],
+    ['JUST_ONE', 3, 'Falta 1 jugador'],
+  ] as const)('%s with %i online says what is missing', async (game, online, label) => {
+    const { mock } = enterRoom('/ABCD', room({ members: players(online), selectedGame: game }));
+    mock.on('GET /api/words/categories', () => Response.json({ categories: [] }));
+
+    expect(await screen.findByRole('button', { name: label })).toBeDisabled();
+  });
+
+  test.each([
+    ['IMPOSTOR', 3],
+    ['WAVELENGTH', 2],
+    ['JUST_ONE', 4],
+  ] as const)('%s starts with %i online', async (game, online) => {
+    const { mock } = enterRoom('/ABCD', room({ members: players(online), selectedGame: game }));
+    mock.on('GET /api/words/categories', () => Response.json({ categories: [] }));
+
+    expect(await screen.findByRole('button', { name: 'Iniciar' })).toBeEnabled();
+  });
+});
+
 describe('the Just One panel', () => {
   test('the host picks Just One, sets the cycles and starts with them', async () => {
-    const served = room({ members: players(3) });
+    const served = room({ members: players(4) });
     const chosen = { ...served, version: 9, selectedGame: 'JUST_ONE' as const };
     const three = {
       ...chosen,
@@ -642,7 +667,7 @@ describe('the Just One panel', () => {
       });
     });
     expect(
-      await screen.findByText(/Cada jugador adivina una vez: 3 rondas con 3 en línea/),
+      await screen.findByText(/Cada jugador adivina una vez: 4 rondas con 4 en línea/),
     ).toBeVisible();
 
     mock.on('PUT /api/rooms/ABCD/config', () => Response.json({ room: three }));
@@ -653,7 +678,7 @@ describe('the Just One panel', () => {
         config: { cycles: 3 },
       });
     });
-    expect(await screen.findByText(/adivina 3 veces: 9 rondas/)).toBeVisible();
+    expect(await screen.findByText(/adivina 3 veces: 12 rondas/)).toBeVisible();
     expect(screen.getByRole('radio', { name: '3' })).toBeChecked();
 
     fireEvent.click(screen.getByRole('button', { name: 'Iniciar' }));
@@ -672,7 +697,7 @@ describe('how to play', () => {
     mock.on('GET /api/words/categories', () => Response.json({ categories: [] }));
 
     const games = await screen.findByRole('region', { name: 'Juegos' });
-    for (const name of ['Impostor', 'Wavelength', 'Just One']) {
+    for (const name of ['Impostor', 'Wavelength', 'Just One', 'La manada']) {
       expect(within(games).getByRole('button', { name: `¿Cómo jugar ${name}?` })).toBeVisible();
     }
 
@@ -697,7 +722,7 @@ describe('how to play', () => {
     expect(screen.getByRole('dialog', { name: 'Just One' })).toBeVisible();
   });
 
-  test.each(['Impostor', 'Wavelength', 'Just One'])(
+  test.each(['Impostor', 'Wavelength', 'Just One', 'La manada'])(
     '%s walks through 4 to 6 steps, each with its scene',
     async (game) => {
       enterRoom('/ABCD');

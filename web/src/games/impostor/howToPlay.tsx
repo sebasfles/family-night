@@ -1,3 +1,4 @@
+import { CIVILIAN_WIN_POINTS, impostorWinPoints, IMPOSTOR_DEFAULTS } from '@family-night/shared';
 import { Button } from '../../components/Button';
 import { DEMO_FAMILY, DEMO_SELF, demoId } from '../../components/demoFamily';
 import type { HowToPlayStep } from '../../components/HowToPlay';
@@ -10,6 +11,8 @@ import { VoteList } from './Voting';
 
 const everyone = DEMO_FAMILY.map((member) => member.playerId);
 const impostor = demoId(2);
+const civilians = everyone.length - IMPOSTOR_DEFAULTS.impostorCount;
+const impostorPoints = impostorWinPoints(IMPOSTOR_DEFAULTS.impostorCount, everyone.length);
 
 export const impostorSteps: HowToPlayStep[] = [
   {
@@ -96,14 +99,14 @@ export const impostorSteps: HowToPlayStep[] = [
   },
   {
     title: '¿Quién gana?',
-    text: 'Los civiles ganan cuando no queda ningún impostor, y suman 1 punto cada uno. Los impostores ganan si llegan a ser tantos como los civiles que siguen en juego, y suman 2.',
+    text: `Los civiles ganan cuando no queda ningún impostor y suman ${String(CIVILIAN_WIN_POINTS)} punto cada uno. Los impostores ganan si llegan a ser tantos como los civiles en juego, y cada uno suma los civiles del inicio entre los impostores, redondeando hacia arriba: con ${String(civilians)} civiles y un impostor, ${String(impostorPoints)} puntos.`,
     Scene: () => (
       <Scoreboard
         title="Puntaje de la noche"
         rows={everyone.map((playerId) => ({
           playerId,
           from: 0,
-          to: playerId === impostor ? 0 : 1,
+          to: playerId === impostor ? 0 : CIVILIAN_WIN_POINTS,
         }))}
         members={DEMO_FAMILY}
         selfId={DEMO_SELF}

@@ -81,3 +81,47 @@ export function Segmented<T extends string | number>({
     </div>
   );
 }
+
+export function Row({
+  label,
+  hint,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <div className="flex min-w-0 flex-col">
+        <p className="font-bold">{label}</p>
+        {hint && <p className="text-sm text-cream/60">{hint}</p>}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+export function StepButton({
+  label,
+  disabled,
+  onClick,
+  children,
+}: {
+  label: string;
+  disabled: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      disabled={disabled}
+      onClick={onClick}
+      className={`flex size-12 items-center justify-center rounded-full text-2xl font-bold disabled:opacity-35 ${unchosen} hover:enabled:bg-night-raised motion-safe:active:enabled:scale-95 ${control}`}
+    >
+      {children}
+    </button>
+  );
+}

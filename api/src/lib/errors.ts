@@ -1,4 +1,9 @@
-import { API_ERRORS, type ErrorCode, type ErrorResponse } from '@family-night/shared';
+import {
+  API_ERRORS,
+  notEnoughPlayersMessage,
+  type ErrorCode,
+  type ErrorResponse,
+} from '@family-night/shared';
 
 export class AppError extends Error {
   readonly code: ErrorCode;
@@ -25,4 +30,8 @@ export class AppError extends Error {
     if (this.details !== undefined) error.details = this.details;
     return { error };
   }
+}
+
+export function notEnoughPlayers(minPlayers: number): AppError {
+  return new AppError('NOT_ENOUGH_PLAYERS', undefined, notEnoughPlayersMessage(minPlayers));
 }

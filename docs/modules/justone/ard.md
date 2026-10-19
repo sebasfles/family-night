@@ -1,6 +1,6 @@
 ---
-updated: 2026-10-18
-source: 0005_just_one
+updated: 2026-10-19
+source: 0008_scoring_and_manada
 ---
 
 # Just One: decisions
@@ -85,3 +85,12 @@ source: 0005_just_one
 - Debt created: right after a restart the word just played can come up again.
 - Revisit when: a family plays through the bank in one night.
 - Source: 0005_just_one
+
+## 2026-10-19: No night-points function for Just One
+
+- Decision: Just One finishes without `scores`, and its final screen says the team score does not reach the night.
+- Alternatives rejected: a `justOneNightPoints` that always returns nothing.
+- Reason: a function that only returns an empty map is ceremony; the absence is the rule.
+- Debt created: none
+- Revisit when: the cooperative game should weigh on the night.
+- Source: 0008_scoring_and_manada

@@ -1,6 +1,6 @@
 ---
-updated: 2026-10-18
-source: 0006_gameplay_and_redesign
+updated: 2026-10-19
+source: 0008_scoring_and_manada
 ---
 
 # Product Requirements Document
@@ -9,7 +9,7 @@ source: 0006_gameplay_and_redesign
 
 Family Night is a web app of party games for one family, ages 20 to 60, gathered in the same room.
 Each player uses their own phone inside a shared room that lasts the whole evening; the host picks a game, several matches are played in a row, and the talking happens in person.
-Phase 1 shipped the common platform and the Impostor game; Wavelength and Just One followed.
+Phase 1 shipped the common platform and the Impostor game; Wavelength, Just One and La manada followed.
 Source spec: [implementation-plan.md](implementation-plan.md) (Spanish).
 
 ## Users
@@ -40,10 +40,17 @@ Details: [modules/wavelength/prd.md](modules/wavelength/prd.md)
 Each round one player guesses a secret word from one-word clues the others write in secret; repeated clues cancel each other, the guesser sees only what survives and guesses or passes, and the team score is everyone's.
 Details: [modules/justone/prd.md](modules/justone/prd.md)
 
+### La manada
+
+Each round everyone answers the same question in secret; matching answers form groups, the largest group scores, and the only player alone with their answer takes the pink cow, which keeps them from winning.
+Details: [modules/manada/prd.md](modules/manada/prd.md)
+
 ## Cross-cutting rules
 
 - No accounts and no login: identity is the device; the name starts random and the player can change it, 2 to 20 visible characters, unique among players.
 - Only the host configures, starts, ends matches and removes players; the host role passes on if the host disappears.
+- Each game has its minimum of online players (Impostor 3, Wavelength 2, Just One 4, La manada 3).
+- The night's score weighs every game alike: a finished match adds podium-like points (Impostor by side and table size), the cooperative Just One adds none.
 - Nobody can learn another player's secret, from the app or from inspecting the network.
 - Rooms and matches vanish after 24 hours of inactivity; players and their names stay.
 - Everything the user reads is Spanish.

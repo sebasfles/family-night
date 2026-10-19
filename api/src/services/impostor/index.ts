@@ -1,7 +1,7 @@
 import {
   closeVoting,
   everyoneConfirmed,
-  matchScores,
+  impostorNightPoints,
   maxImpostors,
   nextRound,
   pickWord,
@@ -18,10 +18,11 @@ import {
   type RoomSnapshot,
   type RoundRequest,
   type VoteRequest,
+  MIN_IMPOSTOR_PLAYERS,
 } from '@family-night/shared';
 import { impostorConfigSchema } from '@family-night/shared/schemas';
 import type { Deps } from '../../deps.ts';
-import { AppError } from '../../lib/errors.ts';
+import { AppError, notEnoughPlayers } from '../../lib/errors.ts';
 import { iso, ttlFrom } from '../../lib/time.ts';
 import type { TransactItem } from '../../repos/db.ts';
 import {
@@ -68,7 +69,7 @@ export function parseImpostorConfig(raw: unknown): ImpostorConfig {
 
 export function checkImpostorStart(config: ImpostorConfig, playerCount: number): void {
   const problem = startProblem(config, playerCount);
-  if (problem === 'NOT_ENOUGH_PLAYERS') throw new AppError('NOT_ENOUGH_PLAYERS');
+  if (problem === 'NOT_ENOUGH_PLAYERS') throw notEnoughPlayers(MIN_IMPOSTOR_PLAYERS);
   if (problem === 'TOO_MANY_IMPOSTORS') {
     const max = maxImpostors(playerCount);
     throw new AppError(
@@ -132,14 +133,13 @@ function toBallot(vote: VoteItem): Ballot {
 function withScores(
   before: ImpostorPublic,
   after: ImpostorPublic,
-  facts: MatchFacts,
   writes: TransactItem[] = [],
 ): MatchUpdate {
   const finished = before.status === 'PLAYING' && after.status === 'FINISHED';
   return {
     publicState: after,
     writes,
-    ...(finished ? { scores: matchScores(after, facts.impostorIds) } : {}),
+    ...(finished ? { scores: impostorNightPoints(after) } : {}),
   };
 }
 
@@ -170,7 +170,7 @@ export async function impostorDeparture(
   const writes = votes
     .filter((vote) => dropped.some((ballot) => ballot.voterId === vote.voterId))
     .map((vote) => deps.repos.votes.deleteItem(vote));
-  return withScores(before, state, facts, writes);
+  return withScores(before, state, writes);
 }
 
 async function roundBallots(deps: Deps, match: MatchItem, nowMs: number): Promise<Ballot[]> {
@@ -273,7 +273,7 @@ async function impostorNextRound(
           deps.repos.votes.deleteItem(vote),
         )
       : [];
-  return withScores(before, after, facts, cleared);
+  return withScores(before, after, cleared);
 }
 
 async function impostorSecret(

@@ -434,6 +434,37 @@ describe('rooms stored before the last chance was removed', () => {
   });
 });
 
+describe('matches stored before departures were recorded', () => {
+  test('an Impostor match without departedIds reads it as empty and still scores', async () => {
+    const room = await roomWith(4);
+    const match = currentMatch(await start(room));
+    await room.harness.client.send(
+      new UpdateCommand({
+        TableName: room.harness.tables.matches,
+        Key: { roomCode: room.code, matchId: match.matchId },
+        UpdateExpression: 'REMOVE publicState.departedIds',
+      }),
+    );
+    expect(currentMatch(await getRoom(room.harness, room.host, room.code)).departedIds).toEqual([]);
+    const roles = await rolesOf(room, match);
+    const [impostor] = roles.impostors;
+    const leaver = roles.civilians.find((civilian) => civilian.playerId !== room.host.playerId);
+    if (!impostor || !leaver) throw new Error('missing roles');
+
+    await json(call(room.harness, leaver, 'POST', `/api/rooms/${room.code}/leave`));
+    const snapshot = await getRoom(room.harness, room.host, room.code);
+    expect(currentMatch(snapshot).departedIds).toEqual([leaver.playerId]);
+    const stayer = roles.civilians.find((civilian) => civilian !== leaver) ?? room.host;
+    const revealed = await everyoneVotes(room, currentMatch(snapshot), impostor, stayer);
+    const finished = await hostAction(room, revealed, 'next-round', { round: 1 });
+
+    expect(currentMatch(finished)).toMatchObject({ status: 'FINISHED', winner: 'CIVILIANS' });
+    for (const member of finished.members) {
+      expect(member.totalScore).toBe(member.playerId === impostor.playerId ? 0 : 1);
+    }
+  });
+});
+
 describe('a living player leaves or is kicked', () => {
   test('a kicked civilian is out with the role shown, their confirmed ballots are dropped and voters vote again', async () => {
     const room = await roomWith(5);

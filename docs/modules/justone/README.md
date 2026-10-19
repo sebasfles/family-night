@@ -1,13 +1,13 @@
 ---
-updated: 2026-10-18
-source: 0005_just_one
+updated: 2026-10-19
+source: 0008_scoring_and_manada
 ---
 
 # Just One
 
 The third game of Family Night, cooperative.
 Each round one player, the adivinador, must guess a secret word; everyone else writes a one-word clue without seeing the others', repeated clues are cancelled, and the adivinador sees only what survives and guesses once or passes.
-The team scores together, and every participant adds the team score to the night's scoreboard.
+The team scores together; the score stays in the match and adds nothing to the night's scoreboard.
 
 ## Boundaries
 

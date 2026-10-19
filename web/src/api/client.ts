@@ -11,6 +11,8 @@ import {
   type JustOneClueRequest,
   type JustOneGuessRequest,
   type LeaveRoomResponse,
+  type ManadaAnswerRequest,
+  type MergeGroupsRequest,
   type MatchSecretResponse,
   type MeResponse,
   type RenameInRoomResponse,
@@ -18,6 +20,7 @@ import {
   type RenamePlayerResponse,
   type RoomResponse,
   type RoundRequest,
+  type SplitGroupRequest,
   type TargetPlayerRequest,
   type VoteRequest,
   type WordCategoriesResponse,
@@ -166,4 +169,12 @@ export const api = {
     request<RoomResponse>('POST', match(code, matchId, 'accept-guess'), { body }),
   skipGuesser: (code: string, matchId: string, body: RoundRequest) =>
     request<RoomResponse>('POST', match(code, matchId, 'skip-guesser'), { body }),
+  answer: (code: string, matchId: string, body: ManadaAnswerRequest) =>
+    request<RoomResponse>('PUT', match(code, matchId, 'answer'), { body }),
+  closeAnswers: (code: string, matchId: string, body: RoundRequest) =>
+    request<RoomResponse>('POST', match(code, matchId, 'close-answers'), { body }),
+  mergeGroups: (code: string, matchId: string, body: MergeGroupsRequest) =>
+    request<RoomResponse>('POST', match(code, matchId, 'merge-groups'), { body }),
+  splitGroup: (code: string, matchId: string, body: SplitGroupRequest) =>
+    request<RoomResponse>('POST', match(code, matchId, 'split-group'), { body }),
 };

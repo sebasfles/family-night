@@ -1,6 +1,6 @@
 ---
-updated: 2026-10-18
-source: 0006_gameplay_and_redesign
+updated: 2026-10-19
+source: 0008_scoring_and_manada
 ---
 
 # Impostor: database
@@ -13,7 +13,7 @@ Table names carry the prefix `family-night-prd-`; the kebab-case suffixes below 
 
 | Table | Purpose |
 |---|---|
-| `family-night-prd-match-secrets` | What each player alone may see (role, word or clue, category) and one `#MATCH` item with the real word, its id, the clue and the impostor ids. Wavelength keeps its `#ROUND` and `#GUESS` items here, Just One its `#ROUND` and `#CLUE` items; every `#` key is server-only. |
+| `family-night-prd-match-secrets` | What each player alone may see (role, word or clue, category) and one `#MATCH` item with the real word, its id, the clue and the impostor ids. Wavelength keeps its `#ROUND` and `#GUESS` items here, Just One its `#ROUND` and `#CLUE` items, La manada its `#ANSWER` items; every `#` key is server-only. |
 | `family-night-prd-votes` | One item per player per round: who voted for whom. |
 
 ## Tables referenced
@@ -38,7 +38,7 @@ Table names carry the prefix `family-night-prd-`; the kebab-case suffixes below 
 - A start writes the room, the match and every `MatchSecrets` item in one transaction; a published match always has its secrets.
 - The votes of the round are cleared when the next round opens.
 - `MatchSecrets` and `Votes` expire 24 hours after they are written; unlike the match, they are not renewed.
-- Scores are added once, in the write that makes the match finished, and only to winners still in the room.
+- Scores are added once, in the write that makes the match finished, exactly as `impostorNightPoints` gives them, and never to a participant in `departedIds`.
 
 ## Migrations of note
 

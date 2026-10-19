@@ -1,6 +1,6 @@
 ---
-updated: 2026-10-18
-source: 0007_lobby_polish
+updated: 2026-10-19
+source: 0008_scoring_and_manada
 ---
 
 # Platform: decisions
@@ -319,3 +319,57 @@ source: 0007_lobby_polish
 - Debt created: a name with one word longer than about 11 letters still breaks mid-word in a member row at 360.
 - Revisit when: a family uses such a name.
 - Source: 0007_lobby_polish
+
+## 2026-10-19: Night points on one scale for every game
+
+- Decision: a finished match adds to the night by podium: with N players still in the match, place p (shared places 1, 1, 3) gets N - p + 1, and the winners of La manada share first place. Impostor gives each impostor ceil(civilians at start / impostors) on an impostor win and each civilian 1 on a civilian win; Just One gives 0; a Wavelength match that started with 2 gives 0; a player who left or was removed scores nothing. Each game's minimum of online players is a `MIN_*_PLAYERS` constant in `shared`, read by the api's start check and the lobby's button.
+- Alternatives rejected: each game's raw match points; splitting the points of a shared place; Impostor's flat 1 and 2; Just One's team score; minimums stored in DynamoDB or kept in the web.
+- Reason: every game weighs the same on the night, so a mixed night is not decided by the game with the biggest numbers; minimums are rules both sides must agree on, not data.
+- Debt created: none
+- Revisit when: a new game does not fit a podium.
+- Source: 0008_scoring_and_manada
+
+## 2026-10-19: Night points show as a line under each name
+
+- Decision: a match scoreboard takes optional `night` points and shows "+N a la noche" under each player's name; the lobby scoreboard keeps its shape.
+- Alternatives rejected: a second list of night points next to the match result; the points beside the score.
+- Reason: a second list doubles the final screen, and beside the score it squeezed names at 360 px.
+- Debt created: none
+- Revisit when: a game needs more than one number per player on its final.
+- Source: 0008_scoring_and_manada
+
+## 2026-10-19: The scoreboard can take the ranking from the game
+
+- Decision: `Scoreboard` takes optional `ranks`; with them rows sort and number by the given place and then by score, and the leader highlight needs a single first place.
+- Alternatives rejected: always ranking by points; a scoreboard of La manada's own.
+- Reason: in La manada a cow holder with more points ranks below the winners, and the medals must agree with the night points.
+- Debt created: none
+- Revisit when: another game ranks by something other than points.
+- Source: 0008_scoring_and_manada
+
+## 2026-10-19: Shared lobby controls live with the config section
+
+- Decision: `Row` and `StepButton` moved from Impostor's config panel to `components/lobby/ConfigSection.tsx`, next to `Segmented`, and both Impostor and La manada use them; the game picker shows two columns from `sm` for four games.
+- Alternatives rejected: a copy inside La manada's panel, since games never import each other.
+- Reason: one stepper and one row style across games.
+- Debt created: none
+- Revisit when: a game needs a control none of them covers.
+- Source: 0008_scoring_and_manada
+
+## 2026-10-19: Rose tokens for La manada and its cow
+
+- Decision: `--color-rose` and `--color-rose-deep` join the palette, with AA contrast tests on night and on rose.
+- Alternatives rejected: Just One's orchid, which would make the two cards read as one game.
+- Reason: the pink cow is the game's mascot and needs its own pink.
+- Debt created: none
+- Revisit when: the palette is reviewed as a whole.
+- Source: 0008_scoring_and_manada
+
+## 2026-10-19: Waiting dots sit inline with the text
+
+- Decision: `Waiting` renders its dots as an inline element at the start of the centered text.
+- Alternatives rejected: dots and text as two flex items.
+- Reason: with a wrapped message at 360 px the flex text took the full width and left the dots far from it, in every game.
+- Debt created: none
+- Revisit when: waiting messages get longer than two lines.
+- Source: 0008_scoring_and_manada

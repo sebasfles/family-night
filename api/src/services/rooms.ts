@@ -62,6 +62,7 @@ export async function createRoom(deps: Deps, player: PlayerItem): Promise<RoomSn
       usedWordIds: [],
       usedSpectrumIds: [],
       usedJustOneWordIds: [],
+      usedManadaQuestionIds: [],
       selectedGame: 'IMPOSTOR',
       configs: {},
     };

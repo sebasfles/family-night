@@ -3,6 +3,7 @@ import {
   DIAL_MAX,
   MIN_WAVELENGTH_ACTIVE,
   MIN_WAVELENGTH_PLAYERS,
+  WAVELENGTH_UNSCORED_PLAYERS,
 } from '../constants.ts';
 import type {
   DialGuess,
@@ -12,6 +13,7 @@ import type {
   WavelengthPublic,
 } from '../domain.ts';
 import { shuffle, type RandomInt } from '../random.ts';
+import { podiumPoints } from '../scoring.ts';
 
 export interface CommittedGuess {
   playerId: string;
@@ -228,10 +230,7 @@ export function dropWavelengthPlayer(
   return { state: dropped, cancelsRound };
 }
 
-export function wavelengthScores(state: WavelengthPublic): Record<string, number> {
-  return Object.fromEntries(
-    wavelengthPlayers(state)
-      .map((id) => [id, state.totals[id] ?? 0] as const)
-      .filter(([, points]) => points > 0),
-  );
+export function wavelengthNightPoints(state: WavelengthPublic): Record<string, number> {
+  if (state.participants.length <= WAVELENGTH_UNSCORED_PLAYERS) return {};
+  return podiumPoints(state.totals, wavelengthPlayers(state));
 }

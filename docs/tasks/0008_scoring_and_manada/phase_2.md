@@ -27,4 +27,47 @@ updated: 2026-10-18
 
 ## om-developer notes
 
+### Round 1
+
+Done:
+
+- shared: `manada/rules.ts` with answer cleaning and validation (1 to 3 words, 30 characters), `sameAnswer` (Just One's `sameWord` per word, same word count, a leading article dropped), transitive and deterministic `groupAnswers` (union-find; largest first, then by who answered first), majority, `loneAnswererId` for the cow, merge and split recomputed from the round's stored `totalsBefore` and `cowBefore`, win check, winners, departures and `manadaNightPoints` (winners share first, the rest by points with the cow holder among them); `ManadaConfig`, `ManadaPublic`, `ManadaSecret` and the endpoint types; constants `MIN_MANADA_PLAYERS` 3, `MIN_MANADA_ACTIVE` 2, rounds 5 to 15, `MANADA_WIN_POINTS` 8.
+- api: `services/manada` in the registry (prepare, next round, departure, `/me`), `PUT answer` (conditional put, then the room write recomputes `answeredPlayerIds` from the stored answers and reveals once), `POST close-answers`, `POST merge-groups`, `POST split-group`; answers as `#ANSWER#{nn}#{playerId}` items in `MatchSecrets`; `usedManadaQuestionIds` on the room through `match-change.ts` and the version bump; `api/src/data/manada-questions.json` with 209 questions and stable slug ids; night points added at FINISHED from `manadaNightPoints`.
+- web: La manada card in the picker (now 2 columns from `sm`), its panel (Por rondas with a 5 to 15 stepper, or Hasta 8 puntos), route `$code/manada.tsx`, screens ANSWER (question card, answer form, confirmed answer, "Respondieron N de M", host close with confirmation), REVEAL (group cards with names, "+1 cada uno" or "Empate", host merge by tapping two groups and "Separar", the pink cow card sliding to its new holder, totals), FINISHED (winners banner, cow holder, podium with night points), Espectador; optimistic answer, merge and split; `howToPlay.tsx` with 6 steps; phase vibration.
+- Tests: shared (40: grouping, plural per word, article, transitivity, majority ties, every cow case, merge chain and split, win with and without cow, rounds run out, departures, night points, config, question rotation); api (12 with DynamoDB Local: start and minimum, answers absent from every event and snapshot until the reveal, 8 simultaneous answers reveal once, early close, merge and split recompute, a whole match with podium totals in `RoomMembers` and no repeated question across a rematch, until 8 points, departures); web (10 on answer input, spectator, close, reveal, merge and split, result, final and the lobby panel; lobby tests cover the fourth card and its tutorial).
+- Screenshots in `screenshots/phase_2/` of the workspace, every screen at 360, 390, 768 and 1280.
+
+Decisions not in the plan:
+
+- Config is `{ goal: 'ROUNDS' | 'POINTS', rounds }`; `rounds` stays stored while the goal is points, so switching back keeps it.
+- "Hasta 8 puntos" also ends at round 99 (`MANADA_ROUND_LIMIT`), the highest round any request body accepts, so a match can never get stuck.
+- A merge names each group by any member (`groupIds: [a, b]`; a group's id is its first member) and stores the union of both groups' players, so a chain is several merges; "Separar" (`split-group`) undoes every merge inside that group at once, back to the automatic groups.
+- Error codes `ANSWER_CONFIRMED` (409, "Ya confirmaste tu respuesta") and `NOT_IN_MATCH` (403, "No juegas esta partida, juegas en la siguiente"), because the UI shows the message as is.
+- `/me` returns the caller's own answer only in ANSWER; there is no round secret item because the question is public.
+- Winners are the players still in without the cow who have the top score, even at 0; the banner then says "Nadie sumó puntos" and the podium still ranks them first.
+- Answers that differ in word count do not group ("hot dog", "hotdog"); the host merge covers them.
+- `Scoreboard` takes optional `ranks` so La manada's final lists the podium order (a cow holder with more points below the winners) with the medals of the night points.
+- `Row` and `StepButton` moved from Impostor's `ConfigPanel` to `components/lobby/ConfigSection.tsx`, shared by both panels.
+- New colour tokens `rose` and `rose-deep` for the game and the pink cow, with contrast tests.
+- Group cards list names without avatars: the avatar tones do not read on a paper card.
+- `Waiting` puts its dots inline with the text: at 360 px a wrapped message left the dots far from it, in every game.
+
+Pending: none.
+
+Deferred: none.
+
+### Round 2
+
+- Finding 1 applied: "Separar" shows on a merged group whenever the caller is the host, whatever the number of groups; the two-tap merge stays for 2 or more groups. New web test: two tied groups merged into the only group, the host splits it back (it failed on round 1's code for the missing button). New screenshot `manada-reveal-merged-single`; every shot refreshed in `screenshots/phase_2/`.
+- Flaky test fixed: the lobby panel test answered both config writes with the same `version`, so the second snapshot was never applied and the assertion only passed while the optimistic overlay lasted; the mock now raises the version per write and the test asserts the served state after both.
+
+Pending: none.
+
+Deferred: none.
+
+### Documentation
+
+- `document-task` over the whole task (phases 1 and 2): new `docs/modules/manada/` (README, prd, trd, ard, database, flows); platform, impostor, wavelength and justone docs updated for night points and minimums; one ARD entry per decision of both phases' notes not in the plan, plus the two let-pass items of phase 1 as debt; `docs/ARD.md` Debt index in line.
+- `docs/PRD.md` and `docs/TRD.md` edited because the task's Scope and Acceptance 4 ask for it, although `document-task` leaves them to setup and the om-manager.
+
 ## Result

@@ -1,6 +1,6 @@
 ---
-updated: 2026-10-18
-source: 0007_lobby_polish
+updated: 2026-10-19
+source: 0008_scoring_and_manada
 ---
 
 # Impostor: product
@@ -59,7 +59,7 @@ Errors: if the server finds the settings invalid at start (too many impostors, n
 - Nobody votes for themselves or for an eliminated player.
 - The civilians win when no impostor is left alive; the impostors win when they are as many as the living civilians.
 - Words do not repeat within a night; when a category runs out, its used words become available again.
-- Points on the night's scoreboard: +1 for each civilian who took part (alive or eliminated) when civilians win, +2 for each impostor when impostors win; only players still in the room when the match ends score.
+- Points on the night's scoreboard: when civilians win, +1 for each civilian who took part (alive or eliminated); when impostors win, each impostor (voted out or not) gets the civilians at the start divided by the impostors, rounded up (4 civilians and 1 impostor: +4). A player who left or was removed during the match scores nothing, even back as a spectator.
 
 - If a living player leaves and every remaining living player has already voted, the vote closes by itself.
 - A vote that ends the match still shows the result screen first; the host taps "Ver resultado" to reach the final screen.

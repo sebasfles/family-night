@@ -1,6 +1,6 @@
 ---
-updated: 2026-10-18
-source: 0004_wavelength
+updated: 2026-10-19
+source: 0008_scoring_and_manada
 ---
 
 # Wavelength: database
@@ -24,7 +24,7 @@ No table of its own; the shapes are in `api/src/repos/match-secrets.ts` and `sha
 - A guess is a plain put conditional on not existing; the room-state write that follows recomputes `committedPlayerIds` from the round's guesses and reveals when every guesser has one, so concurrent guessers converge.
 - Only guesses of players still in the match count; a departure deletes the leaver's guess in the same write.
 - The public state keeps only the last round's result and the running totals.
-- Points reach `RoomMembers.totalScore` once, in the write that finishes the match, only for players still in it.
+- Podium points (`wavelengthNightPoints`) reach `RoomMembers.totalScore` once, in the write that finishes the match, only for players still in it; never the match points themselves.
 - `usedSpectrumIds` is a list; when every spectrum is used it restarts empty.
 
 ## Migrations of note

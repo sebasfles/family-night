@@ -77,6 +77,9 @@ function createMatch(
     ...(prepared.usedWordIds ? { usedWordIds: prepared.usedWordIds } : {}),
     ...(prepared.usedSpectrumIds ? { usedSpectrumIds: prepared.usedSpectrumIds } : {}),
     ...(prepared.usedJustOneWordIds ? { usedJustOneWordIds: prepared.usedJustOneWordIds } : {}),
+    ...(prepared.usedManadaQuestionIds
+      ? { usedManadaQuestionIds: prepared.usedManadaQuestionIds }
+      : {}),
     writes: [...(change.writes ?? []), ...(prepared.writes ?? [])],
   };
 }

@@ -89,6 +89,20 @@ export type ShowCluesRequest = RoundRequest;
 export type AcceptGuessRequest = RoundRequest;
 export type SkipGuesserRequest = RoundRequest;
 
+export interface ManadaAnswerRequest extends RoundRequest {
+  answer: string;
+}
+
+export interface MergeGroupsRequest extends RoundRequest {
+  groupIds: [string, string];
+}
+
+export interface SplitGroupRequest extends RoundRequest {
+  groupId: string;
+}
+
+export type CloseAnswersRequest = RoundRequest;
+
 export interface WordCategory {
   id: string;
   name: string;
@@ -112,10 +126,12 @@ export const API_ERRORS = {
   NOT_CLUE_GIVER: { status: 403, message: 'En esta ronda no te toca dar pista' },
   MATCH_IN_PROGRESS: { status: 409, message: 'Ya hay una partida en curso' },
   STALE_ROUND: { status: 409, message: 'Esa ronda ya terminó' },
-  NOT_ENOUGH_PLAYERS: { status: 422, message: 'Se necesitan al menos 3 jugadores en línea' },
+  NOT_ENOUGH_PLAYERS: { status: 422, message: 'Faltan jugadores en línea para esta partida' },
   INVALID_CONFIG: { status: 422, message: 'La configuración de la partida no es válida' },
   INVALID_VOTE: { status: 422, message: 'Ese voto no es válido' },
   VOTE_CONFIRMED: { status: 409, message: 'Ya confirmaste tu voto' },
+  ANSWER_CONFIRMED: { status: 409, message: 'Ya confirmaste tu respuesta' },
+  NOT_IN_MATCH: { status: 403, message: 'No juegas esta partida, juegas en la siguiente' },
   NAME_TAKEN: { status: 409, message: 'Ese nombre ya lo tiene otra persona' },
   INVALID_NAME: { status: 422, message: 'El nombre debe tener entre 2 y 20 caracteres visibles' },
   INVALID_GUESS: { status: 422, message: 'En esta ronda no te toca adivinar' },
@@ -125,6 +141,10 @@ export const API_ERRORS = {
 } as const satisfies Record<string, { status: number; message: string }>;
 
 export type ErrorCode = keyof typeof API_ERRORS;
+
+export function notEnoughPlayersMessage(minPlayers: number): string {
+  return `Se necesitan al menos ${String(minPlayers)} jugadores en línea`;
+}
 
 export interface ErrorResponse {
   error: {

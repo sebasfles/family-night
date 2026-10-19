@@ -68,7 +68,7 @@ export const justOneSteps: HowToPlayStep[] = [
   },
   {
     title: 'Suma el equipo',
-    text: 'La palabra se da vuelta. Acertar suma 1 al equipo, pasar no suma y fallar resta 1, sin bajar de 0.',
+    text: 'La palabra se da vuelta. Acertar suma 1 al equipo, pasar no suma y fallar resta 1, sin bajar de 0. Es un puntaje de equipo: no suma a la noche.',
     Scene: () => (
       <>
         <FlipReveal back={<WordBack />}>

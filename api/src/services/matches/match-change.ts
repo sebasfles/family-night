@@ -23,6 +23,7 @@ export interface MatchUpdate {
   usedWordIds?: string[];
   usedSpectrumIds?: string[];
   usedJustOneWordIds?: string[];
+  usedManadaQuestionIds?: string[];
 }
 
 export type GameState<G extends GameType> = Extract<MatchPublic, { gameType: G }>;
@@ -82,6 +83,9 @@ export function applyMatchUpdate(
     ...(update.usedWordIds ? { usedWordIds: update.usedWordIds } : {}),
     ...(update.usedSpectrumIds ? { usedSpectrumIds: update.usedSpectrumIds } : {}),
     ...(update.usedJustOneWordIds ? { usedJustOneWordIds: update.usedJustOneWordIds } : {}),
+    ...(update.usedManadaQuestionIds
+      ? { usedManadaQuestionIds: update.usedManadaQuestionIds }
+      : {}),
   };
 }
 

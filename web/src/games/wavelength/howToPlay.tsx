@@ -66,7 +66,7 @@ export const wavelengthSteps: HowToPlayStep[] = [
   },
   {
     title: 'Suman puntos',
-    text: 'El psíquico gana el promedio de los puntos de los demás. Al final gana quien sume más.',
+    text: 'El psíquico gana el promedio de los puntos de los demás. Al final, el primero suma a la noche un punto por jugador, el segundo uno menos, y así; los empatados comparten el puesto. Con 2 jugadores la partida no suma.',
     Scene: () => (
       <Scoreboard
         title="Puntaje"

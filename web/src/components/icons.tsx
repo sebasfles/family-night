@@ -271,3 +271,74 @@ export function EyeIcon({ className }: IconProps) {
     </svg>
   );
 }
+
+export function CowIcon({ className }: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 32 32"
+      fill="none"
+      className={`shrink-0 ${className ?? ''}`}
+    >
+      <path
+        d="M10.5 8.5C9.5 6 7.5 4.5 5 5M21.5 8.5c1-2.5 3-4 5.5-3.5"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <ellipse
+        cx="5.5"
+        cy="12.5"
+        rx="3.5"
+        ry="2"
+        transform="rotate(20 5.5 12.5)"
+        fill="currentColor"
+        fillOpacity="0.45"
+        stroke="currentColor"
+        strokeWidth="1.8"
+      />
+      <ellipse
+        cx="26.5"
+        cy="12.5"
+        rx="3.5"
+        ry="2"
+        transform="rotate(-20 26.5 12.5)"
+        fill="currentColor"
+        fillOpacity="0.45"
+        stroke="currentColor"
+        strokeWidth="1.8"
+      />
+      <rect
+        x="8.5"
+        y="7.5"
+        width="15"
+        height="16"
+        rx="6.5"
+        fill="currentColor"
+        fillOpacity="0.2"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+      <path
+        d="M13 8.2c1 1.8 3.2 2.3 4.6.6"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <ellipse
+        cx="16"
+        cy="22"
+        rx="6.5"
+        ry="4.5"
+        fill="currentColor"
+        fillOpacity="0.5"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+      <circle cx="12.8" cy="14.5" r="1.4" fill="currentColor" />
+      <circle cx="19.2" cy="14.5" r="1.4" fill="currentColor" />
+      <circle cx="13.6" cy="22" r="1.1" fill="currentColor" />
+      <circle cx="18.4" cy="22" r="1.1" fill="currentColor" />
+    </svg>
+  );
+}

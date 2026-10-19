@@ -16,6 +16,8 @@ interface ScoreboardProps {
   selfId: string;
   signed?: boolean;
   gains?: boolean;
+  night?: Readonly<Record<string, number>>;
+  ranks?: Readonly<Record<string, number>>;
 }
 
 export function Scoreboard({
@@ -25,14 +27,20 @@ export function Scoreboard({
   selfId,
   signed = false,
   gains = false,
+  night,
+  ranks,
 }: ScoreboardProps) {
   const reduced = useReducedMotion();
   const list = useShuffleIn<HTMLOListElement>(
     rows.toSorted(byScore('from')).map((row) => row.playerId),
   );
-  const standings = ranked(rows);
+  const standings = ranks
+    ? rows
+        .map((row) => ({ ...row, rank: ranks[row.playerId] ?? rows.length }))
+        .toSorted((a, b) => a.rank - b.rank || b.to - a.to)
+    : ranked(rows);
   const best = standings[0]?.to ?? 0;
-  const soleLeader = best > 0 && standings.filter((row) => row.to === best).length === 1;
+  const soleLeader = best > 0 && standings.filter((row) => row.rank === 1).length === 1;
   const format = (value: number) => (signed ? `+${String(value)}` : String(value));
 
   return (
@@ -42,6 +50,7 @@ export function Scoreboard({
         {standings.map(({ playerId, from, to, rank }) => {
           const leader = soleLeader && rank === 1;
           const gain = to - from;
+          const earned = night?.[playerId] ?? 0;
           return (
             <li
               key={playerId}
@@ -71,6 +80,11 @@ export function Scoreboard({
                 {nameOf(members, playerId)}
                 {playerId === selfId && (
                   <span className="ml-1.5 font-normal text-cream/60">(tú)</span>
+                )}
+                {earned > 0 && (
+                  <span className="block text-sm font-bold text-sage tabular-nums">
+                    +{earned} a la noche
+                  </span>
                 )}
               </span>
               <span className="flex shrink-0 flex-col items-end">

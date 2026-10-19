@@ -1,6 +1,6 @@
 ---
-updated: 2026-10-18
-source: 0006_gameplay_and_redesign
+updated: 2026-10-19
+source: 0008_scoring_and_manada
 ---
 
 # Wavelength: product
@@ -16,7 +16,7 @@ Everyone plays on their own dial, so nobody waits for a team to agree.
 
 1. In the lobby the host taps the Wavelength card; every phone shows it as the chosen game.
 2. The host picks Vueltas 1, 2 or 3: how many times each player will be the psychic; the panel says how many rounds that makes with the players online.
-3. With at least 3 players online the host taps Iniciar and every phone moves to the game.
+3. With at least 2 players online the host taps Iniciar and every phone moves to the game.
 
 ### The clue
 
@@ -48,12 +48,12 @@ Everyone plays on their own dial, so nobody waits for a team to agree.
 
 ## Rules
 
-- At least 3 players online to start; individual play, no teams.
+- At least 2 players online to start; individual play, no teams; with 2 the single guesser's points are also the psychic's.
 - The psychic order is drawn at the start and repeats every cycle.
 - The target is a whole number from 0 to 100; a guess scores 4 points within 2 of it, 3 within 7, 2 within 12, otherwise 0 (on the dial the zones end half a point further, at 2.5, 7.5 and 12.5).
 - The psychic scores the average of the confirmed guesses' points, rounded half up; 0 when nobody confirmed. Guessers who did not confirm score 0.
 - Scales do not repeat within a night; when all have been played they start over.
-- Points reach the night's scoreboard when the match ends, only for players still in it.
+- The night gets podium points when the match ends, only for players still in it: first gets one point per such player, each place one less, and tied players share the place and its points. A match that started with 2 players gives the night nothing, because the two always tie; one that ends with 2 after a departure uses the podium.
 
 ## Out of scope
 

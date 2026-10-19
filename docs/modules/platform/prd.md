@@ -1,6 +1,6 @@
 ---
-updated: 2026-10-18
-source: 0007_lobby_polish
+updated: 2026-10-19
+source: 0008_scoring_and_manada
 ---
 
 # Platform: product
@@ -49,11 +49,12 @@ Errors and empty states: cancelling the share sheet does nothing.
 ### Lobby
 
 1. Everyone sees the members, a crown on the host, a green dot online or grey "ausente", the night's score, and "(tú)" on themselves.
-2. The host taps a game card (Impostor, Wavelength or Just One) and sets its settings; others see the chosen game and its settings read only and "Esperando a que el host inicie...". The room remembers the choice and each game's settings for the night.
+2. The host taps a game card (Impostor, Wavelength, Just One or La manada) and sets its settings; others see the chosen game and its settings read only and "Esperando a que el host inicie...". The room remembers the choice and each game's settings for the night.
 3. The host can make another member host or remove one, for example a phone that was closed; the removed phone goes home with "Te sacaron de la sala", and opening the link again lets it back in.
 4. Any member can leave after confirming; if the host leaves, the oldest online member takes the crown, and a room left empty waits for its next joiner, who becomes host.
 5. The host's game pick, settings, host handover and kicks, and anyone's rename, show on their own phone at once; if the server refuses, the screen steps back and shows its message.
-6. Starting a match moves every phone to the game screen; ending it or returning to the lobby moves every phone back, with nobody navigating by hand.
+6. Each game has its own minimum of online players (Impostor 3, Wavelength 2, Just One 4, La manada 3); below it the start button is disabled and says how many are missing ("Falta 1 jugador", "Faltan 2 jugadores").
+7. Starting a match moves every phone to the game screen; ending it or returning to the lobby moves every phone back, with nobody navigating by hand.
 
 Errors and empty states: every game card is playable.
 
@@ -80,9 +81,10 @@ Errors and empty states: every game card is playable.
 - Only the host chooses the game, configures, starts, ends and removes members, and returns the room to the lobby.
 - If the host gives no sign of life for 60 s, the oldest online member becomes host; minimizing the phone alone does not count.
 - At most 20 members per room.
+- The night's scoreboard is comparable across games: each finished match adds a few podium-like points (one per player for the best result, fewer down the table), the cooperative Just One adds none, and each game's final screen shows exactly what it adds ("+N a la noche").
 - Rooms and matches vanish after 24 h without activity; players and names stay.
 - Changes show on every phone in under a second.
-- Secrets of a match (words, roles, the Wavelength target, Just One clues before they are shown) are never visible to other players, not even by inspecting the network.
+- Secrets of a match (words, roles, the Wavelength target, Just One clues before they are shown, La manada answers before the reveal) are never visible to other players, not even by inspecting the network.
 - The UI is Spanish only, built for a vertical phone from 360 px wide, buttons at least 48 px, base text 18 px, one warm dark theme; screens, phases, card flips and scores animate, and the system's reduced motion setting turns every animation off.
 
 ## Out of scope

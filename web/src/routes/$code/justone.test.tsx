@@ -518,7 +518,9 @@ describe('guess and reveal', () => {
 
     expect(await screen.findByRole('heading', { name: '3' })).toBeVisible();
     expect(screen.getByText('Acertaron 4 rondas')).toBeVisible();
-    expect(screen.getByText('Cada jugador suma 3 puntos al marcador de la noche.')).toBeVisible();
+    expect(
+      screen.getByText('Es un puntaje de equipo, así que no suma al marcador de la noche.'),
+    ).toBeVisible();
     expect(screen.getByRole('button', { name: 'Jugar otra vez' })).toBeVisible();
     expect(screen.getByRole('button', { name: 'Volver al lobby' })).toBeVisible();
   });

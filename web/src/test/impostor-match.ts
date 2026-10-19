@@ -17,6 +17,7 @@ export function impostorMatch(
     participants,
     order: participants,
     eliminated: [],
+    departedIds: [],
     votedPlayerIds: [],
     lastResult: null,
     winner: null,

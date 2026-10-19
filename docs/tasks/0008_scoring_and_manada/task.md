@@ -101,6 +101,7 @@ Decisions (om-reviewer, accepted):
 - Night points are one pure shared function per game over the FINISHED public state; the api adds exactly its output and the FINISHED screen renders exactly it (as `Final.tsx` of Impostor already does with `matchScores`). Just One's FINISHED says it adds nothing to the night. The lobby button keeps "Iniciar".
 - A La manada answer is confirmed by its one `PUT answer`; no provisional server state; a second one is refused.
 - Screenshots in `{{workspace}}/screenshots/phase_N/`, refreshed every round.
+- `ImpostorPublic` gains `departedIds`: every participant who leaves or is kicked while PLAYING, living or already voted out, so a returning spectator scores nothing; a stored match without it reads as []. Reason: the public state could not tell a voted-out leaver apart (om-developer question, 2026-10-18).
 
 Constraints:
 
@@ -112,6 +113,8 @@ Review beyond the Pipeline:
 
 - Grouping is transitive and deterministic ("perros calientes" with "perro caliente", plural per word); merge and undo recompute from the round's stored starting totals and cow holder, never by adding twice.
 - Concurrent answers reveal once; secrets absent from every snapshot and event; a 2-player Wavelength match end to end in api tests.
+
+Adjustment (om-manager for Sebastian, 2026-10-18): phase 1 approved; no gate after phase 2: when it is clean, `document-task` and publish directly, reporting only `PRs ready` with the screenshot paths.
 
 clearance: repo
 
