@@ -1,6 +1,6 @@
 ---
 updated: 2026-10-18
-source: 0006_gameplay_and_redesign
+source: 0007_lobby_polish
 ---
 
 # Impostor: product
@@ -17,7 +17,7 @@ The phone is the private card and the ballot; the arguing stays face to face.
 ### Host sets up a match
 
 1. In the lobby the host sees the Impostor settings; everyone else sees them read-only.
-2. The host picks the number of impostors (capped by the number of players), random or arrival order, the tie rule, whether impostors see the category, and the categories in play.
+2. The host picks the number of impostors (capped by the number of players), random or arrival order, the tie rule, whether impostors see the category, and the categories in play; the categories start collapsed behind a chevron with a summary ("Todas" or "5 de 10"), and anyone can open them while the lobby is open.
 3. The host sees who will play (the members online at that moment) and confirms.
 4. With fewer than 3 players online the start button is disabled and reads "Faltan N jugadores".
 

@@ -61,7 +61,7 @@ describe('the api client', () => {
         Response.json({ player: { playerId: 'p1', name: 'Tía Marta' }, room: snapshot() }),
     });
 
-    await api.rename({ name: 'Tía Marta', roomCode: 'ABCD' });
+    await api.renameInRoom('ABCD', 'Tía Marta');
 
     const { method, body, headers } = mock.calls[0]?.init ?? {};
     const sent = '{"name":"Tía Marta","roomCode":"ABCD"}';

@@ -5,6 +5,7 @@ import {
   type CreatePlayerResponse,
   type ErrorResponse,
   type MeResponse,
+  type RenameInRoomResponse,
   type RenamePlayerResponse,
 } from '@family-night/shared';
 import { describe, expect, test } from 'vitest';
@@ -106,7 +107,7 @@ describe('GET /api/players/me', () => {
   });
 });
 
-function rename(harness: Harness, player: CreatePlayerResponse, name: string, roomCode: string) {
+function rename(harness: Harness, player: CreatePlayerResponse, name: string, roomCode?: string) {
   return call(harness, player, 'PATCH', '/api/players/me', { name, roomCode });
 }
 
@@ -125,7 +126,7 @@ describe('PATCH /api/players/me', () => {
     const before = await getRoom(room.harness, room.host, room.code);
     room.harness.published.length = 0;
 
-    const renamed = await json<RenamePlayerResponse>(
+    const renamed = await json<RenameInRoomResponse>(
       rename(room.harness, player, '  Tía   Marta ', room.code),
     );
 
@@ -171,7 +172,7 @@ describe('PATCH /api/players/me', () => {
     const before = await getRoom(room.harness, room.host, room.code);
     room.harness.published.length = 0;
 
-    const same = await json<RenamePlayerResponse>(
+    const same = await json<RenameInRoomResponse>(
       rename(room.harness, room.host, room.host.name, room.code),
     );
 
@@ -250,5 +251,97 @@ describe('PATCH /api/players/me', () => {
     await expectError(rename(room.harness, stranger, 'Tía Marta', room.code), 403, 'NOT_MEMBER');
     await expectError(rename(room.harness, stranger, 'Tía Marta', 'ZZZZ'), 404, 'ROOM_NOT_FOUND');
     expect(await nameOwner(room.harness, 'Tía Marta')).toBeUndefined();
+  });
+});
+
+describe('PATCH /api/players/me without a room', () => {
+  test('renames the player and moves the name claim, writing and publishing no room', async () => {
+    const room = await roomWith(2);
+    const [, player] = room.players;
+    if (!player) throw new Error('missing player');
+    const before = await getRoom(room.harness, room.host, room.code);
+    room.harness.published.length = 0;
+
+    const response = await rename(room.harness, player, '  Tía   Marta ');
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual<RenamePlayerResponse>({
+      player: { playerId: player.playerId, name: 'Tía Marta' },
+    });
+    const me = await json<MeResponse>(call(room.harness, player, 'GET', '/api/players/me'));
+    expect(me.name).toBe('Tía Marta');
+    expect(await nameOwner(room.harness, 'Tía Marta')).toBe(player.playerId);
+    expect(await nameOwner(room.harness, player.name)).toBeUndefined();
+    expect(room.harness.published).toEqual([]);
+    const after = await getRoom(room.harness, room.host, room.code);
+    expect(after.version).toBe(before.version);
+    expect(after.members.find((m) => m.playerId === player.playerId)?.name).toBe(player.name);
+  });
+
+  test('works for a player in no room at all, and the room picks the name up on join', async () => {
+    const harness = await createHarness();
+    const player = await newPlayer(harness);
+    const host = await newPlayer(harness);
+    const created = await createRoom(harness, host);
+
+    await json(rename(harness, player, 'Abuela Rosa'));
+    const joined = await join(harness, player, created.roomCode);
+
+    expect(joined.members.find((m) => m.playerId === player.playerId)?.name).toBe('Abuela Rosa');
+  });
+
+  test('keeping the same name writes nothing', async () => {
+    const harness = await createHarness();
+    const player = await newPlayer(harness);
+
+    const same = await json<RenamePlayerResponse>(rename(harness, player, player.name));
+
+    expect(same.player.name).toBe(player.name);
+    expect(await nameOwner(harness, player.name)).toBe(player.playerId);
+  });
+
+  test.each([
+    ['one character', 'A'],
+    ['21 characters', 'a'.repeat(21)],
+    ['only invisible characters', '\u200B\u3164'],
+  ])('refuses %s with INVALID_NAME', async (_, name) => {
+    const harness = await createHarness();
+    const player = await newPlayer(harness);
+
+    await expectError(rename(harness, player, name), 422, 'INVALID_NAME');
+    expect(await nameOwner(harness, player.name)).toBe(player.playerId);
+  });
+
+  test('refuses a name another player holds, leaving both names as they were', async () => {
+    const harness = await createHarness();
+    const [player, other] = [await newPlayer(harness), await newPlayer(harness)];
+
+    const error = await expectError(rename(harness, player, other.name), 409, 'NAME_TAKEN');
+
+    expect(error.message).toBe('Ese nombre ya lo tiene otra persona');
+    expect(await nameOwner(harness, other.name)).toBe(other.playerId);
+    expect(await nameOwner(harness, player.name)).toBe(player.playerId);
+  });
+
+  test('two players claiming one name at once: one gets it, the other is told it is taken', async () => {
+    const harness = await createHarness();
+    const [a, b] = [await newPlayer(harness), await newPlayer(harness)];
+
+    const responses = await Promise.all([
+      rename(harness, a, 'Tío Pepe'),
+      rename(harness, b, 'Tío Pepe'),
+    ]);
+
+    expect(responses.map((response) => response.status).toSorted()).toEqual([200, 409]);
+    const winner = responses[0].status === 200 ? a : b;
+    expect(await nameOwner(harness, 'Tío Pepe')).toBe(winner.playerId);
+  });
+
+  test('refuses a malformed room code instead of renaming without a room', async () => {
+    const harness = await createHarness();
+    const player = await newPlayer(harness);
+
+    await expectError(rename(harness, player, 'Tía Marta', 'abc'), 400, 'VALIDATION_ERROR');
+    expect(await nameOwner(harness, 'Tía Marta')).toBeUndefined();
   });
 });

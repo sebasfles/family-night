@@ -1,6 +1,6 @@
 ---
 updated: 2026-10-18
-source: 0006_gameplay_and_redesign
+source: 0007_lobby_polish
 ---
 
 # Platform: product
@@ -20,11 +20,12 @@ A room lasts the whole night and holds many matches of different games.
 
 ### Change the name
 
-1. In the lobby the player taps the pencil by their own name and types a new one.
-2. The dialog says at once when the name is too short, too long, not visible or already used in the room; Guardar sends it.
-3. Every phone in the room shows the new name; other rooms show it when the player opens them again.
+1. On the home page the player taps the pencil by the greeting, or in the lobby the pencil by their own name, and types a new one.
+2. The dialog says at once when the name is too short, too long, not visible or, in the lobby, already used in the room; Guardar sends it.
+3. The greeting, or every phone in the room, shows the new name at once; other rooms show it when the player opens them again.
+4. From home, Crear sala and Unirme wait for the rename to finish, so a new room never shows the old name.
 
-Errors and empty states: a name another player already has anywhere is refused with "Ese nombre ya lo tiene otra persona".
+Errors and empty states: a name another player already has anywhere is refused with "Ese nombre ya lo tiene otra persona", and the old name comes back.
 
 Errors and empty states: if the stored identity is no longer valid, the player silently gets a new one and a new name.
 
@@ -56,6 +57,13 @@ Errors and empty states: cancelling the share sheet does nothing.
 
 Errors and empty states: every game card is playable.
 
+### How to play
+
+1. Every game card in the lobby has "¿Cómo jugar?", for every member, host or not; tapping it never selects the game.
+2. It opens a drawer from the bottom on phones and a centered window on wider screens, over the lobby.
+3. Inside, four to six steps simulate a match with the game's real cards, dial and scoreboards on an example family, with the same animations.
+4. The player moves with Anterior and Siguiente or by swiping, and leaves with the close button, the drawer's handle, Escape or "¡A jugar!" on the last step.
+
 ### Presence
 
 1. A phone with the tab visible counts as online.
@@ -68,14 +76,14 @@ Errors and empty states: every game card is playable.
 
 ## Rules
 
-- The name starts random and can be changed from the lobby: 2 to 20 visible characters, unique among all players, and not equal to another member's name ignoring case and accents; clearing browser data or switching device means a new player.
+- The name starts random and can be changed from home or the lobby: 2 to 20 visible characters and unique among all players; in the lobby also not equal to another member's name ignoring case and accents; clearing browser data or switching device means a new player.
 - Only the host chooses the game, configures, starts, ends and removes members, and returns the room to the lobby.
 - If the host gives no sign of life for 60 s, the oldest online member becomes host; minimizing the phone alone does not count.
 - At most 20 members per room.
 - Rooms and matches vanish after 24 h without activity; players and names stay.
 - Changes show on every phone in under a second.
 - Secrets of a match (words, roles, the Wavelength target, Just One clues before they are shown) are never visible to other players, not even by inspecting the network.
-- The UI is Spanish only, built for a vertical phone, buttons at least 48 px, base text 18 px, one warm dark theme; screens, phases, card flips and scores animate, and the system's reduced motion setting turns every animation off.
+- The UI is Spanish only, built for a vertical phone from 360 px wide, buttons at least 48 px, base text 18 px, one warm dark theme; screens, phases, card flips and scores animate, and the system's reduced motion setting turns every animation off.
 
 ## Out of scope
 

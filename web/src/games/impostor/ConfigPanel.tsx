@@ -1,5 +1,6 @@
 import type { ImpostorConfig, TieRule, WordCategory } from '@family-night/shared';
-import type { ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
+import { ChevronDownIcon } from '../../components/icons';
 import {
   chosen,
   ConfigSection,
@@ -14,6 +15,8 @@ interface ConfigPanelProps {
   playerCount: number;
   categories: WordCategory[] | undefined;
   editable: boolean;
+  categoriesOpen: boolean;
+  onToggleCategories: () => void;
   onChange: (config: ImpostorConfig) => void;
 }
 
@@ -28,8 +31,11 @@ export function ConfigPanel({
   playerCount,
   categories,
   editable,
+  categoriesOpen,
+  onToggleCategories,
   onChange,
 }: ConfigPanelProps) {
+  const listId = useId();
   const locked = !editable;
   const set = (patch: Partial<ImpostorConfig>) => {
     onChange({ ...config, ...patch });
@@ -100,12 +106,28 @@ export function ConfigPanel({
         }}
       />
 
-      <div className="flex flex-col gap-2">
-        <p id="categories-label" className="font-bold">
-          Categorías
-        </p>
-        {categories ? (
-          <ul aria-labelledby="categories-label" className="flex flex-wrap gap-2">
+      <div className="flex flex-col gap-3">
+        <button
+          type="button"
+          aria-expanded={categoriesOpen}
+          aria-controls={listId}
+          onClick={onToggleCategories}
+          className={`flex min-h-12 w-full items-center justify-between gap-4 rounded-2xl text-left ${control}`}
+        >
+          <span className="flex min-w-0 flex-col">
+            <span id="categories-label" className="font-bold">
+              Categorías
+            </span>
+            <span className="text-sm text-cream/60">
+              {categorySummary(config.categories, categories)}
+            </span>
+          </span>
+          <ChevronDownIcon
+            className={`size-6 text-cream/70 transition-transform duration-200 ease-soft motion-reduce:transition-none ${categoriesOpen ? 'rotate-180' : ''}`}
+          />
+        </button>
+        {categoriesOpen && categories && (
+          <ul id={listId} aria-labelledby="categories-label" className="flex flex-wrap gap-2">
             {categories.map((category) => {
               const on = config.categories.includes(category.id);
               const last = on && config.categories.length === 1;
@@ -132,12 +154,16 @@ export function ConfigPanel({
               );
             })}
           </ul>
-        ) : (
-          <p className="text-base text-cream/60">Cargando categorías…</p>
         )}
       </div>
     </ConfigSection>
   );
+}
+
+function categorySummary(selected: string[], categories: WordCategory[] | undefined): string {
+  if (!categories) return 'Cargando categorías…';
+  const count = categories.filter((category) => selected.includes(category.id)).length;
+  return count === categories.length ? 'Todas' : `${String(count)} de ${String(categories.length)}`;
 }
 
 function Row({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
@@ -206,10 +232,10 @@ function Switch({
       </span>
       <span
         aria-hidden="true"
-        className={`relative h-8 w-14 shrink-0 rounded-full transition-colors duration-200 ${checked ? 'bg-moon shadow-glow' : 'bg-cream/18'}`}
+        className={`relative h-8 w-14 shrink-0 rounded-full transition-colors duration-200 motion-reduce:transition-none ${checked ? 'bg-moon shadow-glow' : 'bg-cream/18'}`}
       >
         <span
-          className={`absolute top-1 left-1 size-6 rounded-full bg-night shadow-md transition-transform duration-200 ease-soft ${checked ? 'translate-x-6' : 'translate-x-0'}`}
+          className={`absolute top-1 left-1 size-6 rounded-full bg-night shadow-md transition-transform duration-200 ease-soft motion-reduce:transition-none ${checked ? 'translate-x-6' : 'translate-x-0'}`}
         />
       </span>
     </button>

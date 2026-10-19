@@ -16,6 +16,7 @@ import { api } from '../../api/client';
 import { useRoomMutation, useRoomView } from '../../api/match';
 import { Button } from '../../components/Button';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { HowToPlay, type HowToPlayStep } from '../../components/HowToPlay';
 import { CyclesPanel } from '../../components/lobby/CyclesPanel';
 import { GamePicker } from '../../components/lobby/GamePicker';
 import { InviteCard } from '../../components/lobby/InviteCard';
@@ -24,10 +25,12 @@ import { RenameDialog } from '../../components/lobby/RenameDialog';
 import { useRoomSession } from '../../components/roomSession';
 import { useToast } from '../../components/useToast';
 import { useNow } from '../../components/useNow';
+import { impostorSteps } from '../../games/impostor/howToPlay';
 import { LobbyPanel as ImpostorPanel } from '../../games/impostor/LobbyPanel';
-import { useIdentity } from '../../identity/identity';
+import { justOneSteps } from '../../games/justone/howToPlay';
+import { wavelengthSteps } from '../../games/wavelength/howToPlay';
+import { storeIdentity, useIdentity } from '../../identity/identity';
 import { Enter } from '../../motion/motion';
-import { saveIdentity, type Identity } from '../../identity/storage';
 
 export const Route = createFileRoute('/$code/')({
   component: Lobby,
@@ -38,6 +41,8 @@ interface PanelProps {
   snapshot: RoomSnapshot;
   isHost: boolean;
   nowMs: number;
+  openSections: ReadonlySet<string>;
+  onToggleSection: (section: string) => void;
 }
 
 const panels: Record<GameType, (props: PanelProps) => ReactNode> = {
@@ -62,6 +67,12 @@ const panels: Record<GameType, (props: PanelProps) => ReactNode> = {
   ),
 };
 
+const howToPlay: Record<GameType, HowToPlayStep[]> = {
+  IMPOSTOR: impostorSteps,
+  WAVELENGTH: wavelengthSteps,
+  JUST_ONE: justOneSteps,
+};
+
 function Lobby() {
   const { code } = Route.useParams();
   const identity = useIdentity();
@@ -72,6 +83,8 @@ function Lobby() {
   const room = useRoomView(code);
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [renaming, setRenaming] = useState(false);
+  const [learning, setLearning] = useState<{ game: GameType; name: string } | null>(null);
+  const [openSections, setOpenSections] = useState<ReadonlySet<string>>(new Set());
 
   const makeHost = useRoomMutation(
     code,
@@ -91,10 +104,8 @@ function Lobby() {
   const rename = useRoomMutation(
     code,
     async (name: string) => {
-      const response = await api.rename({ name, roomCode: code });
-      const renamed: Identity = { ...identity, name: response.player.name };
-      saveIdentity(renamed);
-      queryClient.setQueryData(['identity'], renamed);
+      const response = await api.renameInRoom(code, name);
+      storeIdentity(queryClient, { ...identity, name: response.player.name });
       return response;
     },
     (name) => ({ kind: 'rename', playerId: identity.playerId, name }),
@@ -114,7 +125,7 @@ function Lobby() {
   return (
     <Enter
       as="main"
-      className="mx-auto grid w-full max-w-md flex-1 content-start gap-8 py-8 md:max-w-2xl lg:max-w-5xl lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-10 lg:py-12"
+      className="mx-auto grid w-full max-w-md flex-1 grid-cols-1 content-start gap-8 py-8 md:max-w-2xl lg:max-w-5xl lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-10 lg:py-12"
     >
       <div className="flex flex-col gap-8">
         <InviteCard code={code} />
@@ -143,6 +154,9 @@ function Lobby() {
           onSelect={(game: GameType) => {
             pick.mutate({ gameType: game, config: snapshot.configs[game] } as GameConfigRequest);
           }}
+          onHowToPlay={(game, name) => {
+            setLearning({ game, name });
+          }}
         />
 
         <Panel
@@ -151,6 +165,14 @@ function Lobby() {
           snapshot={snapshot}
           isHost={isHost}
           nowMs={now + clockOffsetMs}
+          openSections={openSections}
+          onToggleSection={(section) => {
+            setOpenSections((open) => {
+              const next = new Set(open);
+              if (!next.delete(section)) next.add(section);
+              return next;
+            });
+          }}
         />
 
         <Button
@@ -174,6 +196,16 @@ function Lobby() {
           }}
           onCancel={() => {
             setRenaming(false);
+          }}
+        />
+      )}
+
+      {learning && (
+        <HowToPlay
+          game={learning.name}
+          steps={howToPlay[learning.game]}
+          onClose={() => {
+            setLearning(null);
           }}
         />
       )}

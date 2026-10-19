@@ -13,16 +13,18 @@ export type MeResponse = Player;
 
 export interface RenamePlayerRequest {
   name: string;
-  roomCode: string;
+  roomCode?: string;
 }
 
 export interface RoomResponse {
   room: RoomSnapshot;
 }
 
-export interface RenamePlayerResponse extends RoomResponse {
+export interface RenamePlayerResponse {
   player: Player;
 }
+
+export interface RenameInRoomResponse extends RenamePlayerResponse, RoomResponse {}
 
 export interface LeaveRoomResponse {
   ok: true;

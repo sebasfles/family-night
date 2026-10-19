@@ -2,6 +2,7 @@ import {
   isRoomCode,
   type CreatePlayerResponse,
   type MeResponse,
+  type RenameInRoomResponse,
   type RenamePlayerRequest,
   type RenamePlayerResponse,
 } from '@family-night/shared';
@@ -13,7 +14,7 @@ import { parseBody, requirePlayer, type AppEnv } from './context.ts';
 
 const renameSchema: z.ZodType<RenamePlayerRequest> = z.object({
   name: z.string().max(200),
-  roomCode: z.string().refine(isRoomCode),
+  roomCode: z.string().refine(isRoomCode).optional(),
 });
 
 export function playersRoutes(deps: Deps) {
@@ -24,6 +25,8 @@ export function playersRoutes(deps: Deps) {
     )
     .patch('/me', requirePlayer(deps), async (c) => {
       const body = await parseBody(c, renameSchema);
-      return c.json<RenamePlayerResponse>(await renamePlayer(deps, c.get('player'), body));
+      return c.json<RenamePlayerResponse | RenameInRoomResponse>(
+        await renamePlayer(deps, c.get('player'), body),
+      );
     });
 }

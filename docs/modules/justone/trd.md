@@ -1,6 +1,6 @@
 ---
 updated: 2026-10-18
-source: 0005_just_one
+source: 0007_lobby_polish
 ---
 
 # Just One: technical
@@ -13,7 +13,7 @@ Stack, conventions and verification commands are in [docs/TRD.md](../../TRD.md);
 - `shared/src/schemas.ts`: `justOneConfigSchema`, imported only by the api.
 - `api/src/services/justone/`: the game module registered in `platform`'s registry (prepare, next round, departure, secret) and the clue, close-clues, cancel-clue, show-clues, guess, accept-guess and skip-guesser commands.
 - `api/src/data/justone-words.json`: about 200 concrete Spanish nouns, Peruvian where it differs, with stable ids; Sebastian reviews them in PRs.
-- `web/src/games/justone/`: the five phase screens, the word card and the skip button; the lobby uses `platform`'s cycles panel and the screen its match header.
+- `web/src/games/justone/`: the five phase screens, the word card and the skip button, and `howToPlay.tsx` (the lobby's how-to-play steps, cancellations from the shared rules); the lobby uses `platform`'s cycles panel and the screen its match header.
 - `web/src/routes/$code/justone.tsx`: the screen; `platform` navigates here when the current match is Just One.
 
 ## Endpoints owned

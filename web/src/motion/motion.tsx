@@ -139,3 +139,40 @@ export function Meter({ fraction, className }: { fraction: number; className?: s
     />
   );
 }
+
+export function SlideUp({ as = 'div', children, ...rest }: BlockProps) {
+  const reduced = useReducedMotion();
+  const Tag = tags[as];
+  return (
+    <Tag
+      initial={reduced ? false : { y: '100%' }}
+      animate={{ y: 0 }}
+      transition={{ ...SOFT, duration: 0.36 }}
+      {...rest}
+    >
+      {children}
+    </Tag>
+  );
+}
+
+export function SlideIn({
+  from,
+  className,
+  children,
+}: {
+  from: 1 | -1;
+  className?: string;
+  children: ReactNode;
+}) {
+  const reduced = useReducedMotion();
+  return (
+    <m.div
+      className={className}
+      initial={reduced ? false : { opacity: 0, x: from * 40 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={SOFT}
+    >
+      {children}
+    </m.div>
+  );
+}
