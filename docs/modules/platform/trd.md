@@ -1,6 +1,6 @@
 ---
 updated: 2026-10-18
-source: 0005_just_one
+source: 0006_gameplay_and_redesign
 ---
 
 # Platform: technical
@@ -13,7 +13,7 @@ Every payload change starts in `shared`, so an incompatible change breaks compil
 
 | Path | What |
 |---|---|
-| `shared/src/{api,events,domain,constants}.ts` | Types of every endpoint and event, the domain types, limits (members, TTL, thresholds, room code alphabet). Pure, no AWS. |
+| `shared/src/{api,events,domain,constants,players}.ts` | Types of every endpoint and event, the domain types, limits (members, TTL, thresholds, room code alphabet), and the name rules (`normalizePlayerName`, `playerNameKey`) web and api both apply. Pure, no AWS. |
 | `api/src/index.ts`, `api/src/app.ts`, `api/src/server.ts` | The Lambda entry and the Node entry around one Hono app (`app.ts`) for every route, platform and game. |
 | `api/src/events-auth.ts` | The Events API authorizer, bundled as its own function: connect needs a valid `playerId:playerToken`, subscribe also membership of the exact channel's room; allows cached 300 s, denials never cached. |
 | `api/scripts/build.mjs` | esbuild bundles of both functions, zipped reproducibly into `dist/api.zip` and `dist/events-auth.zip`. |
@@ -29,9 +29,11 @@ Every payload change starts in `shared`, so an incompatible change breaks compil
 | `web/src/routes/{__root,index}.tsx` | Layout, providers, toasts, identity bootstrap; home. |
 | `web/src/routes/$code/{route,index}.tsx` | Join and snapshot loader, channel subscription, ping, visibility handling, state-driven navigation; lobby. |
 | `web/src/identity/` | `playerId`, `playerToken` and name in localStorage, guarded by try/catch. |
-| `web/src/api/` | Typed fetch client that adds the identity headers and throws `ApiError`; query and mutation hooks. |
+| `web/src/api/` | Typed fetch client that adds the identity headers and throws `ApiError`; query and mutation hooks; `optimistic.ts`, the overlay of a phone's pending commands over the snapshot (`useRoomView`, `useRoomMutation`). |
 | `web/src/realtime/` | One WebSocket per tab to AppSync Events, own client, backoff 1 s to 30 s, resubscribe and invalidate the room query on reconnect. |
-| `web/src/components/` | Shared UI of the lobby, the shell and every game (`MatchHeader`, `AbortMatchMenu`, `lobby/CyclesPanel` for games configured by cycles, `match.ts` with `nameOf`, `vibrate`, `usePhaseVibration`); games never import each other. |
+| `web/src/index.css` | The design system: warm dark colour tokens, Fraunces and Nunito (self-hosted), the `surface`, `popover` and card surfaces (`card-paper`, `card-wine`, `card-back`). |
+| `web/src/motion/` | The only door to `motion` (LazyMotion `domAnimation`, `m` components): `Enter`, `Stagger`, `Pop`, `Fade`, `Meter`; plus own CSS 3D `Flip`/`FlipReveal`, `CountUp` and `useShuffleIn` (Web Animations API); `useReducedMotion` turns all of it off. |
+| `web/src/components/` | Shared UI of the lobby, the shell and every game (`MatchHeader`, `AbortMatchMenu`, `Avatar`, `Scoreboard`, `Notice`, `Waiting`, `field.ts`, `lobby/CyclesPanel` for games configured by cycles, `match.ts` with `nameOf`, `vibrate`, `usePhaseVibration`); games never import each other. |
 | `web/public/og.png` and the Open Graph tags in `web/index.html` | The WhatsApp preview; static because WhatsApp runs no JavaScript. |
 
 ## Endpoints owned
@@ -43,6 +45,7 @@ Authentication, membership and host rules are in [the plan](../../implementation
 | GET | `/api/health` | `{ ok, version }` with the deployed commit; proves the CloudFront to Lambda path. No auth. | `shared/src/api.ts` |
 | POST | `/api/players` | Create the permanent player and name. No auth. | [plan](../../implementation-plan.md#jugadores) |
 | GET | `/api/players/me` | Validate stored identity; 401 makes the web start over. | [plan](../../implementation-plan.md#jugadores) |
+| PATCH | `/api/players/me` | Rename the caller from a room's lobby; writes player, names and that room's member and publishes. | `shared/src/api.ts` |
 | POST | `/api/rooms` | Create a room; caller becomes host. | [plan](../../implementation-plan.md#salas) |
 | GET | `/api/rooms/{code}` | Snapshot, used to resync. | [plan](../../implementation-plan.md#salas) |
 | POST | `/api/rooms/{code}/join` | Idempotent join and rejoin. | [plan](../../implementation-plan.md#salas) |
@@ -81,6 +84,8 @@ Channel `/rooms/{ROOMCODE}` in namespace `rooms` carries `room.updated`, `member
 - Match routes live under the room, which is also the membership check; a match id that exists but is no longer current answers `STALE_ROUND`.
 - The `$code/route.tsx` effect moves the phone to the current match's game route (`/$code/impostor`, `/$code/wavelength`, `/$code/justone`) and back to the lobby when `currentMatch` is null; aborting clears it in the same write.
 - `selectedGame` changes with `PUT /config` and with every start or rematch; the lobby shows that game's panel.
+- Optimistic commands are an overlay, never written into the room cache: the screen is the snapshot plus the phone's pending commands; a refusal drops the command and toasts the message. Every room command of a phone runs in one mutation scope, so they reach the server in tap order. Phase vibration follows the served snapshot, not the overlay.
+- The overlay carries only the caller's own action: never another player's secret, vote or guess.
 
 ## Depends on
 
@@ -104,6 +109,7 @@ Channel `/rooms/{ROOMCODE}` in namespace `rooms` carries `room.updated`, `member
 - Unit: Vitest in `shared`, `api` and `web`.
 - API integration: handlers against DynamoDB Local with the publisher mocked; a vitest `globalSetup` starts `amazon/dynamodb-local` in Docker on a random port and fails without Docker, so the api suite needs Docker locally and in CI.
 - Web: Testing Library on home, lobby and the `$code` session, with the realtime channel driven by a fake WebSocket.
-- Screenshots: `pnpm screenshots` in `web/` with `SCREENSHOTS_DIR` set, every screen mocked at 390, 768 and 1280 px.
+- Screenshots: `pnpm screenshots` in `web/` with `SCREENSHOTS_DIR` set, every screen mocked at 390, 768 and 1280 px with reduced motion, plus `motion-*` shots mid-flip and mid-count.
+- Test setup stubs `matchMedia` with reduced motion on; a test that checks an animation turns it off with `stubReducedMotion(false)`. List assertions read `spokenText` (`web/src/test/text.ts`), skipping decorative `aria-hidden` parts.
 - A test serializes a snapshot of a running match and asserts it holds no secret.
 - Module-specific run: see TRD.

@@ -1,6 +1,6 @@
 ---
 updated: 2026-10-18
-source: 0005_just_one
+source: 0006_gameplay_and_redesign
 ---
 
 # Platform: product
@@ -17,6 +17,14 @@ A room lasts the whole night and holds many matches of different games.
 
 1. The player opens the site and is given a name like "Cóndor Veloz", with nothing to fill in.
 2. The name is theirs on this device from then on, across reloads and future visits.
+
+### Change the name
+
+1. In the lobby the player taps the pencil by their own name and types a new one.
+2. The dialog says at once when the name is too short, too long, not visible or already used in the room; Guardar sends it.
+3. Every phone in the room shows the new name; other rooms show it when the player opens them again.
+
+Errors and empty states: a name another player already has anywhere is refused with "Ese nombre ya lo tiene otra persona".
 
 Errors and empty states: if the stored identity is no longer valid, the player silently gets a new one and a new name.
 
@@ -43,7 +51,8 @@ Errors and empty states: cancelling the share sheet does nothing.
 2. The host taps a game card (Impostor, Wavelength or Just One) and sets its settings; others see the chosen game and its settings read only and "Esperando a que el host inicie...". The room remembers the choice and each game's settings for the night.
 3. The host can make another member host or remove one, for example a phone that was closed; the removed phone goes home with "Te sacaron de la sala", and opening the link again lets it back in.
 4. Any member can leave after confirming; if the host leaves, the oldest online member takes the crown, and a room left empty waits for its next joiner, who becomes host.
-5. Starting a match moves every phone to the game screen; ending it or returning to the lobby moves every phone back, with nobody navigating by hand.
+5. The host's game pick, settings, host handover and kicks, and anyone's rename, show on their own phone at once; if the server refuses, the screen steps back and shows its message.
+6. Starting a match moves every phone to the game screen; ending it or returning to the lobby moves every phone back, with nobody navigating by hand.
 
 Errors and empty states: every game card is playable.
 
@@ -59,18 +68,18 @@ Errors and empty states: every game card is playable.
 
 ## Rules
 
-- The name is permanent, unique among all players ever, with no way to change it; clearing browser data or switching device means a new player.
+- The name starts random and can be changed from the lobby: 2 to 20 visible characters, unique among all players, and not equal to another member's name ignoring case and accents; clearing browser data or switching device means a new player.
 - Only the host chooses the game, configures, starts, ends and removes members, and returns the room to the lobby.
 - If the host gives no sign of life for 60 s, the oldest online member becomes host; minimizing the phone alone does not count.
 - At most 20 members per room.
 - Rooms and matches vanish after 24 h without activity; players and names stay.
 - Changes show on every phone in under a second.
 - Secrets of a match (words, roles, the Wavelength target, Just One clues before they are shown) are never visible to other players, not even by inspecting the network.
-- The UI is Spanish only, built for a vertical phone, buttons at least 48 px, base text 18 px, dark mode supported.
+- The UI is Spanish only, built for a vertical phone, buttons at least 48 px, base text 18 px, one warm dark theme; screens, phases, card flips and scores animate, and the system's reduced motion setting turns every animation off.
 
 ## Out of scope
 
-- Accounts or login, changing the name, text chat, voice or video, monetization, other languages.
+- Accounts or login, a name history or filter, a light theme, text chat, voice or video, monetization, other languages.
 - Rules of any game; they live in each game module.
 
 ## Open questions

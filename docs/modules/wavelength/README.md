@@ -1,6 +1,6 @@
 ---
 updated: 2026-10-18
-source: 0004_wavelength
+source: 0006_gameplay_and_redesign
 ---
 
 # Wavelength
@@ -11,7 +11,7 @@ The reveal shows the target, every guess and the points, and the psychic role ro
 
 ## Boundaries
 
-- Owns: the rules (scoring bands, psychic rotation, round completion, departures), match preparation, the clue, guess, close, skip and next-round handling, the spectra bank, the Wavelength screens and the dial.
+- Owns: the rules (scoring bands, psychic rotation, round completion, departures), match preparation, the clue, guess, close, skip and next-round handling, the spectra bank, the Wavelength screens, the dial and its tick.
 - Does not own: identity, rooms, presence, the snapshot, the match lifecycle and the game registry (`platform`); the `MatchSecrets` table (`impostor`), where this module keeps its own items; AWS resources (`infra`).
 - Code: `shared/src/wavelength/`, `api/src/services/wavelength/`, `api/src/handlers/wavelength.ts`, `api/src/data/wavelength-spectra.json`, `web/src/games/wavelength/`, `web/src/routes/$code/wavelength.tsx`.
 

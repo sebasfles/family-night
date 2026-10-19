@@ -1,6 +1,6 @@
 ---
 updated: 2026-10-18
-source: 0004_wavelength
+source: 0006_gameplay_and_redesign
 ---
 
 # Wavelength: product
@@ -28,12 +28,13 @@ Everyone plays on their own dial, so nobody waits for a team to agree.
 
 1. The clue appears on every phone.
 2. Each guesser moves their dial by dragging, with the − and + buttons (1 point) or the arrow keys, and taps Confirmar; the dial locks from that tap.
-3. Everyone sees "Adivinaron N de M"; nobody sees where the others put their dial.
-4. The round reveals when the last guesser confirms, or when the host taps Cerrar (with a confirmation when some are missing).
+3. The dial ticks on every step of one's own dial; a speaker button above it mutes the tick, and the phone remembers the choice. On iPhone the sound starts after the first touch.
+4. Everyone sees "Adivinaron N de M"; nobody sees where the others put their dial.
+5. The round reveals when the last guesser confirms, or when the host taps Cerrar (with a confirmation when some are missing).
 
 ### Reveal and end
 
-1. Everyone sees the target, every guess with its name on the dial, the round's points and the running totals; players with equal points share a place.
+1. The scoring zones turn over on the dial to show the target, with every guess pinned by name; the round's points follow, and the running totals count up from before the round while players move to their new places; players with equal points share a place.
 2. The host taps "Siguiente ronda", or "Ver resultado" after the last turn; the rest wait.
 3. The final screen names the winner (or the tie) and the scoreboard; the host chooses "Jugar otra vez" (same settings, unseen scales) or "Volver al lobby".
 4. The host can end a match at any time without points.
@@ -49,7 +50,7 @@ Everyone plays on their own dial, so nobody waits for a team to agree.
 
 - At least 3 players online to start; individual play, no teams.
 - The psychic order is drawn at the start and repeats every cycle.
-- The target is a whole number from 0 to 100; a guess scores 4 points within 5 of it, 3 within 10, 2 within 15, 1 within 25, otherwise 0.
+- The target is a whole number from 0 to 100; a guess scores 4 points within 2 of it, 3 within 7, 2 within 12, otherwise 0 (on the dial the zones end half a point further, at 2.5, 7.5 and 12.5).
 - The psychic scores the average of the confirmed guesses' points, rounded half up; 0 when nobody confirmed. Guessers who did not confirm score 0.
 - Scales do not repeat within a night; when all have been played they start over.
 - Points reach the night's scoreboard when the match ends, only for players still in it.
@@ -58,7 +59,8 @@ Everyone plays on their own dial, so nobody waits for a team to agree.
 
 - Teams and the original left/right counter-guess.
 - Timers.
+- Sounds other than the dial tick.
 
 ## Open questions
 
-- Whether the dial feels precise enough on a phone; Sebastian tries it after merge.
+- None.

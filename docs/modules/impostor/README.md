@@ -1,6 +1,6 @@
 ---
-updated: 2026-10-17
-source: setup
+updated: 2026-10-18
+source: 0006_gameplay_and_redesign
 ---
 
 # Impostor
@@ -11,7 +11,7 @@ The debate happens in person; the app deals the cards, shows the speaking order,
 
 ## Boundaries
 
-- Owns: the game rules and their validation, match preparation (word, roles, order, secrets, guess options), rounds and voting, the last-guess phase, scoring, the word bank, the Impostor screen, and the `MatchSecrets` and `Votes` tables.
+- Owns: the game rules and their validation, match preparation (word, roles, order, secrets), rounds and voting with confirmation, scoring, the word bank, the Impostor screen, and the `MatchSecrets` and `Votes` tables.
 - Does not own: identity, rooms, presence, the room snapshot and its realtime contract, and the generic match lifecycle (start, abort, back to lobby, rematch), which belong to `platform`; AWS resources, which belong to `infra`.
 - Code: `shared/src/impostor/`, `api/src/services/impostor/`, `api/src/data/impostor-words.json`, `web/src/games/impostor/`, `web/src/routes/$code/impostor.tsx`.
 

@@ -55,4 +55,11 @@ Applied the one finding, not disputed: the scoreboard rank is its own `size-7` c
 
 Let pass by the om-reviewer, for the decisions: the Impostor final lists every participant still in the room, losers at +0; ranks stay competition ranks (1, 2, 2, 4) as in phase 1.
 
+### Docs
+
+`document-task` over the three phases: platform prd, trd, ard, database, flows and README; impostor prd, trd, ard, database, flows and README; wavelength prd, trd, ard and README; justone prd (screens only, rules unchanged).
+Beyond the skill's files, as the task's Context & decisions asks: `docs/PRD.md` (rename, last chance gone, "Not in the product", theme and motion) and a `docs/ARD.md` decision "Players can change their name", which overrides the 2026-10-17 identity entry without editing it; the om-reviewer carries it to the PR's Decisions.
+Superseded by new entries, not rewritten: platform "The room snapshot decides the screen" (its no-optimistic clause) and impostor "No optimistic updates on votes"; the impostor debt on a vote changed at the close now covers unconfirmed choices only.
+Debt index: added the stale name in other rooms, the `IMPOSTOR_GUESS` leftover and the fast-drag tick; reworded the changed-vote row.
+
 ## Result
