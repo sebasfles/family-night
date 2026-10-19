@@ -118,6 +118,8 @@ Review beyond the Pipeline:
 - Optimistic tests that check the UI before the request resolves and the rollback on a refused command; nothing of another player in the overlay.
 - Dial screenshots with targets at 0, 3, 50, 97 and 100; motion library bundle cost per round in phases 2 and 3.
 
+Adjustment (om-manager for Sebastian, 2026-10-18): phase 1 approved; no gate after phase 2, phase 3 starts as soon as phase 2 is clean; after phase 3 the om-reviewer reports only `PRs ready` with the screenshot paths of phases 2 and 3.
+
 clearance: repo
 
 ## om-developer notes

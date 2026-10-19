@@ -66,3 +66,11 @@ Applied the four findings, none disputed:
 Screenshots refreshed in `screenshots/phase_1/`.
 
 ## Result
+
+Approved by Sebastian on 2026-10-18 at c29ccc2, after 2 rounds.
+
+- Delivered as scoped: optimistic own commands through a pending overlay, rename from the lobby, last chance removed, provisional and confirmed votes, Wavelength bands 4/3/2 with labels on their zones, dial tick with mute.
+- Deviations: `votedPlayerIds` lists confirmed voters while voting and every counted voter after the close; one `PUT votes { round, targetId, confirmed }` serves selection and confirmation; name length counts graphemes and names must be visible; one tick per pointer move on fast drags.
+- Debt: a match left in `IMPOSTOR_GUESS` at deploy shows only the header and card until the host aborts it.
+- For phase 3 docs: the decisions under om-developer notes of rounds 1 and 2 feed `document-task`.
+
