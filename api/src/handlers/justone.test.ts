@@ -79,9 +79,9 @@ function wireOf(room: Room, reads: RoomSnapshot[] = []): string {
 
 describe('starting Just One', () => {
   test('the host starts with the online members, one publish, a guesser and no word', async () => {
-    const room = await roomWith(4);
+    const room = await roomWith(5);
     room.harness.advance(ONLINE_WINDOW_MS);
-    for (const player of room.players.slice(0, 3)) {
+    for (const player of room.players.slice(0, 4)) {
       await json(call(room.harness, player, 'POST', `/api/rooms/${room.code}/ping`));
     }
     room.harness.published.length = 0;
@@ -101,7 +101,7 @@ describe('starting Just One', () => {
       score: 0,
       roundsWon: 0,
     });
-    const online = room.players.slice(0, 3).map((player) => player.playerId);
+    const online = room.players.slice(0, 4).map((player) => player.playerId);
     expect(match.participants).toEqual(online);
     expect(match.order.toSorted()).toEqual(online.toSorted());
     expect(match.guesserId).toBe(match.order[0]);
@@ -116,8 +116,8 @@ describe('starting Just One', () => {
     expect((await storedRoom(room))?.usedWordIds).toEqual([]);
   });
 
-  test('a new room carries the default config; bad configs and fewer than 3 cannot start', async () => {
-    const room = await roomWith(3);
+  test('a new room carries the default config; bad configs and fewer than 4 cannot start', async () => {
+    const room = await roomWith(4);
     expect((await getRoom(room.harness, room.host, room.code)).configs.JUST_ONE).toEqual(
       JUST_ONE_DEFAULTS,
     );
@@ -138,7 +138,9 @@ describe('starting Just One', () => {
     room.harness.advance(ONLINE_WINDOW_MS);
     await json(call(room.harness, room.host, 'POST', `/api/rooms/${room.code}/ping`));
     await json(call(room.harness, room.member(1), 'POST', `/api/rooms/${room.code}/ping`));
-    await expectError(startCall(room), 422, 'NOT_ENOUGH_PLAYERS');
+    await json(call(room.harness, room.member(2), 'POST', `/api/rooms/${room.code}/ping`));
+    const error = await expectError(startCall(room), 422, 'NOT_ENOUGH_PLAYERS');
+    expect(error.message).toBe('Se necesitan al menos 4 jugadores en línea');
   });
 });
 
@@ -271,14 +273,14 @@ describe('secrets', () => {
 
 describe('clues', () => {
   test('only clue-givers commit, once, one word of up to 30 characters', async () => {
-    const room = await roomWith(4);
+    const room = await roomWith(5);
     room.harness.advance(ONLINE_WINDOW_MS);
-    for (const player of room.players.slice(0, 3)) {
+    for (const player of room.players.slice(0, 4)) {
       await json(call(room.harness, player, 'POST', `/api/rooms/${room.code}/ping`));
     }
     const match = await start(room);
     const giver = firstClueGiver(room, match);
-    const spectator = room.member(3);
+    const spectator = room.member(4);
 
     await expectError(clueCall(room, guesserOf(room, match), match, 'Hola'), 403, 'NOT_CLUE_GIVER');
     await expectError(clueCall(room, spectator, match, 'Hola'), 403, 'NOT_CLUE_GIVER');
@@ -395,7 +397,7 @@ describe('review', () => {
   });
 
   test('a clue-giver or the host shows the clues; the guesser alone cannot', async () => {
-    const room = await roomWith(3);
+    const room = await roomWith(4);
     let match = await start(room);
     while (match.guesserId === room.host.playerId) {
       match = await host(room, await playRound(room, match, 'PASS'), 'next-round');
@@ -412,7 +414,7 @@ describe('review', () => {
   });
 
   test('the host shows the clues also when the host is the guesser', async () => {
-    const room = await roomWith(3);
+    const room = await roomWith(4);
     let match = await start(room);
     while (match.guesserId !== room.host.playerId) {
       match = await host(room, await playRound(room, match, 'PASS'), 'next-round');
@@ -453,7 +455,7 @@ describe('guess and score', () => {
   });
 
   test('a pass scores 0, a wrong guess -1 with a floor of 0, and the host can count it', async () => {
-    const room = await roomWith(3);
+    const room = await roomWith(4);
     let match = await start(room, 3);
     match = await playRound(room, match, 'PASS');
     expect(match).toMatchObject({ score: 0, lastResult: { outcome: 'PASS', score: 0 } });
@@ -494,30 +496,30 @@ describe('guess and score', () => {
 });
 
 describe('rotation, end and scoring', () => {
-  test('every participant guesses once per cycle in order, then everyone gets the team score', async () => {
-    const room = await roomWith(3);
+  test('every participant guesses once per cycle in order, and the team score adds nothing to the night', async () => {
+    const room = await roomWith(4);
     let match = await start(room, 2);
     const guessers: string[] = [];
     const words: string[] = [];
-    for (let round = 1; round <= 6; round++) {
+    for (let round = 1; round <= 8; round++) {
       expect(match).toMatchObject({ phase: 'CLUE', round });
       guessers.push(match.guesserId);
-      const revealed = await playRound(room, match, round === 6 ? 'WRONG' : 'CORRECT');
+      const revealed = await playRound(room, match, round === 8 ? 'WRONG' : 'CORRECT');
       words.push(revealed.lastResult?.word ?? '');
       match = await host(room, revealed, 'next-round');
     }
 
     expect(guessers).toEqual([...match.order, ...match.order]);
-    expect(new Set(words).size).toBe(6);
-    expect(match).toMatchObject({ status: 'FINISHED', phase: 'FINISHED', score: 4, roundsWon: 5 });
+    expect(new Set(words).size).toBe(8);
+    expect(match).toMatchObject({ status: 'FINISHED', phase: 'FINISHED', score: 6, roundsWon: 7 });
     const snapshot = await getRoom(room.harness, room.host, room.code);
-    expect(Object.values(scoresOf(snapshot))).toEqual([4, 4, 4]);
+    expect(Object.values(scoresOf(snapshot))).toEqual([0, 0, 0, 0]);
     await expectError(act(room, room.host, match, 'next-round'), 409, 'STALE_ROUND');
     expect(scoresOf(await getRoom(room.harness, room.host, room.code))).toEqual(scoresOf(snapshot));
   });
 
   test('Jugar otra vez keeps the config and picks words not seen that night', async () => {
-    const room = await roomWith(3);
+    const room = await roomWith(4);
     let match = await start(room);
     const seen: string[] = [];
     for (let game = 0; game < 2; game++) {
@@ -531,13 +533,13 @@ describe('rotation, end and scoring', () => {
     }
     seen.push(await wordOf(room, match));
 
-    expect(new Set(seen).size).toBe(7);
+    expect(new Set(seen).size).toBe(9);
     const ids = seen.map((word) => justOneWords.find((entry) => entry.word === word)?.id);
     expect((await storedRoom(room))?.usedJustOneWordIds).toEqual(ids);
   });
 
   test('the word bank restarts when every word was used', async () => {
-    const room = await roomWith(3);
+    const room = await roomWith(4);
     const [unseen, ...used] = justOneWords;
     if (!unseen) throw new Error('empty bank');
     await room.harness.client.send(
@@ -676,23 +678,24 @@ describe('a player leaves or is skipped', () => {
   });
 
   test('under 2 players left the match finishes with the score so far', async () => {
-    const room = await roomWith(3);
+    const room = await roomWith(4);
     const revealed = await playRound(room, await start(room), 'CORRECT');
     const [stays, ...leavers] = revealed.participants;
     if (!stays) throw new Error('missing player');
 
     await leave(room, leavers[0] ?? '');
+    await leave(room, leavers[1] ?? '');
     const two = justOne(await getRoom(room.harness, stayer(room, ...leavers), room.code));
     expect(two).toMatchObject({ status: 'PLAYING', phase: 'REVEAL' });
-    await leave(room, leavers[1] ?? '');
+    await leave(room, leavers[2] ?? '');
 
     const snapshot = await getRoom(room.harness, stayer(room, ...leavers), room.code);
     expect(justOne(snapshot)).toMatchObject({ status: 'FINISHED', phase: 'FINISHED', score: 1 });
-    expect(scoresOf(snapshot)).toEqual({ [stays]: 1 });
+    expect(scoresOf(snapshot)).toEqual({ [stays]: 0 });
   });
 
   test('the host skips the guesser, who keeps their later turns', async () => {
-    const room = await roomWith(3);
+    const room = await roomWith(4);
     const match = await start(room, 2);
     await expectError(
       act(room, stayer(room, room.host.playerId), match, 'skip-guesser'),
@@ -715,7 +718,8 @@ describe('a player leaves or is skipped', () => {
     latest = await host(room, guessing, 'skip-guesser');
     expect(latest).toMatchObject({ round: 3, turn: 2 });
     latest = await host(room, await playRound(room, latest, 'PASS'), 'next-round');
-    expect(latest).toMatchObject({ turn: 3, guesserId: match.guesserId });
+    latest = await host(room, await playRound(room, latest, 'PASS'), 'next-round');
+    expect(latest).toMatchObject({ turn: 4, guesserId: match.guesserId });
     const revealed = await playRound(room, latest, 'PASS');
     await expectError(act(room, room.host, revealed, 'skip-guesser'), 409, 'STALE_ROUND');
   });
@@ -737,7 +741,8 @@ describe('a player leaves or is skipped', () => {
       latest = await host(room, await playRound(room, latest, 'CORRECT'), 'next-round');
     }
     const scores = scoresOf(await getRoom(room.harness, leaver, room.code));
+    expect(latest.score).toBeGreaterThan(0);
     expect(scores[leaver.playerId]).toBe(0);
-    expect(scores[room.host.playerId]).toBe(latest.score);
+    expect(scores[room.host.playerId]).toBe(0);
   });
 });

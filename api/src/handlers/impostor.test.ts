@@ -6,7 +6,7 @@ import {
 } from '@family-night/shared';
 import { describe, expect, test } from 'vitest';
 import { wordCategories } from '../services/impostor/words.ts';
-import { call, expectError, getRoom, json, roomWith, updates } from '../test/harness.ts';
+import { call, expectError, getRoom, join, json, roomWith, updates } from '../test/harness.ts';
 import {
   currentMatch,
   everyoneVotes,
@@ -283,7 +283,7 @@ describe('voting', () => {
 });
 
 describe('end of the match and scoring', () => {
-  test('impostors win by parity and score 2 each, once', async () => {
+  test('impostors win by parity and score civilians over impostors each, once', async () => {
     const { room, match, impostor, civilian, other } = await playing(3);
     await voted(room, impostor, civilian, match);
     await voted(room, other, civilian, match);
@@ -327,6 +327,48 @@ describe('end of the match and scoring', () => {
     const scores = scoresOf(finished);
     for (const player of roles.civilians) expect(scores[player.playerId]).toBe(1);
     expect(scores[impostor.playerId]).toBe(0);
+  });
+
+  test('an impostor among 5 scores 4, rounded up from the civilians at the start', async () => {
+    const { room, match, roles, impostor } = await playing(5);
+    let latest = match;
+    for (const target of roles.civilians.slice(0, 3)) {
+      const revealed = await everyoneVotes(room, latest, target, impostor);
+      expect(revealed.lastResult?.eliminatedId).toBe(target.playerId);
+      latest = currentMatch(
+        await hostAction(room, revealed, 'next-round', { round: revealed.round }),
+      );
+    }
+
+    expect(latest).toMatchObject({ status: 'FINISHED', winner: 'IMPOSTORS' });
+    const scores = scoresOf(await getRoom(room.harness, room.host, room.code));
+    expect(scores[impostor.playerId]).toBe(4);
+    for (const civilian of roles.civilians) expect(scores[civilian.playerId]).toBe(0);
+  });
+
+  test('a voted-out civilian who leaves and returns as a spectator scores nothing', async () => {
+    const { room, match, roles, impostor } = await playing(4);
+    const [gone, ...stayers] = roles.civilians.filter(
+      (civilian) => civilian.playerId !== room.host.playerId,
+    );
+    if (!gone) throw new Error('missing civilian');
+    const out = await everyoneVotes(room, match, gone, impostor);
+    expect(out.lastResult?.eliminatedId).toBe(gone.playerId);
+    await json(call(room.harness, gone, 'POST', `/api/rooms/${room.code}/leave`));
+    expect(currentMatch(await join(room.harness, gone, room.code)).departedIds).toEqual([
+      gone.playerId,
+    ]);
+
+    const round2 = currentMatch(await hostAction(room, out, 'next-round', { round: 1 }));
+    const caught = await everyoneVotes(room, round2, impostor, stayers[0] ?? room.host);
+    const finished = await hostAction(room, caught, 'next-round', { round: 2 });
+
+    expect(currentMatch(finished)).toMatchObject({ status: 'FINISHED', winner: 'CIVILIANS' });
+    const scores = scoresOf(finished);
+    expect(scores[gone.playerId]).toBe(0);
+    for (const civilian of roles.civilians.filter((c) => c !== gone)) {
+      expect(scores[civilian.playerId]).toBe(1);
+    }
   });
 
   test('the last-chance routes no longer exist', async () => {

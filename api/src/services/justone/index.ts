@@ -9,7 +9,6 @@ import {
   isJustOneOpen,
   justOneClueProblem,
   justOneGuessProblem,
-  justOneScores,
   justOneStartProblem,
   nextJustOneTurn,
   openJustOneRound,
@@ -23,6 +22,7 @@ import {
   showCluesProblem,
   startJustOne,
   JUST_ONE_DEFAULTS,
+  MIN_JUST_ONE_PLAYERS,
   type CancelClueRequest,
   type JustOneClue,
   type JustOneClueRequest,
@@ -36,7 +36,7 @@ import {
 } from '@family-night/shared';
 import { justOneConfigSchema } from '@family-night/shared/schemas';
 import type { Deps } from '../../deps.ts';
-import { AppError } from '../../lib/errors.ts';
+import { AppError, notEnoughPlayers } from '../../lib/errors.ts';
 import { iso, ttlFrom } from '../../lib/time.ts';
 import type { ClueItem } from '../../repos/match-secrets.ts';
 import type { MatchItem } from '../../repos/matches.ts';
@@ -68,8 +68,7 @@ function parseJustOneConfig(raw: unknown): JustOneConfig {
 }
 
 function checkJustOneStart(_config: JustOneConfig, playerCount: number): void {
-  const problem = justOneStartProblem(playerCount);
-  if (problem) throw new AppError(problem);
+  if (justOneStartProblem(playerCount)) throw notEnoughPlayers(MIN_JUST_ONE_PLAYERS);
 }
 
 function opening(deps: Deps, room: RoomItem, opened: JustOnePublic, nowMs: number): MatchUpdate {
@@ -96,21 +95,15 @@ function prepareJustOne(deps: Deps, input: PrepareInput<JustOneConfig>): MatchUp
   return opening(deps, room, state, nowMs);
 }
 
-function finished(before: JustOnePublic, after: JustOnePublic): MatchUpdate {
-  const ended = before.status === 'PLAYING' && after.status === 'FINISHED';
-  return { publicState: after, ...(ended ? { scores: justOneScores(after) } : {}) };
-}
-
 function advance(
   deps: Deps,
   room: RoomItem,
-  before: JustOnePublic,
   state: JustOnePublic,
   skipped: JustOneSkippedTurn | null,
   nowMs: number,
 ): MatchUpdate {
   const turn = nextJustOneTurn(state);
-  if (turn === null) return finished(before, finishJustOne(state));
+  if (turn === null) return { publicState: finishJustOne(state) };
   return opening(deps, room, openJustOneRound(state, turn, skipped), nowMs);
 }
 
@@ -151,7 +144,7 @@ async function justOneNextRound(
 ): Promise<MatchUpdate> {
   const before = gameState(match, 'JUST_ONE');
   requireOpen(before, ['REVEAL'], round);
-  return Promise.resolve(advance(deps, room, before, before, null, nowMs));
+  return Promise.resolve(advance(deps, room, before, null, nowMs));
 }
 
 async function justOneDeparture(
@@ -165,10 +158,10 @@ async function justOneDeparture(
   const before = gameState(match, 'JUST_ONE');
   const { state, cancelsRound } = dropJustOnePlayer(before, playerId);
   if (state === before) return null;
-  if (state.status === 'FINISHED') return finished(before, state);
+  if (state.status === 'FINISHED') return { publicState: state };
   if (cancelsRound) {
     const skipped = { round: before.round, guesserId: playerId, reason };
-    return advance(deps, room, before, state, skipped, nowMs);
+    return advance(deps, room, state, skipped, nowMs);
   }
   if (state.phase !== 'CLUE' && state.phase !== 'REVIEW') return { publicState: state };
 
@@ -358,6 +351,6 @@ export function skipGuesserCommand(
     const before = gameState(match, 'JUST_ONE');
     requireOpen(before, ['CLUE', 'REVIEW', 'GUESS'], round);
     const skipped: JustOneSkippedTurn = { round, guesserId: before.guesserId, reason: 'SKIPPED' };
-    return Promise.resolve(advance(deps, state.room, before, before, skipped, nowMs));
+    return Promise.resolve(advance(deps, state.room, before, skipped, nowMs));
   });
 }

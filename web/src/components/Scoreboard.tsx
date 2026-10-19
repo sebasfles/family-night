@@ -16,6 +16,7 @@ interface ScoreboardProps {
   selfId: string;
   signed?: boolean;
   gains?: boolean;
+  night?: Readonly<Record<string, number>>;
 }
 
 export function Scoreboard({
@@ -25,6 +26,7 @@ export function Scoreboard({
   selfId,
   signed = false,
   gains = false,
+  night,
 }: ScoreboardProps) {
   const reduced = useReducedMotion();
   const list = useShuffleIn<HTMLOListElement>(
@@ -42,6 +44,7 @@ export function Scoreboard({
         {standings.map(({ playerId, from, to, rank }) => {
           const leader = soleLeader && rank === 1;
           const gain = to - from;
+          const earned = night?.[playerId] ?? 0;
           return (
             <li
               key={playerId}
@@ -71,6 +74,11 @@ export function Scoreboard({
                 {nameOf(members, playerId)}
                 {playerId === selfId && (
                   <span className="ml-1.5 font-normal text-cream/60">(tú)</span>
+                )}
+                {earned > 0 && (
+                  <span className="block text-sm font-bold text-sage tabular-nums">
+                    +{earned} a la noche
+                  </span>
                 )}
               </span>
               <span className="flex shrink-0 flex-col items-end">

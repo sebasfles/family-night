@@ -81,6 +81,7 @@ export interface ImpostorPublic {
   participants: string[];
   order: string[];
   eliminated: Elimination[];
+  departedIds: string[];
   votedPlayerIds: string[];
   lastResult: RoundResult | null;
   winner: ImpostorWinner | null;

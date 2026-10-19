@@ -5,13 +5,14 @@ import { impostorConfigSchema } from '../schemas.ts';
 import {
   closeVoting,
   everyoneConfirmed,
+  impostorNightPoints,
+  impostorWinPoints,
   maxImpostors,
   nextRound,
   outcome,
   pickWord,
   recordBallots,
   removePlayer,
-  matchScores,
   startMatch,
   startProblem,
   voteProblem,
@@ -294,7 +295,7 @@ describe('end of the match', () => {
       winner: 'CIVILIANS',
       reveal: { word: 'Perro', category: 'Animales', impostorIds: ['a'] },
     });
-    expect(matchScores(finished, facts.impostorIds)).toEqual({ b: 1, c: 1, d: 1 });
+    expect(impostorNightPoints(finished)).toEqual({ b: 1, c: 1, d: 1 });
   });
 
   test('impostors win by parity', () => {
@@ -304,7 +305,7 @@ describe('end of the match', () => {
     expect(outcome(after)).toBe('IMPOSTORS');
     const finished = nextRound(after, facts);
     expect(finished.winner).toBe('IMPOSTORS');
-    expect(matchScores(finished, facts.impostorIds)).toEqual({ a: 2 });
+    expect(impostorNightPoints(finished)).toEqual({ a: 2 });
   });
 
   test('several impostors caught in different rounds, civilians win with the last one', () => {
@@ -330,7 +331,7 @@ describe('end of the match', () => {
 
     const civiliansWin = nextRound(round3, facts);
     expect(civiliansWin).toMatchObject({ phase: 'FINISHED', winner: 'CIVILIANS' });
-    expect(matchScores(civiliansWin, facts.impostorIds)).toEqual({ c: 1, d: 1, e: 1, f: 1 });
+    expect(impostorNightPoints(civiliansWin)).toEqual({ c: 1, d: 1, e: 1, f: 1 });
   });
 });
 
@@ -408,7 +409,7 @@ describe('a living player leaves or is kicked', () => {
     expect(after).toMatchObject({ phase: 'VOTING', votedPlayerIds: ['b'] });
   });
 
-  test('the caught impostor leaving during the reveal changes nothing', () => {
+  test('the caught impostor leaving during the reveal is only recorded as departed', () => {
     const { state, facts } = match(['a', 'b', 'c', 'd'], ['a']);
     const caught = vote(state, facts, { b: 'a', c: 'a', d: 'a' });
     const { state: after } = removePlayer({
@@ -419,11 +420,11 @@ describe('a living player leaves or is kicked', () => {
       ballots: [],
       randomInt: first,
     });
-    expect(after).toBe(caught);
+    expect(after).toEqual({ ...caught, departedIds: ['a'] });
     expect(nextRound(after, facts)).toMatchObject({ phase: 'FINISHED', winner: 'CIVILIANS' });
   });
 
-  test('a spectator, an eliminated player or anyone after the end changes nothing', () => {
+  test('a spectator, a player already departed or anyone after the end changes nothing', () => {
     const { state, facts } = match(['a', 'b', 'c', 'd'], ['a']);
     const leave = (from: ImpostorPublic, playerId: string) =>
       removePlayer({ state: from, playerId, reason: 'LEFT', facts, ballots: [], randomInt: first })
@@ -431,8 +432,85 @@ describe('a living player leaves or is kicked', () => {
 
     expect(leave(state, 'z')).toBe(state);
     const revealed = vote(state, facts, { a: 'b', c: 'b', d: 'b' });
-    expect(leave(revealed, 'b')).toBe(revealed);
+    const departed = leave(revealed, 'b');
+    expect(departed.departedIds).toEqual(['b']);
+    expect(leave(departed, 'b')).toBe(departed);
     const finished = nextRound(vote(state, facts, { b: 'a', c: 'a', d: 'a' }), facts);
     expect(leave(finished, 'c')).toBe(finished);
+  });
+});
+
+describe('night points', () => {
+  test.each([
+    [1, 3, 2],
+    [1, 5, 4],
+    [2, 6, 2],
+    [2, 7, 3],
+    [3, 9, 2],
+    [3, 10, 3],
+    [3, 20, 6],
+  ])('%i impostors among %i players each get %i on a win', (impostors, players, points) => {
+    expect(impostorWinPoints(impostors, players)).toBe(points);
+  });
+
+  test('every impostor scores on their win, the one voted out included', () => {
+    const players = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
+    const { state, facts } = match(players, ['a', 'b']);
+    const rounds: Record<string, string>[] = [
+      { c: 'a', d: 'a', e: 'a', f: 'a', g: 'c' },
+      { b: 'c', c: 'd', d: 'e', e: 'c', f: 'c' },
+      { b: 'd', d: 'e', e: 'd', f: 'd', g: 'd' },
+      { b: 'e', e: 'f', f: 'e', g: 'e' },
+      { b: 'f', f: 'g', g: 'f' },
+    ];
+    const played = rounds.reduce(
+      (from, pairs) => nextRound(vote(from, facts, pairs), facts),
+      state,
+    );
+
+    expect(played.winner).toBe('IMPOSTORS');
+    expect(impostorNightPoints(played)).toEqual({ a: 3, b: 3 });
+  });
+
+  test('a player who left or was kicked scores nothing on their side win, living or not', () => {
+    const { state, facts } = match(['a', 'b', 'c', 'd', 'e'], ['a']);
+    const leave = (from: ImpostorPublic, playerId: string, reason: 'LEFT' | 'KICKED') =>
+      removePlayer({ state: from, playerId, reason, facts, ballots: [], randomInt: first }).state;
+
+    const round1 = vote(leave(state, 'b', 'LEFT'), facts, { a: 'c', c: 'd', d: 'c', e: 'c' });
+    expect(round1.lastResult?.eliminatedId).toBe('c');
+    const civiliansWin = nextRound(
+      vote(nextRound(leave(round1, 'c', 'KICKED'), facts), facts, { d: 'a', e: 'a', a: 'd' }),
+      facts,
+    );
+    expect(civiliansWin.winner).toBe('CIVILIANS');
+    expect(civiliansWin.departedIds).toEqual(['b', 'c']);
+    expect(impostorNightPoints(civiliansWin)).toEqual({ d: 1, e: 1 });
+
+    const six = match(['a', 'b', 'c', 'd', 'e', 'f'], ['a', 'b']);
+    const leaveSix = (from: ImpostorPublic, playerId: string, reason: 'LEFT' | 'KICKED') =>
+      removePlayer({
+        state: from,
+        playerId,
+        reason,
+        facts: six.facts,
+        ballots: [],
+        randomInt: first,
+      }).state;
+    const thinned = leaveSix(leaveSix(six.state, 'a', 'LEFT'), 'c', 'KICKED');
+    const endgame: Record<string, string>[] = [
+      { b: 'd', d: 'e', e: 'd', f: 'd' },
+      { b: 'e', e: 'f', f: 'e' },
+    ];
+    const impostorsWin = endgame.reduce(
+      (from, pairs) => nextRound(vote(from, six.facts, pairs), six.facts),
+      thinned,
+    );
+    expect(impostorsWin.winner).toBe('IMPOSTORS');
+    expect(impostorNightPoints(impostorsWin)).toEqual({ b: 2 });
+  });
+
+  test('a match not finished gives nothing', () => {
+    expect(impostorNightPoints(match(['a', 'b', 'c'], ['a']).state)).toEqual({});
   });
 });

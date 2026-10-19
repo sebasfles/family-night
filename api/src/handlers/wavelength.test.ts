@@ -94,16 +94,16 @@ describe('starting Wavelength', () => {
     expect(await getRoom(room.harness, room.member(3), room.code)).toEqual(snapshot);
   });
 
-  test('fewer than 3 online members or a bad cycle count cannot start', async () => {
-    const room = await roomWith(3);
+  test('fewer than 2 online members or a bad cycle count cannot start', async () => {
+    const room = await roomWith(2);
     await expectError(startCall(room, { cycles: 4 }), 422, 'INVALID_CONFIG');
     await expectError(startCall(room, { cycles: 1, extra: 1 }), 422, 'INVALID_CONFIG');
     await expectError(startCall(room, { cycles: 1 }, room.member(1)), 403, 'NOT_HOST');
     room.harness.advance(ONLINE_WINDOW_MS);
     await json(call(room.harness, room.host, 'POST', `/api/rooms/${room.code}/ping`));
-    await json(call(room.harness, room.member(1), 'POST', `/api/rooms/${room.code}/ping`));
 
-    await expectError(startCall(room), 422, 'NOT_ENOUGH_PLAYERS');
+    const error = await expectError(startCall(room), 422, 'NOT_ENOUGH_PLAYERS');
+    expect(error.message).toBe('Se necesitan al menos 2 jugadores en línea');
     expect((await getRoom(room.harness, room.host, room.code)).currentMatch).toBeNull();
   });
 });
@@ -410,7 +410,7 @@ describe('rotation, end and scoring', () => {
     expect(match).toMatchObject({ status: 'FINISHED', phase: 'FINISHED' });
     expect(Object.values(match.totals)).toEqual([24, 24, 24]);
     const snapshot = await getRoom(room.harness, room.host, room.code);
-    expect(Object.values(scoresOf(snapshot))).toEqual([24, 24, 24]);
+    expect(Object.values(scoresOf(snapshot))).toEqual([3, 3, 3]);
     await expectError(
       call(room.harness, room.host, 'POST', matchPath(room, match.matchId, 'next-round'), {
         round: 6,
@@ -419,6 +419,58 @@ describe('rotation, end and scoring', () => {
       'STALE_ROUND',
     );
     expect(scoresOf(await getRoom(room.harness, room.host, room.code))).toEqual(scoresOf(snapshot));
+  });
+
+  test('the night gets the podium of the match points', async () => {
+    const room = await roomWith(3, { secureRandomInt: fixedTarget(50) });
+    const [first, second, third] = room.players.map((player) => player.playerId);
+    const aim: Record<string, number> = {
+      [first ?? '']: 50,
+      [second ?? '']: 55,
+      [third ?? '']: 70,
+    };
+    let match = await start(room);
+    while (match.status === 'PLAYING') {
+      let round = await giveClue(room, match);
+      for (const guesser of guessersOf(room, round)) {
+        round = await guessed(room, guesser, round, aim[guesser.playerId] ?? 50);
+      }
+      match = wavelength(await host(room, round, 'next-round'));
+    }
+
+    expect(match.totals).toEqual({ [first ?? '']: 10, [second ?? '']: 8, [third ?? '']: 4 });
+    expect(scoresOf(await getRoom(room.harness, room.host, room.code))).toEqual({
+      [first ?? '']: 3,
+      [second ?? '']: 2,
+      [third ?? '']: 1,
+    });
+  });
+
+  test('two players play a whole match, one guesser a round, and the night gets nothing', async () => {
+    const room = await roomWith(2, { secureRandomInt: fixedTarget(50) });
+    let match = await start(room, 2);
+    const psychics: string[] = [];
+    for (let round = 1; round <= 4; round++) {
+      expect(match).toMatchObject({ phase: 'CLUE', round });
+      psychics.push(match.psychicId);
+      const clued = await giveClue(room, match);
+      const [guesser, ...others] = guessersOf(room, clued);
+      if (!guesser) throw new Error('missing guesser');
+      expect(others).toEqual([]);
+      const revealed = await guessed(room, guesser, clued, 45 + round);
+      const points = revealed.lastResult?.guesses[0]?.points;
+      expect(revealed).toMatchObject({ phase: 'REVEAL', lastResult: { psychicPoints: points } });
+      match = wavelength(await host(room, revealed, 'next-round'));
+    }
+
+    expect(psychics).toEqual([...match.order, ...match.order]);
+    expect(match.status).toBe('FINISHED');
+    const [a, b] = Object.values(match.totals);
+    expect(a).toBeGreaterThan(0);
+    expect(a).toBe(b);
+    expect(Object.values(scoresOf(await getRoom(room.harness, room.host, room.code)))).toEqual([
+      0, 0,
+    ]);
   });
 
   test('Jugar otra vez keeps the config and picks spectra not seen that night', async () => {
@@ -532,7 +584,7 @@ describe('a player leaves or is skipped', () => {
     const stayer = room.players.find((p) => p.playerId === stays) ?? room.host;
     const snapshot = await getRoom(room.harness, stayer, room.code);
     expect(wavelength(snapshot)).toMatchObject({ status: 'FINISHED', phase: 'FINISHED' });
-    expect(scoresOf(snapshot)).toEqual({ [stays]: 4 });
+    expect(scoresOf(snapshot)).toEqual({ [stays]: 1 });
   });
 
   test('the host skips an absent psychic, who keeps their later turns', async () => {

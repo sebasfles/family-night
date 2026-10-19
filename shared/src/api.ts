@@ -112,7 +112,7 @@ export const API_ERRORS = {
   NOT_CLUE_GIVER: { status: 403, message: 'En esta ronda no te toca dar pista' },
   MATCH_IN_PROGRESS: { status: 409, message: 'Ya hay una partida en curso' },
   STALE_ROUND: { status: 409, message: 'Esa ronda ya terminó' },
-  NOT_ENOUGH_PLAYERS: { status: 422, message: 'Se necesitan al menos 3 jugadores en línea' },
+  NOT_ENOUGH_PLAYERS: { status: 422, message: 'Faltan jugadores en línea para esta partida' },
   INVALID_CONFIG: { status: 422, message: 'La configuración de la partida no es válida' },
   INVALID_VOTE: { status: 422, message: 'Ese voto no es válido' },
   VOTE_CONFIRMED: { status: 409, message: 'Ya confirmaste tu voto' },
@@ -125,6 +125,10 @@ export const API_ERRORS = {
 } as const satisfies Record<string, { status: number; message: string }>;
 
 export type ErrorCode = keyof typeof API_ERRORS;
+
+export function notEnoughPlayersMessage(minPlayers: number): string {
+  return `Se necesitan al menos ${String(minPlayers)} jugadores en línea`;
+}
 
 export interface ErrorResponse {
   error: {

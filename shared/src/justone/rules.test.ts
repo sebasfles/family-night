@@ -12,7 +12,6 @@ import {
   dropJustOnePlayer,
   justOneClueProblem,
   justOneGuessProblem,
-  justOneScores,
   justOneStartProblem,
   nextJustOneTurn,
   normalizeWord,
@@ -144,9 +143,9 @@ describe('the word bank', () => {
 });
 
 describe('starting', () => {
-  test('needs at least 3 players and a cycle count from 1 to 3', () => {
-    expect(justOneStartProblem(2)).toBe('NOT_ENOUGH_PLAYERS');
-    expect(justOneStartProblem(3)).toBeNull();
+  test('needs at least 4 players and a cycle count from 1 to 3', () => {
+    expect(justOneStartProblem(3)).toBe('NOT_ENOUGH_PLAYERS');
+    expect(justOneStartProblem(4)).toBeNull();
     expect(justOneConfigSchema.safeParse({ cycles: 0 }).success).toBe(false);
     expect(justOneConfigSchema.safeParse({ cycles: 4 }).success).toBe(false);
     expect(justOneConfigSchema.safeParse({ cycles: 1, extra: true }).success).toBe(false);
@@ -376,22 +375,17 @@ describe('departures', () => {
     expect(revealed.lastResult?.clues.map((clue) => clue.authorId)).toEqual(['b', 'c', 'd']);
   });
 
-  test('under 2 players the match finishes with the score so far, for those still in', () => {
+  test('under 2 players the match finishes with the score so far', () => {
     const state = playRound(match(['a', 'b', 'c']), 'Perro');
     const two = dropJustOnePlayer(state, 'a').state;
     expect(two.status).toBe('PLAYING');
     const { state: finished, cancelsRound } = dropJustOnePlayer(two, 'c');
     expect(cancelsRound).toBe(false);
     expect(finished).toMatchObject({ status: 'FINISHED', phase: 'FINISHED', score: 1 });
-    expect(justOneScores(finished)).toEqual({ b: 1 });
   });
 
   test('a player not in the match changes nothing', () => {
     const state = match(['a', 'b', 'c']);
     expect(dropJustOnePlayer(state, 'stranger')).toEqual({ state, cancelsRound: false });
-  });
-
-  test('a score of 0 adds nothing to the totals', () => {
-    expect(justOneScores(match(['a', 'b', 'c']))).toEqual({});
   });
 });

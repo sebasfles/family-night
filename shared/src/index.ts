@@ -6,4 +6,5 @@ export * from './impostor/rules.ts';
 export * from './justone/rules.ts';
 export * from './players.ts';
 export * from './random.ts';
+export * from './scoring.ts';
 export * from './wavelength/rules.ts';

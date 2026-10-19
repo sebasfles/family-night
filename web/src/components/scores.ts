@@ -1,3 +1,5 @@
+import { place } from '@family-night/shared';
+
 export interface ScoreRow {
   playerId: string;
   from: number;
@@ -9,7 +11,6 @@ export function byScore(key: 'from' | 'to') {
 }
 
 export function ranked(rows: ScoreRow[]): (ScoreRow & { rank: number })[] {
-  return rows
-    .toSorted(byScore('to'))
-    .map((row, _, all) => ({ ...row, rank: 1 + all.filter((other) => other.to > row.to).length }));
+  const scores = rows.map((row) => row.to);
+  return rows.toSorted(byScore('to')).map((row) => ({ ...row, rank: place(row.to, scores) }));
 }

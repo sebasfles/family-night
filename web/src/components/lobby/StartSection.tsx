@@ -45,9 +45,11 @@ export function StartSection({
           onClick={onStart}
           className="min-h-14 text-xl"
         >
-          {missing > 0
-            ? `Faltan ${String(missing)} ${missing === 1 ? 'jugador' : 'jugadores'}`
-            : 'Iniciar'}
+          {missing <= 0
+            ? 'Iniciar'
+            : missing === 1
+              ? 'Falta 1 jugador'
+              : `Faltan ${String(missing)} jugadores`}
         </Button>
       ) : (
         <p

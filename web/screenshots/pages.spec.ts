@@ -333,8 +333,24 @@ test('lobby as host missing players', async ({ page }) => {
   await signIn(page);
   await serveRoom(page, room({ members: family.slice(0, 3) }));
   await page.goto('/KXPR');
-  await expect(page.getByRole('button', { name: 'Faltan 1 jugador' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Falta 1 jugador' })).toBeDisabled();
   await capture(page, 'lobby-host-missing-players');
+});
+
+test('lobby as host with Just One missing a player', async ({ page }) => {
+  await signIn(page);
+  await serveRoom(page, room({ members: online.slice(0, 3), selectedGame: 'JUST_ONE' }));
+  await page.goto('/KXPR');
+  await expect(page.getByRole('button', { name: 'Falta 1 jugador' })).toBeDisabled();
+  await capture(page, 'lobby-host-justone-missing-players');
+});
+
+test('lobby as host with Wavelength and 2 online', async ({ page }) => {
+  await signIn(page);
+  await serveRoom(page, room({ members: online.slice(0, 2), selectedGame: 'WAVELENGTH' }));
+  await page.goto('/KXPR');
+  await expect(page.getByRole('button', { name: 'Iniciar' })).toBeEnabled();
+  await capture(page, 'lobby-host-wavelength-two');
 });
 
 test('impostor card hidden and shown, civilian', async ({ page }) => {
@@ -639,6 +655,23 @@ test('wavelength final', async ({ page }) => {
   await capture(page, 'wavelength-final');
 });
 
+test('wavelength final, two players', async ({ page }) => {
+  await serveWavelength(
+    page,
+    wavelengthMatch([me.playerId, zorro], {
+      status: 'FINISHED',
+      phase: 'FINISHED',
+      turn: 1,
+      round: 2,
+      totals: { [me.playerId]: 6, [zorro]: 6 },
+    }),
+    null,
+    { members: online.slice(0, 2) },
+  );
+  await expect(page.getByRole('heading', { name: /^Empate:/ })).toBeVisible();
+  await capture(page, 'wavelength-final-two');
+});
+
 test('wavelength final, member', async ({ page }) => {
   await serveWavelength(
     page,
@@ -931,7 +964,7 @@ test.describe('in motion', () => {
 
   test('impostor final, the points counting', async ({ page }) => {
     await serveMatch(page, finished('CIVILIANS'));
-    await page.getByRole('list', { name: 'Puntos de esta partida' }).scrollIntoViewIfNeeded();
+    await page.getByRole('list', { name: 'Puntos para la noche' }).scrollIntoViewIfNeeded();
     await page.waitForTimeout(1300);
     await snap(page, 'impostor-final-counting');
   });

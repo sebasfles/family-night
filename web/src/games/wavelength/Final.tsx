@@ -1,4 +1,8 @@
-import type { RoomMember, WavelengthPublic } from '@family-night/shared';
+import {
+  wavelengthNightPoints,
+  type RoomMember,
+  type WavelengthPublic,
+} from '@family-night/shared';
 import { Button } from '../../components/Button';
 import { CrownIcon } from '../../components/icons';
 import { nameOf } from '../../components/match';
@@ -28,6 +32,8 @@ export function Final({
   onLobby,
 }: FinalProps) {
   const rows = scoreRows(match, 'match');
+  const night = wavelengthNightPoints(match);
+  const unscored = Object.keys(night).length === 0;
   const standings = ranked(rows);
   const best = standings[0]?.to ?? 0;
   const names = standings
@@ -50,7 +56,18 @@ export function Final({
         {best > 0 && <p className="text-xl font-bold">con {best} puntos</p>}
       </div>
 
-      <Scoreboard title="Puntos de esta partida" rows={rows} members={members} selfId={selfId} />
+      <Scoreboard
+        title="Puntos de esta partida"
+        rows={rows}
+        members={members}
+        selfId={selfId}
+        night={night}
+      />
+      {unscored && (
+        <p className="text-center text-lg text-balance text-cream/80">
+          Con 2 jugadores siempre empatan, así que la partida no suma a la noche.
+        </p>
+      )}
 
       {isHost ? (
         <div className="flex flex-col gap-3">

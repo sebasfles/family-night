@@ -488,9 +488,19 @@ describe('the final screen', () => {
     expect(await screen.findByRole('heading', { name: 'Ganaron los civiles' })).toBeVisible();
     expect(screen.getByText('Perro')).toBeVisible();
     expect(screen.getByText('Ronda 1:')).toBeVisible();
-    const points = screen.getByRole('heading', { name: 'Puntos de esta partida' }).parentElement;
+    const points = screen.getByRole('heading', { name: 'Puntos para la noche' }).parentElement;
     expect(within(points ?? document.body).getAllByText('+1')).toHaveLength(3);
     expect(screen.queryByRole('button', { name: /Toca para ver tu carta/ })).toBeNull();
+  });
+
+  test('a civilian who left and came back as a spectator gets no points', async () => {
+    play(room({ ...finished('CIVILIANS'), departedIds: [oso.playerId] }));
+
+    const points = (await screen.findByRole('heading', { name: 'Puntos para la noche' }))
+      .parentElement;
+    const list = within(points ?? document.body);
+    expect(list.getAllByText('+1')).toHaveLength(2);
+    expect(list.getByText('Oso Sabio').closest('li')).toHaveTextContent('+0');
   });
 
   test('points list only the winners still in the room, as the server credits them', async () => {
@@ -498,17 +508,17 @@ describe('the final screen', () => {
     const match = finished('CIVILIANS');
     play(room({ ...match, participants: [...match.participants, gone] }));
 
-    const points = (await screen.findByRole('heading', { name: 'Puntos de esta partida' }))
+    const points = (await screen.findByRole('heading', { name: 'Puntos para la noche' }))
       .parentElement;
     expect(within(points ?? document.body).getAllByText('+1')).toHaveLength(3);
     expect(screen.queryByText('Alguien que salió')).toBeNull();
   });
 
-  test('impostors win and the impostor gets 2 points', async () => {
+  test('impostors win and the impostor gets one point per civilian at the start', async () => {
     play(room(finished('IMPOSTORS')));
 
     expect(await screen.findByRole('heading', { name: 'Ganaron los impostores' })).toBeVisible();
-    expect(screen.getByText('+2')).toBeVisible();
+    expect(screen.getByText('+3')).toBeVisible();
   });
 
   test('the host plays again or goes back to the lobby; members wait', async () => {

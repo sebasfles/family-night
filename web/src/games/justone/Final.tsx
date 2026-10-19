@@ -14,7 +14,6 @@ interface FinalProps {
 }
 
 export function Final({ match, isHost, rematching, leaving, onRematch, onLobby }: FinalProps) {
-  const points = match.score === 1 ? '1 punto' : `${String(match.score)} puntos`;
   return (
     <section aria-labelledby="final-title" className="flex flex-col gap-6">
       <div className="relative flex flex-col items-center gap-2 overflow-hidden rounded-card bg-linear-to-b from-orchid to-orchid-deep px-6 py-8 text-center text-night shadow-lift">
@@ -32,7 +31,7 @@ export function Final({ match, isHost, rematching, leaving, onRematch, onLobby }
         </p>
       </div>
       <p className="text-center text-lg text-balance text-cream/80">
-        Cada jugador suma {points} al marcador de la noche.
+        Es un puntaje de equipo, así que no suma al marcador de la noche.
       </p>
 
       {isHost ? (

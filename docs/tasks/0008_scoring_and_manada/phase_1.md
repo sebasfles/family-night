@@ -28,4 +28,28 @@ updated: 2026-10-18
 
 ## om-developer notes
 
+### Round 1
+
+Done:
+
+- shared: `scoring.ts` with `place` (1, 1, 3 ranking) and `podiumPoints` (N - place + 1); `impostorWinPoints(impostorCount, participantCount)` and `impostorNightPoints(state)` replace `matchScores` and `IMPOSTOR_WIN_POINTS`; `wavelengthNightPoints(state)` replaces `wavelengthScores` (0 when the match started with `WAVELENGTH_UNSCORED_PLAYERS` = 2, podium of the players still in otherwise); `justOneScores` removed.
+- shared: `ImpostorPublic.departedIds` (om-reviewer answer): `removePlayer` records every participant who leaves or is kicked while PLAYING; a voted-out player only gets recorded, a living one is also eliminated as before. Night points skip `departedIds`.
+- shared: `MIN_WAVELENGTH_PLAYERS` 2, `MIN_JUST_ONE_PLAYERS` 4; `notEnoughPlayersMessage(min)`; the default `NOT_ENOUGH_PLAYERS` message no longer names a number.
+- api: each game's `checkStart` throws `notEnoughPlayers(MIN_*)`, so the message names that game's minimum; Impostor and Wavelength add exactly their night-points function at FINISHED; Just One adds nothing (its `finished` helper and the unused `before` of `advance` are gone); `MatchesRepo.get` reads a stored Impostor match without `departedIds` as `[]`.
+- web: `scores.ts` ranks with the shared `place`; `Scoreboard` takes `night` and shows "+N a la noche" under each name; Impostor FINISHED titles its list "Puntos para la noche" and renders `impostorNightPoints`; Wavelength FINISHED shows the podium points and, for a match of 2, says it adds nothing; Just One FINISHED says the team score does not reach the night; "Falta 1 jugador" in the singular.
+- Tutorials: Impostor's last step explains ceil(civilians / impostors) with the demo family's number from the shared rule; Wavelength's and Just One's last steps say what reaches the night.
+- Tests: shared (every win-points case, departed players on both sides, podium ties, 2-player rotation and tie, lone survivor); api (5-player impostor win scores 4, voted-out leaver back as spectator scores 0, legacy match without `departedIds`, Wavelength podium totals, full 2-player Wavelength match with night 0, Just One leaves totals at 0, per-game minimum messages); web (Empezar state per game and count, night points on each FINISHED screen).
+- Screenshots in `screenshots/phase_1/` of the workspace, all screens at 360, 390, 768 and 1280, with new shots `lobby-host-justone-missing-players`, `lobby-host-wavelength-two` and `wavelength-final-two`.
+
+Decisions not in the plan:
+
+- No `justOneNightPoints` function: Just One gives nothing, so the api passes no scores and the screen says so; a function returning `{}` would only be ceremony.
+- The 0 rule of Wavelength is its own constant (`WAVELENGTH_UNSCORED_PLAYERS`), not `MIN_WAVELENGTH_PLAYERS`, because it is about two players always tying, not about the minimum.
+- Night points of the podium are shown as a "+N a la noche" line under each name of the match scoreboard, instead of a second list; under the score it squeezed names at 360 px.
+- "Faltan 1 jugador" corrected to "Falta 1 jugador" (it is the copy of this phase's lobby button).
+
+Pending: none.
+
+Deferred: none.
+
 ## Result

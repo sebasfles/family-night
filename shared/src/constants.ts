@@ -26,7 +26,6 @@ export const IMPOSTOR_CAPS = [
   { minPlayers: 3, maxImpostors: 1 },
 ] as const;
 export const CIVILIAN_WIN_POINTS = 1;
-export const IMPOSTOR_WIN_POINTS = 2;
 export const IMPOSTOR_DEFAULTS = {
   impostorCount: 1,
   randomOrder: true,
@@ -34,8 +33,9 @@ export const IMPOSTOR_DEFAULTS = {
   showCategoryToImpostor: false,
 } as const;
 
-export const MIN_WAVELENGTH_PLAYERS = 3;
+export const MIN_WAVELENGTH_PLAYERS = 2;
 export const MIN_WAVELENGTH_ACTIVE = 2;
+export const WAVELENGTH_UNSCORED_PLAYERS = 2;
 export const WAVELENGTH_MAX_CYCLES = 3;
 export const WAVELENGTH_CLUE_MAX = 40;
 export const DIAL_MAX = 100;
@@ -46,7 +46,7 @@ export const DIAL_BANDS = [
 ] as const;
 export const WAVELENGTH_DEFAULTS = { cycles: 1 } as const;
 
-export const MIN_JUST_ONE_PLAYERS = 3;
+export const MIN_JUST_ONE_PLAYERS = 4;
 export const MIN_JUST_ONE_ACTIVE = 2;
 export const JUST_ONE_MAX_CYCLES = 3;
 export const JUST_ONE_CLUE_MAX = 30;

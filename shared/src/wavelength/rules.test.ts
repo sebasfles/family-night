@@ -9,6 +9,7 @@ import {
   dialPoints,
   drawTarget,
   dropWavelengthPlayer,
+  finishWavelength,
   giveClue,
   guessersOf,
   nextTurn,
@@ -18,7 +19,7 @@ import {
   recordCommits,
   revealRound,
   startWavelength,
-  wavelengthScores,
+  wavelengthNightPoints,
   wavelengthStartProblem,
 } from './rules.ts';
 
@@ -124,7 +125,7 @@ describe('scoring', () => {
 
     expect(state.totals).toEqual({ a: 4, b: 6, c: 4 });
     const { state: afterLeave } = dropWavelengthPlayer(state, 'c');
-    expect(wavelengthScores(afterLeave)).toEqual({ a: 4, b: 6 });
+    expect(wavelengthNightPoints(finishWavelength(afterLeave))).toEqual({ a: 1, b: 2 });
   });
 });
 
@@ -252,7 +253,7 @@ describe('a player leaves', () => {
     expect(two.status).toBe('PLAYING');
     const { state: one } = dropWavelengthPlayer(two, 'b');
     expect(one).toMatchObject({ status: 'FINISHED', phase: 'FINISHED' });
-    expect(wavelengthScores(one)).toEqual({ a: 4 });
+    expect(wavelengthNightPoints(one)).toEqual({ a: 1 });
   });
 
   test('someone outside the match or a finished match changes nothing', () => {
@@ -266,9 +267,9 @@ describe('a player leaves', () => {
 });
 
 describe('setup', () => {
-  test('three players are needed and cycles go from 1 to 3', () => {
-    expect(wavelengthStartProblem(2)).toBe('NOT_ENOUGH_PLAYERS');
-    expect(wavelengthStartProblem(3)).toBeNull();
+  test('two players are needed and cycles go from 1 to 3', () => {
+    expect(wavelengthStartProblem(1)).toBe('NOT_ENOUGH_PLAYERS');
+    expect(wavelengthStartProblem(2)).toBeNull();
     expect(wavelengthConfigSchema.safeParse({ cycles: 1 }).success).toBe(true);
     expect(wavelengthConfigSchema.safeParse({ cycles: 3 }).success).toBe(true);
     expect(wavelengthConfigSchema.safeParse({ cycles: 0 }).success).toBe(false);
@@ -294,5 +295,57 @@ describe('setup', () => {
 
     const reset = pickSpectrum(bank, lastPick.usedSpectrumIds, last);
     expect(reset).toEqual({ spectrum: bank[2], usedSpectrumIds: ['feo-bonito'] });
+  });
+});
+
+describe('two players', () => {
+  test('they take turns as psychic, the psychic earns the one guess, and both always tie', () => {
+    let state = match(['a', 'b'], 2);
+    const psychics: string[] = [];
+    for (const [value, target] of [
+      [50, 50],
+      [60, 50],
+      [10, 30],
+      [80, 70],
+    ] as const) {
+      psychics.push(state.psychicId);
+      const [guesser] = guessersOf(state);
+      if (!guesser) throw new Error('expected one guesser');
+      expect(guessersOf(state)).toEqual([guesser]);
+      const recorded = recordCommits(guessing(state), [{ playerId: guesser, value }]);
+      expect(allCommitted(recorded)).toBe(true);
+      const revealed = revealRound(recorded, target, [{ playerId: guesser, value }]);
+      expect(revealed.lastResult?.psychicPoints).toBe(dialPoints(value, target));
+      const turn = nextTurn(revealed);
+      state = turn === null ? finishWavelength(revealed) : openRound(revealed, turn, other);
+    }
+
+    expect(psychics).toEqual([...state.order, ...state.order]);
+    expect(state).toMatchObject({ status: 'FINISHED', totals: { a: 8, b: 8 } });
+    expect(wavelengthNightPoints(state)).toEqual({});
+  });
+
+  test('a match that started with 2 gives nothing even to the one left', () => {
+    const revealed = revealRound(guessing(match(['a', 'b'])), 50, [{ playerId: 'b', value: 50 }]);
+    const { state } = dropWavelengthPlayer(revealed, 'a');
+    expect(state.status).toBe('FINISHED');
+    expect(wavelengthNightPoints(state)).toEqual({});
+  });
+});
+
+describe('night points', () => {
+  test('the podium of the players still in, ties sharing the place and its points', () => {
+    const state = finishWavelength({
+      ...match(['a', 'b', 'c', 'd', 'e']),
+      totals: { a: 9, b: 12, c: 9, d: 3, e: 20 },
+    });
+    expect(wavelengthNightPoints(state)).toEqual({ e: 5, b: 4, a: 3, c: 3, d: 1 });
+  });
+
+  test('a match that ends with 2 after a departure still uses the podium', () => {
+    const scored = { ...match(['a', 'b', 'c']), totals: { a: 5, b: 9, c: 2 } };
+    const { state } = dropWavelengthPlayer(scored, 'b');
+    expect(state.status).toBe('PLAYING');
+    expect(wavelengthNightPoints(finishWavelength(state))).toEqual({ a: 2, c: 1 });
   });
 });

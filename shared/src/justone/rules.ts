@@ -331,8 +331,3 @@ export function dropJustOnePlayer(
   const cancelsRound = playerId === state.guesserId && state.phase !== 'REVEAL';
   return { state: dropped, cancelsRound };
 }
-
-export function justOneScores(state: JustOnePublic): Record<string, number> {
-  if (state.score === 0) return {};
-  return Object.fromEntries(justOnePlayers(state).map((id) => [id, state.score]));
-}

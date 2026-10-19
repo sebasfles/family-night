@@ -101,6 +101,7 @@ Decisions (om-reviewer, accepted):
 - Night points are one pure shared function per game over the FINISHED public state; the api adds exactly its output and the FINISHED screen renders exactly it (as `Final.tsx` of Impostor already does with `matchScores`). Just One's FINISHED says it adds nothing to the night. The lobby button keeps "Iniciar".
 - A La manada answer is confirmed by its one `PUT answer`; no provisional server state; a second one is refused.
 - Screenshots in `{{workspace}}/screenshots/phase_N/`, refreshed every round.
+- `ImpostorPublic` gains `departedIds`: every participant who leaves or is kicked while PLAYING, living or already voted out, so a returning spectator scores nothing; a stored match without it reads as []. Reason: the public state could not tell a voted-out leaver apart (om-developer question, 2026-10-18).
 
 Constraints:
 

@@ -498,6 +498,27 @@ describe('the reveal and the end', () => {
     expect(screen.queryByRole('button', { name: 'Siguiente ronda' })).toBeNull();
   });
 
+  test('a match of 2 says it adds nothing to the night', async () => {
+    const pair = [me.playerId, zorro.playerId];
+    play(
+      room(
+        wavelengthMatch(pair, {
+          status: 'FINISHED',
+          phase: 'FINISHED',
+          turn: 1,
+          round: 2,
+          totals: { [me.playerId]: 6, [zorro.playerId]: 6 },
+        }),
+      ),
+    );
+
+    expect(await screen.findByRole('heading', { name: /^Empate:/ })).toBeVisible();
+    expect(
+      screen.getByText('Con 2 jugadores siempre empatan, así que la partida no suma a la noche.'),
+    ).toBeVisible();
+    expect(screen.queryByText(/a la noche$/)).toBeNull();
+  });
+
   test('the final scoreboard crowns the leader and the host plays again or leaves', async () => {
     const finished = revealed({ status: 'FINISHED', phase: 'FINISHED', turn: 3, round: 4 });
     const { mock } = play(room(finished));
@@ -506,6 +527,12 @@ describe('the reveal and the end', () => {
     expect(await screen.findByRole('heading', { name: 'Fin de la partida' })).toBeVisible();
     expect(screen.getByRole('heading', { name: 'Ganó Cóndor Veloz' })).toBeVisible();
     expect(screen.getByText('Wavelength, 4 rondas')).toBeVisible();
+    const scoreboard = within(screen.getByRole('list', { name: 'Puntos de esta partida' }));
+    const night = (name: string) => scoreboard.getByText(name).closest('li');
+    expect(night('Cóndor Veloz')).toHaveTextContent('+4 a la noche');
+    expect(night('Zorro Astuto')).toHaveTextContent('+3 a la noche');
+    expect(night('Oso Sabio')).toHaveTextContent('+2 a la noche');
+    expect(night('Colibrí Risueño')).toHaveTextContent('+1 a la noche');
     expect(screen.getByRole('button', { name: 'Volver al lobby' })).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Jugar otra vez' }));
     await waitFor(() => {

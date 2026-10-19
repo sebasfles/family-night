@@ -1,4 +1,4 @@
-import { matchScores, type ImpostorPublic, type RoomMember } from '@family-night/shared';
+import { impostorNightPoints, type ImpostorPublic, type RoomMember } from '@family-night/shared';
 import type { ReactNode } from 'react';
 import { Avatar } from '../../components/Avatar';
 import { Button } from '../../components/Button';
@@ -33,7 +33,7 @@ export function Final({
   const reveal = match.reveal;
   if (!reveal || !match.winner) return null;
   const civilians = match.winner === 'CIVILIANS';
-  const points = matchScores(match, reveal.impostorIds);
+  const points = impostorNightPoints(match);
   const present = (playerId: string) => members.some((member) => member.playerId === playerId);
   const rows = match.participants
     .filter(present)
@@ -136,7 +136,7 @@ export function Final({
       </Block>
 
       <Scoreboard
-        title="Puntos de esta partida"
+        title="Puntos para la noche"
         rows={rows}
         members={members}
         selfId={selfId}
