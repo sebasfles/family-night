@@ -1,6 +1,6 @@
 ---
-updated: 2026-10-18
-source: 0006_gameplay_and_redesign
+updated: 2026-10-19
+source: 0008_scoring_and_manada
 ---
 
 # Impostor: decisions
@@ -205,3 +205,11 @@ Decisions come from [the plan](../../implementation-plan.md); where the plan sta
 - Revisit when: the list feels long in a 20-player room.
 - Source: 0006_gameplay_and_redesign
 
+## 2026-10-19: A returning departed player shows on the final with +0
+
+- Decision: the final scoreboard keeps listing every participant still in the room, so a player in `departedIds` who came back as a spectator appears with +0.
+- Alternatives rejected: hiding departed players from the final list.
+- Reason: the list mirrors the room, and the points are right; only the row is debatable.
+- Debt created: a player who left and came back reads as a loser with +0 rather than as absent from the match.
+- Revisit when: a family finds that row confusing.
+- Source: 0008_scoring_and_manada

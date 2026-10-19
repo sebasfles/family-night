@@ -1,6 +1,6 @@
 ---
-updated: 2026-10-18
-source: 0006_gameplay_and_redesign
+updated: 2026-10-19
+source: 0008_scoring_and_manada
 ---
 
 # Just One: product
@@ -16,7 +16,7 @@ Everyone plays for the same score, so the table cheers together.
 
 1. In the lobby the host taps the Just One card; every phone shows it as the chosen game.
 2. The host picks Vueltas 1, 2 or 3: how many times each player will be the adivinador; the panel says how many rounds that makes with the players online.
-3. With at least 3 players online the host taps Iniciar and every phone moves to the game.
+3. With at least 4 players online the host taps Iniciar and every phone moves to the game.
 
 ### Clues
 
@@ -48,12 +48,12 @@ Everyone plays for the same score, so the table cheers together.
 
 ## Rules
 
-- At least 3 players online to start; one team score per match.
+- At least 4 players online to start; one team score per match.
 - Correct +1, pass 0, wrong -1, and the score never goes below 0; counting a wrong guess as correct recomputes that round from the score before it.
 - Clues match when they are equal ignoring case, accents and plural (s, es, ces to z); ñ is not n.
 - The adivinador order is drawn at the start and repeats every cycle.
 - Words do not repeat within a night; when the bank is used up it starts over.
-- The team score reaches every player still in the match when it ends.
+- The team score stays in the match: the night's scoreboard does not change, because a cooperative score is not comparable with the other games; the final screen says so.
 
 ## Out of scope
 

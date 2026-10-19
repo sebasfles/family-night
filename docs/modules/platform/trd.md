@@ -1,6 +1,6 @@
 ---
-updated: 2026-10-18
-source: 0007_lobby_polish
+updated: 2026-10-19
+source: 0008_scoring_and_manada
 ---
 
 # Platform: technical
@@ -13,7 +13,7 @@ Every payload change starts in `shared`, so an incompatible change breaks compil
 
 | Path | What |
 |---|---|
-| `shared/src/{api,events,domain,constants,players}.ts` | Types of every endpoint and event, the domain types, limits (members, TTL, thresholds, room code alphabet), and the name rules (`normalizePlayerName`, `playerNameKey`) web and api both apply. Pure, no AWS. |
+| `shared/src/{api,events,domain,constants,players,scoring}.ts` | Types of every endpoint and event, the domain types, limits (members, TTL, thresholds, room code alphabet, the minimum players of each game), the name rules (`normalizePlayerName`, `playerNameKey`) web and api both apply, and the podium of night points (`place`, `podiumPoints`) the games build on. Pure, no AWS. |
 | `api/src/index.ts`, `api/src/app.ts`, `api/src/server.ts` | The Lambda entry and the Node entry around one Hono app (`app.ts`) for every route, platform and game. |
 | `api/src/events-auth.ts` | The Events API authorizer, bundled as its own function: connect needs a valid `playerId:playerToken`, subscribe also membership of the exact channel's room; allows cached 300 s, denials never cached. |
 | `api/scripts/build.mjs` | esbuild bundles of both functions, zipped reproducibly into `dist/api.zip` and `dist/events-auth.zip`. |
@@ -33,7 +33,7 @@ Every payload change starts in `shared`, so an incompatible change breaks compil
 | `web/src/realtime/` | One WebSocket per tab to AppSync Events, own client, backoff 1 s to 30 s, resubscribe and invalidate the room query on reconnect. |
 | `web/src/index.css` | The design system: warm dark colour tokens, Fraunces and Nunito (self-hosted), the `surface`, `popover` and card surfaces (`card-paper`, `card-wine`, `card-back`). |
 | `web/src/motion/` | The only door to `motion` (LazyMotion `domAnimation`, `m` components): `Enter`, `Stagger`, `Pop`, `Fade`, `Meter`, `SlideUp`, `SlideIn`; plus own CSS 3D `Flip`/`FlipReveal`, `CountUp` and `useShuffleIn` (Web Animations API); `useReducedMotion` turns all of it off. |
-| `web/src/components/` | Shared UI of the lobby, the shell and every game (`MatchHeader`, `AbortMatchMenu`, `Avatar`, `Scoreboard`, `Notice`, `Waiting`, `field.ts`, `lobby/CyclesPanel` for games configured by cycles, `match.ts` with `nameOf`, `vibrate`, `usePhaseVibration`, `HowToPlay` with the example family of its steps); games never import each other, and `components/` never imports `games/`: the lobby route maps each game to its panel and its how-to-play steps. |
+| `web/src/components/` | Shared UI of the lobby, the shell and every game (`MatchHeader`, `AbortMatchMenu`, `Avatar`, `Scoreboard`, `Notice`, `Waiting`, `field.ts`, `lobby/CyclesPanel` for games configured by cycles, `lobby/ConfigSection` with `Segmented`, `Row` and `StepButton`, `match.ts` with `nameOf`, `vibrate`, `usePhaseVibration`, `HowToPlay` with the example family of its steps); games never import each other, and `components/` never imports `games/`: the lobby route maps each game to its panel and its how-to-play steps. |
 | `web/public/og.png` and the Open Graph tags in `web/index.html` | The WhatsApp preview; static because WhatsApp runs no JavaScript. |
 
 ## Endpoints owned
@@ -81,8 +81,10 @@ Channel `/rooms/{ROOMCODE}` in namespace `rooms` carries `room.updated`, `member
 - The realtime connection authenticates with `playerId:playerToken` through the AppSync Lambda authorizer; subscribing to `/rooms/{code}` needs membership of that room.
 - Game endpoints are mounted in the same router by the game modules; start, config, rematch, next-round, `/me` and departures reach the game through the registry by `gameType`. A route several games share lives in the platform: `next-round` in the matches router, and `PUT clue` and `PUT guess`, whose bodies differ per game, in the shared match router; a game without the path answers `STALE_ROUND`.
 - Leaving or being kicked mid-match calls the game's own handling of a player who left.
+- Night points come from one pure shared function per game over its finished public state; the api adds exactly its output to `totalScore` in the write that finishes the match, and the final screen renders exactly the same function's output.
+- Each game's `checkStart` refuses with `NOT_ENOUGH_PLAYERS` and a message naming that game's minimum (`MIN_*_PLAYERS` in `shared`), the same constant the lobby's start button reads.
 - Match routes live under the room, which is also the membership check; a match id that exists but is no longer current answers `STALE_ROUND`.
-- The `$code/route.tsx` effect moves the phone to the current match's game route (`/$code/impostor`, `/$code/wavelength`, `/$code/justone`) and back to the lobby when `currentMatch` is null; aborting clears it in the same write.
+- The `$code/route.tsx` effect moves the phone to the current match's game route (`/$code/impostor`, `/$code/wavelength`, `/$code/justone`, `/$code/manada`) and back to the lobby when `currentMatch` is null; aborting clears it in the same write.
 - `selectedGame` changes with `PUT /config` and with every start or rematch; the lobby shows that game's panel.
 - Optimistic commands are an overlay, never written into the room cache: the screen is the snapshot plus the phone's pending commands; a refusal drops the command and toasts the message. Every room command of a phone runs in one mutation scope, so they reach the server in tap order. Phase vibration follows the served snapshot, not the overlay.
 - The overlay carries only the caller's own action: never another player's secret, vote or guess.
@@ -90,11 +92,11 @@ Channel `/rooms/{ROOMCODE}` in namespace `rooms` carries `room.updated`, `member
 ## Depends on
 
 - infra: the tables, the Lambda and its Function URL behind CloudFront, the AppSync Events API, the Lambda authorizer of the Events API, the Actions variables the web build reads.
-- impostor, wavelength, justone: their registry entries (config, start, next round, player-left handling, secret) and `publicState`.
+- impostor, wavelength, justone, manada: their registry entries (config, start, next round, player-left handling, secret) and `publicState`.
 
 ## Depended on by
 
-- impostor, wavelength, justone: auth, membership checks, version and optimistic locking, snapshot building, publishing, the `$code` shell and `GET /api/rooms/{code}/matches/{matchId}/me`.
+- impostor, wavelength, justone, manada: auth, membership checks, version and optimistic locking, snapshot building, publishing, the `$code` shell and `GET /api/rooms/{code}/matches/{matchId}/me`.
 - deploy: builds and ships `shared`, `api` and `web`.
 
 ## Configuration

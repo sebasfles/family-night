@@ -65,4 +65,9 @@ Pending: none.
 
 Deferred: none.
 
+### Documentation
+
+- `document-task` over the whole task (phases 1 and 2): new `docs/modules/manada/` (README, prd, trd, ard, database, flows); platform, impostor, wavelength and justone docs updated for night points and minimums; one ARD entry per decision of both phases' notes not in the plan, plus the two let-pass items of phase 1 as debt; `docs/ARD.md` Debt index in line.
+- `docs/PRD.md` and `docs/TRD.md` edited because the task's Scope and Acceptance 4 ask for it, although `document-task` leaves them to setup and the om-manager.
+
 ## Result

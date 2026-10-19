@@ -1,6 +1,6 @@
 ---
-updated: 2026-10-18
-source: 0006_gameplay_and_redesign
+updated: 2026-10-19
+source: 0008_scoring_and_manada
 ---
 
 # Platform
@@ -12,7 +12,7 @@ Every phone sees the same room in real time.
 ## Boundaries
 
 - Owns: identity, the random name and renaming, rooms and membership, host rules and transfer, lobby, presence, invitation, the realtime channel and the room snapshot contract, the match lifecycle shared by every game, the game registry and the selected game, and the web shell (routes, identity bootstrap, state-driven navigation, HTTP and realtime clients, the optimistic overlay), and the design system and motion every screen uses.
-- Does not own: game rules, endpoints and screens (`impostor`, `wavelength`, `justone`), AWS resources (`infra`), workflows (`deploy`).
+- Does not own: game rules, endpoints and screens (`impostor`, `wavelength`, `justone`, `manada`), AWS resources (`infra`), workflows (`deploy`).
 - Code: `shared/src/` except the game folders, `api/src/{lib,repos,realtime}`, `api/src/handlers/{context,matches,shared-match,rooms,players}.ts`, `api/src/services/{players,rooms,presence,matches,games.ts}`, `web/src/{routes,identity,api,realtime,components,motion}` and `web/src/index.css`, except the game routes.
 
 ## Documents

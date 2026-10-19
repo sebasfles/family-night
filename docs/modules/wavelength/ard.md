@@ -1,6 +1,6 @@
 ---
-updated: 2026-10-18
-source: 0006_gameplay_and_redesign
+updated: 2026-10-19
+source: 0008_scoring_and_manada
 ---
 
 # Wavelength: decisions
@@ -149,3 +149,11 @@ source: 0006_gameplay_and_redesign
 - Revisit when: the dial needs another animated layer.
 - Source: 0006_gameplay_and_redesign
 
+## 2026-10-19: The unscored size is its own constant
+
+- Decision: `WAVELENGTH_UNSCORED_PLAYERS` (2) decides that a match started with that many players gives the night nothing; it is separate from `MIN_WAVELENGTH_PLAYERS`, also 2 today.
+- Alternatives rejected: reusing the minimum.
+- Reason: the rule is about two players always tying on the podium, not about who may start.
+- Debt created: a match that started with 2 and lost one player still finishes with "Con 2 jugadores siempre empatan", though only one was left.
+- Revisit when: the minimum or the podium changes.
+- Source: 0008_scoring_and_manada
