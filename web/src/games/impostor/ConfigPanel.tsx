@@ -1,11 +1,13 @@
 import type { ImpostorConfig, TieRule, WordCategory } from '@family-night/shared';
-import { useId, type ReactNode } from 'react';
+import { useId } from 'react';
 import { ChevronDownIcon } from '../../components/icons';
 import {
   chosen,
   ConfigSection,
   control,
+  Row,
   Segmented,
+  StepButton,
   unchosen,
 } from '../../components/lobby/ConfigSection';
 
@@ -164,42 +166,6 @@ function categorySummary(selected: string[], categories: WordCategory[] | undefi
   if (!categories) return 'Cargando categorías…';
   const count = categories.filter((category) => selected.includes(category.id)).length;
   return count === categories.length ? 'Todas' : `${String(count)} de ${String(categories.length)}`;
-}
-
-function Row({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
-  return (
-    <div className="flex items-center justify-between gap-4">
-      <div className="flex min-w-0 flex-col">
-        <p className="font-bold">{label}</p>
-        {hint && <p className="text-sm text-cream/60">{hint}</p>}
-      </div>
-      {children}
-    </div>
-  );
-}
-
-function StepButton({
-  label,
-  disabled,
-  onClick,
-  children,
-}: {
-  label: string;
-  disabled: boolean;
-  onClick: () => void;
-  children: ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      disabled={disabled}
-      onClick={onClick}
-      className={`flex size-12 items-center justify-center rounded-full text-2xl font-bold disabled:opacity-35 ${unchosen} hover:enabled:bg-night-raised motion-safe:active:enabled:scale-95 ${control}`}
-    >
-      {children}
-    </button>
-  );
 }
 
 function Switch({

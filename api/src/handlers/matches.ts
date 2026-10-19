@@ -15,7 +15,7 @@ import {
 import { matchIdParam, parseBody, roomCodeParam, roundSchema, type AppEnv } from './context.ts';
 
 const configBodySchema: z.ZodType<ConfigBody> = z.object({
-  gameType: z.enum(['IMPOSTOR', 'WAVELENGTH', 'JUST_ONE']),
+  gameType: z.enum(['IMPOSTOR', 'WAVELENGTH', 'JUST_ONE', 'MANADA']),
   config: z.unknown(),
 });
 

@@ -255,7 +255,7 @@ describe('the lobby', () => {
     enterRoom('/ABCD');
 
     const games = await screen.findByRole('region', { name: 'Juegos' });
-    for (const name of ['Impostor', 'Just One', 'Wavelength']) {
+    for (const name of ['Impostor', 'Just One', 'Wavelength', 'La manada']) {
       expect(within(games).getByRole('heading', { name })).toBeVisible();
     }
     expect(within(games).getByText('Elegido')).toBeVisible();
@@ -263,7 +263,7 @@ describe('the lobby', () => {
       'aria-pressed',
       'true',
     );
-    for (const name of ['Jugar Wavelength', 'Jugar Just One']) {
+    for (const name of ['Jugar Wavelength', 'Jugar Just One', 'Jugar La manada']) {
       expect(within(games).getByRole('button', { name })).toHaveAttribute('aria-pressed', 'false');
     }
     expect(within(games).queryByText('Próximamente')).toBeNull();
@@ -697,7 +697,7 @@ describe('how to play', () => {
     mock.on('GET /api/words/categories', () => Response.json({ categories: [] }));
 
     const games = await screen.findByRole('region', { name: 'Juegos' });
-    for (const name of ['Impostor', 'Wavelength', 'Just One']) {
+    for (const name of ['Impostor', 'Wavelength', 'Just One', 'La manada']) {
       expect(within(games).getByRole('button', { name: `¿Cómo jugar ${name}?` })).toBeVisible();
     }
 
@@ -722,7 +722,7 @@ describe('how to play', () => {
     expect(screen.getByRole('dialog', { name: 'Just One' })).toBeVisible();
   });
 
-  test.each(['Impostor', 'Wavelength', 'Just One'])(
+  test.each(['Impostor', 'Wavelength', 'Just One', 'La manada'])(
     '%s walks through 4 to 6 steps, each with its scene',
     async (game) => {
       enterRoom('/ABCD');

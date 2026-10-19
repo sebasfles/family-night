@@ -1,12 +1,18 @@
 import { join } from 'node:path';
 import {
+  finishManada,
+  mergeGroups,
+  revealManada,
   IMPOSTOR_DEFAULTS,
   JUST_ONE_DEFAULTS,
+  MANADA_DEFAULTS,
   WAVELENGTH_DEFAULTS,
   type ImpostorPublic,
   type ImpostorSecret,
   type JustOnePublic,
   type JustOneSecret,
+  type ManadaPublic,
+  type ManadaSecret,
   type RoomMember,
   type RoomSnapshot,
   type WavelengthPublic,
@@ -15,6 +21,7 @@ import {
 import { expect, type Page, test } from '@playwright/test';
 import { impostorMatch, MATCH_ID } from '../src/test/impostor-match';
 import { JUST_ONE_MATCH_ID, justOneMatch } from '../src/test/justone-match';
+import { MANADA_MATCH_ID, manadaMatch } from '../src/test/manada-match';
 import { WAVELENGTH_MATCH_ID, wavelengthMatch } from '../src/test/wavelength-match';
 
 const me = {
@@ -71,6 +78,7 @@ function room(overrides: Partial<RoomSnapshot> = {}): RoomSnapshot {
       },
       WAVELENGTH: { ...WAVELENGTH_DEFAULTS },
       JUST_ONE: { ...JUST_ONE_DEFAULTS },
+      MANADA: { ...MANADA_DEFAULTS },
     },
     serverTime: new Date().toISOString(),
     ...overrides,
@@ -337,7 +345,7 @@ test('lobby as host with the Impostor config', async ({ page }) => {
   await capture(page, 'lobby-host-config-categories');
 });
 
-for (const game of ['Impostor', 'Wavelength', 'Just One']) {
+for (const game of ['Impostor', 'Wavelength', 'Just One', 'La manada']) {
   test(`how to play ${game}, every step`, async ({ page }) => {
     await signIn(page);
     await serveRoom(page, room({ members: online }));
@@ -954,6 +962,176 @@ test('just one spectator', async ({ page }) => {
   await capture(page, 'justone-spectator');
 });
 
+async function serveManada(
+  page: Page,
+  match: ManadaPublic,
+  secret: ManadaSecret | null = null,
+  overrides: Partial<RoomSnapshot> = {},
+) {
+  await signIn(page);
+  await serveRoom(
+    page,
+    room({ members: live(), currentMatch: match, selectedGame: 'MANADA', ...overrides }),
+  );
+  await page.route(`**/api/rooms/KXPR/matches/${MANADA_MATCH_ID}/me`, (route) =>
+    route.fulfill({ json: { secret } }),
+  );
+  await page.goto('/KXPR');
+  await expect(page.getByRole('heading', { name: /^(Ronda|Fin de la partida)/ })).toBeVisible();
+}
+
+const herd = [me.playerId, zorro, oso, colibri, hipo];
+
+function live(): RoomMember[] {
+  const now = new Date().toISOString();
+  return online.map((player) => ({ ...player, lastSeenAt: now }));
+}
+
+function mm(overrides: Partial<ManadaPublic> = {}): ManadaPublic {
+  return manadaMatch(herd, {
+    round: 3,
+    totals: { [me.playerId]: 2, [zorro]: 3, [oso]: 1, [colibri]: 2, [hipo]: 0 },
+    cowHolderId: colibri,
+    ...overrides,
+  });
+}
+
+function mmRevealed(answers: (string | null)[], overrides: Partial<ManadaPublic> = {}) {
+  const given = herd.flatMap((playerId, index) => {
+    const answer = answers[index];
+    return answer ? [{ playerId, answer }] : [];
+  });
+  const match = mm(overrides);
+  return revealManada(
+    { ...match, answeredPlayerIds: given.map((answer) => answer.playerId) },
+    given,
+  );
+}
+
+const yourAnswer = (answer: string | null): ManadaSecret => ({
+  role: 'ANSWERER',
+  round: 3,
+  answer,
+});
+
+test('lobby as host with the La manada config', async ({ page }) => {
+  await signIn(page);
+  await serveRoom(page, room({ members: live(), selectedGame: 'MANADA' }));
+  await page.goto('/KXPR');
+  await expect(page.getByRole('radio', { name: 'Rondas' })).toBeChecked();
+  await capture(page, 'lobby-host-manada');
+});
+
+test('lobby as host with La manada until 8 points', async ({ page }) => {
+  await signIn(page);
+  await serveRoom(
+    page,
+    room({
+      members: live(),
+      selectedGame: 'MANADA',
+      configs: { ...room().configs, MANADA: { goal: 'POINTS', rounds: 10 } },
+    }),
+  );
+  await page.goto('/KXPR');
+  await expect(page.getByRole('radio', { name: '8 puntos' })).toBeChecked();
+  await capture(page, 'lobby-host-manada-points');
+});
+
+test('lobby as host with La manada missing a player', async ({ page }) => {
+  await signIn(page);
+  const two = [member(me.playerId, me.name), member(zorro, 'Zorro Astuto')];
+  await serveRoom(page, room({ members: two, selectedGame: 'MANADA' }));
+  await page.goto('/KXPR');
+  await expect(page.getByRole('button', { name: 'Falta 1 jugador' })).toBeDisabled();
+  await capture(page, 'lobby-host-manada-missing-players');
+});
+
+test('la manada answer, host before confirming', async ({ page }) => {
+  await serveManada(page, mm({ answeredPlayerIds: [zorro, hipo] }), yourAnswer(null));
+  await page.getByRole('textbox', { name: 'Tu respuesta' }).fill('Plátano frito');
+  await capture(page, 'manada-answer-host');
+});
+
+test('la manada answer, too many words', async ({ page }) => {
+  await serveManada(page, mm(), yourAnswer(null), { hostId: zorro });
+  await page.getByRole('textbox', { name: 'Tu respuesta' }).fill('un plátano bien frito');
+  await expect(page.getByText('Máximo 3 palabras')).toBeVisible();
+  await capture(page, 'manada-answer-too-long');
+});
+
+test('la manada answer, confirmed', async ({ page }) => {
+  await serveManada(
+    page,
+    mm({ answeredPlayerIds: [me.playerId, zorro, hipo] }),
+    yourAnswer('Plátano frito'),
+    { hostId: zorro },
+  );
+  await expect(page.getByText('Listo. Esperando a los demás…')).toBeVisible();
+  await capture(page, 'manada-answer-confirmed');
+});
+
+test('la manada answer, host closing early', async ({ page }) => {
+  await serveManada(page, mm({ answeredPlayerIds: [zorro, hipo] }), yourAnswer(null));
+  await page.getByRole('button', { name: 'Cerrar respuestas' }).click();
+  await expect(page.getByRole('alertdialog')).toBeVisible();
+  await capture(page, 'manada-answer-close-confirm', false);
+});
+
+test('la manada reveal, the cow moves', async ({ page }) => {
+  await serveManada(
+    page,
+    mmRevealed(['Plátano', 'plátanos', 'Plátano', 'el plátano', 'Mango']),
+    null,
+    { hostId: zorro },
+  );
+  await expect(page.getByText('La vaca rosa pasa a Hipopótamo Majestuoso')).toBeVisible();
+  await capture(page, 'manada-reveal-cow');
+});
+
+test('la manada reveal, a tie and the cow stays, host', async ({ page }) => {
+  await serveManada(page, mmRevealed(['Mango', 'mango', 'Piña', 'piñas', null]));
+  await expect(page.getByText('Empatan las manadas más grandes: nadie suma')).toBeVisible();
+  await capture(page, 'manada-reveal-tie-host');
+});
+
+test('la manada reveal, host merging two groups', async ({ page }) => {
+  const answers = ['Plátano', 'Banana', 'plátano', 'Mango', 'Banano'];
+  await serveManada(page, mmRevealed(answers));
+  await page.getByRole('button', { name: 'Elegir el grupo Banana' }).click();
+  await expect(page.getByText(/Toca otro grupo para unirlo con «Banana»/)).toBeVisible();
+  await capture(page, 'manada-reveal-merging');
+});
+
+test('la manada reveal, merged by the host', async ({ page }) => {
+  const revealed = mmRevealed(['Plátano', 'Banana', 'plátano', 'Mango', 'Banano'], {
+    cowHolderId: oso,
+  });
+  await serveManada(page, mergeGroups(revealed, zorro, hipo));
+  await expect(page.getByText('Unidas por el host')).toBeVisible();
+  await capture(page, 'manada-reveal-merged');
+});
+
+test('la manada final', async ({ page }) => {
+  const finished = finishManada(
+    mm({
+      round: 9,
+      totals: { [me.playerId]: 8, [zorro]: 9, [oso]: 5, [colibri]: 8, [hipo]: 2 },
+      cowHolderId: zorro,
+    }),
+  );
+  await serveManada(page, finished);
+  await expect(page.getByRole('heading', { name: /^Empate/ })).toBeVisible();
+  await capture(page, 'manada-final');
+});
+
+test('la manada spectator', async ({ page }) => {
+  await serveManada(page, mm({ departedIds: [me.playerId], answeredPlayerIds: [zorro] }), null, {
+    hostId: zorro,
+  });
+  await expect(page.getByText('Partida en curso, juegas en la siguiente')).toBeVisible();
+  await capture(page, 'manada-spectator');
+});
+
 test.describe('in motion', () => {
   test.use({ reducedMotion: 'no-preference' });
 
@@ -989,6 +1167,19 @@ test.describe('in motion', () => {
   test('just one reveal, the word flipping', async ({ page }) => {
     await serveJustOne(page, joRevealed('CORRECT'), null, { hostId: zorro });
     await midFlip(page, 'justone-reveal-flip');
+  });
+
+  test('la manada reveal, the cow moving to its new holder', async ({ page }) => {
+    await serveManada(
+      page,
+      mmRevealed(['Plátano', 'plátanos', 'Plátano', 'el plátano', 'Mango']),
+      null,
+      { hostId: zorro },
+    );
+    const cow = page.getByRole('region', { name: 'La vaca rosa' });
+    await cow.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(120);
+    await snap(page, 'manada-cow-moving');
   });
 
   test('impostor final, the points counting', async ({ page }) => {

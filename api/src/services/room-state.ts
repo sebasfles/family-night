@@ -35,6 +35,7 @@ export interface RoomChange {
   usedWordIds?: string[];
   usedSpectrumIds?: string[];
   usedJustOneWordIds?: string[];
+  usedManadaQuestionIds?: string[];
   writes?: TransactItem[];
 }
 
@@ -131,6 +132,7 @@ async function commit(
         usedWordIds: change.usedWordIds ?? state.room.usedWordIds,
         usedSpectrumIds: change.usedSpectrumIds ?? state.room.usedSpectrumIds,
         usedJustOneWordIds: change.usedJustOneWordIds ?? state.room.usedJustOneWordIds,
+        usedManadaQuestionIds: change.usedManadaQuestionIds ?? state.room.usedManadaQuestionIds,
         selectedGame: change.selectedGame ?? state.room.selectedGame,
         configs: change.configs ?? state.room.configs,
         updatedAt: iso(nowMs),

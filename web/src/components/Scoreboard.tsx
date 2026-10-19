@@ -17,6 +17,7 @@ interface ScoreboardProps {
   signed?: boolean;
   gains?: boolean;
   night?: Readonly<Record<string, number>>;
+  ranks?: Readonly<Record<string, number>>;
 }
 
 export function Scoreboard({
@@ -27,14 +28,19 @@ export function Scoreboard({
   signed = false,
   gains = false,
   night,
+  ranks,
 }: ScoreboardProps) {
   const reduced = useReducedMotion();
   const list = useShuffleIn<HTMLOListElement>(
     rows.toSorted(byScore('from')).map((row) => row.playerId),
   );
-  const standings = ranked(rows);
+  const standings = ranks
+    ? rows
+        .map((row) => ({ ...row, rank: ranks[row.playerId] ?? rows.length }))
+        .toSorted((a, b) => a.rank - b.rank || b.to - a.to)
+    : ranked(rows);
   const best = standings[0]?.to ?? 0;
-  const soleLeader = best > 0 && standings.filter((row) => row.to === best).length === 1;
+  const soleLeader = best > 0 && standings.filter((row) => row.rank === 1).length === 1;
   const format = (value: number) => (signed ? `+${String(value)}` : String(value));
 
   return (

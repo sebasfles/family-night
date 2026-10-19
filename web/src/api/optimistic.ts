@@ -5,8 +5,13 @@ import {
   giveClue,
   guessersOf,
   justOneClueProblem,
+  manadaAnswerProblem,
+  mergeGroups,
+  recordAnswers,
   recordClues,
+  regroupProblem,
   setClueCancelled,
+  splitGroup,
   voteProblem,
   type GameConfigRequest,
   type GameType,
@@ -34,7 +39,10 @@ export type Optimistic =
       playerId: string;
       authorId: string;
       cancelled: boolean;
-    });
+    })
+  | (MatchStep & { kind: 'manada-answer'; playerId: string })
+  | (MatchStep & { kind: 'manada-merge'; groupIds: [string, string] })
+  | (MatchStep & { kind: 'manada-split'; groupId: string });
 
 type MatchOptimistic = Extract<Optimistic, MatchStep>;
 
@@ -64,6 +72,18 @@ function applyToMatch(match: MatchPublic, step: MatchOptimistic): MatchPublic {
       if (match.gameType !== 'JUST_ONE') return match;
       if (cancelClueProblem(match, step.playerId, step.round, step.authorId)) return match;
       return setClueCancelled(match, step.authorId, step.cancelled);
+    case 'manada-answer':
+      if (match.gameType !== 'MANADA') return match;
+      if (manadaAnswerProblem(match, step.playerId, step.round)) return match;
+      return recordAnswers(match, [...match.answeredPlayerIds, step.playerId]);
+    case 'manada-merge':
+      if (match.gameType !== 'MANADA') return match;
+      if (regroupProblem(match, step.round, step.groupIds)) return match;
+      return mergeGroups(match, ...step.groupIds);
+    case 'manada-split':
+      if (match.gameType !== 'MANADA') return match;
+      if (regroupProblem(match, step.round, [step.groupId])) return match;
+      return splitGroup(match, step.groupId);
   }
 }
 

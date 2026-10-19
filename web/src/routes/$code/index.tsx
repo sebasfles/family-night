@@ -28,6 +28,8 @@ import { useNow } from '../../components/useNow';
 import { impostorSteps } from '../../games/impostor/howToPlay';
 import { LobbyPanel as ImpostorPanel } from '../../games/impostor/LobbyPanel';
 import { justOneSteps } from '../../games/justone/howToPlay';
+import { manadaSteps } from '../../games/manada/howToPlay';
+import { LobbyPanel as ManadaPanel } from '../../games/manada/LobbyPanel';
 import { wavelengthSteps } from '../../games/wavelength/howToPlay';
 import { storeIdentity, useIdentity } from '../../identity/identity';
 import { Enter } from '../../motion/motion';
@@ -65,12 +67,14 @@ const panels: Record<GameType, (props: PanelProps) => ReactNode> = {
       turn="adivina"
     />
   ),
+  MANADA: ManadaPanel,
 };
 
 const howToPlay: Record<GameType, HowToPlayStep[]> = {
   IMPOSTOR: impostorSteps,
   WAVELENGTH: wavelengthSteps,
   JUST_ONE: justOneSteps,
+  MANADA: manadaSteps,
 };
 
 function Lobby() {

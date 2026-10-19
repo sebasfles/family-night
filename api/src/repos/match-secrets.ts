@@ -12,6 +12,7 @@ export const MATCH_KEY = '#MATCH';
 const GUESS_PREFIX = '#GUESS#';
 const ROUND_PREFIX = '#ROUND#';
 const CLUE_PREFIX = '#CLUE#';
+const ANSWER_PREFIX = '#ANSWER#';
 
 export interface PlayerSecretItem {
   matchId: string;
@@ -70,6 +71,16 @@ export interface ClueItem {
   ttl: number;
 }
 
+export interface AnswerItem {
+  matchId: string;
+  playerId: string;
+  round: number;
+  authorId: string;
+  answer: string;
+  createdAt: string;
+  ttl: number;
+}
+
 function twoDigits(round: number): string {
   return String(round).padStart(2, '0');
 }
@@ -80,6 +91,14 @@ function guessPrefix(round: number): string {
 
 function cluePrefix(round: number): string {
   return `${CLUE_PREFIX}${twoDigits(round)}#`;
+}
+
+function answerPrefix(round: number): string {
+  return `${ANSWER_PREFIX}${twoDigits(round)}#`;
+}
+
+export function answerKey(round: number, authorId: string): string {
+  return answerPrefix(round) + authorId;
 }
 
 export function roundKey(round: number): string {
@@ -222,5 +241,26 @@ export class MatchSecretsRepo {
 
   deleteClueItem(clue: ClueItem): TransactItem {
     return this.deleteItem(clue);
+  }
+
+  getAnswer(
+    matchId: string,
+    round: number,
+    authorId: string,
+    nowMs: number,
+  ): Promise<AnswerItem | null> {
+    return this.read<AnswerItem>(matchId, answerKey(round, authorId), nowMs);
+  }
+
+  putAnswer(answer: Omit<AnswerItem, 'playerId'>): Promise<boolean> {
+    return this.putOnce({ ...answer, playerId: answerKey(answer.round, answer.authorId) });
+  }
+
+  listAnswers(matchId: string, round: number, nowMs: number): Promise<AnswerItem[]> {
+    return this.listByPrefix<AnswerItem>(matchId, answerPrefix(round), nowMs);
+  }
+
+  deleteAnswerItem(answer: AnswerItem): TransactItem {
+    return this.deleteItem(answer);
   }
 }

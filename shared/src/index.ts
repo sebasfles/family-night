@@ -4,6 +4,7 @@ export type * from './domain.ts';
 export type * from './events.ts';
 export * from './impostor/rules.ts';
 export * from './justone/rules.ts';
+export * from './manada/rules.ts';
 export * from './players.ts';
 export * from './random.ts';
 export * from './scoring.ts';

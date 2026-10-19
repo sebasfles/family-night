@@ -114,6 +114,8 @@ Review beyond the Pipeline:
 - Grouping is transitive and deterministic ("perros calientes" with "perro caliente", plural per word); merge and undo recompute from the round's stored starting totals and cow holder, never by adding twice.
 - Concurrent answers reveal once; secrets absent from every snapshot and event; a 2-player Wavelength match end to end in api tests.
 
+Adjustment (om-manager for Sebastian, 2026-10-18): phase 1 approved; no gate after phase 2: when it is clean, `document-task` and publish directly, reporting only `PRs ready` with the screenshot paths.
+
 clearance: repo
 
 ## om-developer notes

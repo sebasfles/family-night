@@ -61,3 +61,8 @@ Pending: none.
 Deferred: none.
 
 ## Result
+
+Approved 2026-10-18 at f1f6e29 after two rounds (round 2: a real impostor win in the final screenshots).
+Deviations: `ImpostorPublic.departedIds` added (om-reviewer answer), a stored match reads it as []; "Falta 1 jugador" in the singular; podium night points shown as "+N a la noche" under each name.
+Let pass: a participant who left and came back shows +0 on the Impostor final; a Wavelength match of 2 ended by a departure still reads "Con 2 jugadores siempre empatan".
+Debt created: none.
