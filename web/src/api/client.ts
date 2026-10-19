@@ -10,10 +10,11 @@ import {
   type DialGuessRequest,
   type JustOneClueRequest,
   type JustOneGuessRequest,
-  type GuessRequest,
   type LeaveRoomResponse,
   type MatchSecretResponse,
   type MeResponse,
+  type RenamePlayerRequest,
+  type RenamePlayerResponse,
   type RoomResponse,
   type RoundRequest,
   type TargetPlayerRequest,
@@ -77,7 +78,7 @@ async function errorFrom(response: Response): Promise<ApiError> {
 }
 
 export async function request<T>(
-  method: 'GET' | 'POST' | 'PUT',
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH',
   path: string,
   options: RequestOptions = {},
 ): Promise<T> {
@@ -106,6 +107,8 @@ const match = (code: string, matchId: string, action: string) =>
 export const api = {
   createPlayer: () => request<CreatePlayerResponse>('POST', '/players'),
   me: () => request<MeResponse>('GET', '/players/me'),
+  rename: (body: RenamePlayerRequest) =>
+    request<RenamePlayerResponse>('PATCH', '/players/me', { body }),
   createRoom: () => request<RoomResponse>('POST', '/rooms'),
   getRoom: (code: string) => request<RoomResponse>('GET', room(code)),
   joinRoom: (code: string) => request<RoomResponse>('POST', room(code, '/join')),
@@ -134,10 +137,6 @@ export const api = {
     request<RoomResponse>('POST', match(code, matchId, 'close-voting'), { body }),
   nextRound: (code: string, matchId: string, body: RoundRequest) =>
     request<RoomResponse>('POST', match(code, matchId, 'next-round'), { body }),
-  guess: (code: string, matchId: string, body: GuessRequest) =>
-    request<RoomResponse>('POST', match(code, matchId, 'guess'), { body }),
-  skipGuess: (code: string, matchId: string) =>
-    request<RoomResponse>('POST', match(code, matchId, 'skip-guess')),
   giveClue: (code: string, matchId: string, body: ClueRequest) =>
     request<RoomResponse>('PUT', match(code, matchId, 'clue'), { body }),
   commitGuess: (code: string, matchId: string, body: DialGuessRequest) =>

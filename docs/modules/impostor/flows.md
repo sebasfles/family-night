@@ -1,6 +1,6 @@
 ---
-updated: 2026-10-17
-source: 0003_impostor
+updated: 2026-10-18
+source: 0006_gameplay_and_redesign
 ---
 
 # Impostor: flows
@@ -14,23 +14,19 @@ Per-state rules are in [prd.md](prd.md).
 ```mermaid
 stateDiagram-v2
   [*] --> VOTING: match starts (round 1)
-  VOTING --> REVEAL: all living voted, or host closes voting
+  VOTING --> REVEAL: all living confirmed, or host closes voting
   REVEAL --> VOTING: host next-round, match goes on
-  REVEAL --> IMPOSTOR_GUESS: last impostor voted out and last guess on
-  REVEAL --> FINISHED: win evaluated, no guess
-  IMPOSTOR_GUESS --> FINISHED: guess right (impostors win) or wrong (civilians win)
-  IMPOSTOR_GUESS --> FINISHED: host skips guess, or the guesser leaves (civilians win)
+  REVEAL --> FINISHED: host next-round, a side has won
   VOTING --> FINISHED: a living player leaves or is kicked and the win condition is met
   REVEAL --> FINISHED: a living player leaves or is kicked and the win condition is met
   VOTING --> VOTING: a living player leaves or is kicked, match goes on
   FINISHED --> [*]
   VOTING --> ABORTED: host ends the match
   REVEAL --> ABORTED: host ends the match
-  IMPOSTOR_GUESS --> ABORTED: host ends the match
   ABORTED --> [*]
 ```
 
 - A vote that ends the match passes through `REVEAL`; the host moves everyone to `FINISHED` with "Ver resultado".
-- In `REVEAL` a departure finishes the match at once only when the outcome is already a win; the would-be guesser leaving gives the civilians the win.
-- A leaving or kicked living player is recorded as eliminated with reason `LEFT` or `KICKED` and the win is evaluated; a last impostor who leaves gives the civilians the win without a last guess.
+- In `REVEAL` a departure finishes the match at once only when the outcome is already a win.
+- A leaving or kicked living player is recorded as eliminated with reason `LEFT` or `KICKED` and the win is evaluated.
 - After `FINISHED` or `ABORTED` the host goes back to the lobby or starts a rematch; both belong to `platform`.

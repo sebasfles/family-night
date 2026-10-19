@@ -1,6 +1,6 @@
 ---
 updated: 2026-10-18
-source: 0004_wavelength
+source: 0006_gameplay_and_redesign
 ---
 
 # Wavelength: decisions
@@ -121,3 +121,31 @@ source: 0004_wavelength
 - Debt created: none
 - Revisit when: a tie-break rule is wanted.
 - Source: 0004_wavelength
+
+## 2026-10-18: Bands 4, 3 and 2, one table for scoring and drawing
+
+- Decision: `DIAL_BANDS` scores 4 within 2, 3 within 7, 2 within 12, otherwise 0, on integer distances, and the dial draws each zone half a point past its last scoring value (2.5, 7.5, 12.5) with its number on the zone; the same table drives both.
+- Alternatives rejected: the 5/10/15/25 bands with a 1-point band.
+- Reason: Sebastian's call after playing: the old bands were too generous; the board game's bands are the reference.
+- Debt created: none
+- Revisit when: rounds feel too hard to score.
+- Source: 0006_gameplay_and_redesign
+
+## 2026-10-18: The dial ticks through Web Audio, muted per device
+
+- Decision: a 30 ms triangle at 1800 Hz synthesized on every value change of one's own dial (drag, buttons, keys); the audio context resumes on pointer, key and button presses, so on iOS a first drag ticks after the finger lifts; the mute toggle shows to a guesser who has not confirmed and is stored in localStorage.
+- Alternatives rejected: audio files.
+- Reason: no asset to load, no latency, nothing to cache.
+- Debt created: on a fast drag one pointer move ticks once, however many points it jumps.
+- Revisit when: the tick feels uneven on a phone.
+- Source: 0006_gameplay_and_redesign
+
+## 2026-10-18: The dial is three layers and the zones flip on the reveal
+
+- Decision: the own dial component of 2026-10-18 is redrawn as three SVGs with one viewBox: the face with a lagoon to ember rim, the bands in `moon-bright`, `ember` and `orchid`, and the hand (ticks, name pins, needle, hub) that takes the pointer; on REVEAL the bands turn over from a striped shutter with the platform's `FlipReveal`; the psychic sees the zones without a flip.
+- Alternatives rejected: flipping inside one SVG (no 3D on SVG groups).
+- Reason: CSS 3D needs HTML boxes; layering keeps the pointer math and the zone geometry unchanged.
+- Debt created: none
+- Revisit when: the dial needs another animated layer.
+- Source: 0006_gameplay_and_redesign
+

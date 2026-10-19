@@ -1,6 +1,6 @@
 ---
-updated: 2026-10-17
-source: 0003_impostor
+updated: 2026-10-18
+source: 0006_gameplay_and_redesign
 ---
 
 # Impostor: decisions
@@ -168,3 +168,40 @@ Decisions come from [the plan](../../implementation-plan.md); where the plan sta
 - Debt created: none
 - Revisit when: the host is surprised by a lower count.
 - Source: 0003_impostor
+
+## 2026-10-18: A vote is a provisional choice until confirmed, and an early close counts choices
+
+- Decision: `PUT votes { round, targetId, confirmed }` serves both: a choice overwrites the ballot until it is confirmed, and a confirmed ballot is final through a put conditional on the stored ballot not being confirmed. `votedPlayerIds` lists confirmed voters while voting and every counted voter after the close; the round closes by itself when every living player has confirmed. An early close counts unconfirmed choices. A confirm carries its target, so a lost provisional request cannot confirm someone else.
+- Alternatives rejected: counting only confirmed votes on an early close; a separate confirm endpoint; enforcing the lock only in the UI.
+- Reason: Sebastian's call: a forgotten tap must not become an abstention; the server lock holds against racing requests; keeping counted voters after the close keeps the late-vote rule (200 if your ballot counted).
+- Debt created: none new; the 2026-10-17 debt of a vote changed at the instant of the close now applies only to an unconfirmed choice.
+- Revisit when: a changed choice is reported as not counted.
+- Source: 0006_gameplay_and_redesign
+
+## 2026-10-18: Choices and confirmations show at once
+
+- Decision: a choice and a confirmation go through the platform's optimistic overlay: the phone marks them at once and steps back with the server message if refused; others see only the confirmed check from the snapshot. Supersedes "No optimistic updates on votes".
+- Alternatives rejected: waiting for the server, as before.
+- Reason: Sebastian's call that every tap feels instant; the overlay rolls back exactly, so a stale or invalid vote no longer lingers.
+- Debt created: none
+- Revisit when: a refused vote is seen as accepted.
+- Source: 0006_gameplay_and_redesign
+
+## 2026-10-18: No last chance
+
+- Decision: the last-chance guess is gone: config flag, `IMPOSTOR_GUESS`, `POST guess`, `POST skip-guess`, `NOT_GUESSER` and the guess options of `#MATCH`. A stored config with `impostorLastGuess` still parses with the key dropped; a match left in `IMPOSTOR_GUESS` at deploy can only be aborted.
+- Alternatives rejected: a typed guess instead of five options.
+- Reason: Sebastian's call: the reveal in person is enough.
+- Debt created: a match left in `IMPOSTOR_GUESS` at deploy shows only the header and card until the host aborts it.
+- Revisit when: such a match is seen after the deploy.
+- Source: 0006_gameplay_and_redesign
+
+## 2026-10-18: The final points list everyone still in the room
+
+- Decision: the final scoreboard shows every participant still in the room, losers at +0, counting up and moving into place; points are unchanged.
+- Alternatives rejected: listing winners only, as before.
+- Reason: a full scoreboard reads as a result and gives the rows somewhere to move.
+- Debt created: none
+- Revisit when: the list feels long in a 20-player room.
+- Source: 0006_gameplay_and_redesign
+

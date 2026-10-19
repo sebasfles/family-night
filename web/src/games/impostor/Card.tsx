@@ -1,14 +1,20 @@
 import type { ImpostorSecret } from '@family-night/shared';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
+import { MaskIcon } from '../../components/icons';
 import { vibrate } from '../../components/match';
+import { Flip } from '../../motion/Flip';
+
+const CARD = 'flex min-h-60 flex-col items-center justify-center gap-2 p-7 text-center';
 
 export function Card({ secret }: { secret: ImpostorSecret | undefined }) {
   const [shown, setShown] = useState(false);
 
   if (!secret) {
     return (
-      <div className="flex min-h-48 items-center justify-center rounded-3xl bg-night-soft p-6 text-cream/70 ring-1 ring-cream/10">
-        Cargando tu carta…
+      <div className={`${CARD} rounded-card card-back [--card-accent:var(--color-ember)]`}>
+        <p role="status" className="text-lg font-semibold text-cream/75">
+          Cargando tu carta…
+        </p>
       </div>
     );
   }
@@ -21,19 +27,38 @@ export function Card({ secret }: { secret: ImpostorSecret | undefined }) {
         if (!shown) vibrate();
         setShown(!shown);
       }}
-      className={`flex min-h-48 w-full flex-col items-center justify-center gap-2 rounded-3xl p-6 text-center ring-1 focus-visible:ring-2 focus-visible:ring-moon focus-visible:outline-none ${
-        shown ? 'bg-cream text-night ring-cream' : 'bg-night-soft ring-cream/15'
-      }`}
+      className="w-full rounded-card text-left focus-visible:ring-2 focus-visible:ring-moon focus-visible:ring-offset-4 focus-visible:ring-offset-night focus-visible:outline-none motion-safe:transition-transform motion-safe:active:scale-[0.98]"
     >
-      {shown ? <Face secret={secret} /> : <Back />}
+      <Flip
+        flipped={shown}
+        back={
+          <CardBack>
+            <CardBackHint />
+          </CardBack>
+        }
+        front={<Face secret={secret} />}
+      />
     </button>
   );
 }
 
-function Back() {
+export function CardBack({ children }: { children?: ReactNode }) {
+  return (
+    <span className={`${CARD} rounded-card card-back [--card-accent:var(--color-ember)]`}>
+      <span className="flex size-20 items-center justify-center rounded-full bg-night text-ember shadow-lift ring-1 ring-ember/40">
+        <MaskIcon className="size-12" />
+      </span>
+      {children}
+    </span>
+  );
+}
+
+function CardBackHint() {
   return (
     <>
-      <span className="text-2xl font-bold">Toca para ver tu carta</span>
+      <span className="mt-2 font-display text-2xl font-bold text-cream">
+        Toca para ver tu carta
+      </span>
       <span className="text-base text-cream/70">Que nadie más mire tu pantalla</span>
     </>
   );
@@ -42,24 +67,33 @@ function Back() {
 function Face({ secret }: { secret: ImpostorSecret }) {
   if (secret.role === 'CIVILIAN') {
     return (
-      <>
-        <span className="text-base font-semibold text-night/60">Tu palabra</span>
-        <span className="text-4xl font-bold break-words">{secret.word}</span>
-        <span className="text-lg text-night/80">Categoría: {secret.category}</span>
-        <span className="mt-2 text-sm text-night/60">Toca para ocultar</span>
-      </>
+      <span className={`${CARD} rounded-card card-paper`}>
+        <span className="font-sans text-sm font-bold tracking-[0.18em] text-night/65 uppercase">
+          Tu palabra
+        </span>
+        <span className="font-display text-5xl leading-tight font-bold break-words">
+          {secret.word}
+        </span>
+        <span className="rounded-full bg-night/8 px-3 py-1 text-base font-semibold text-night/75">
+          Categoría: {secret.category}
+        </span>
+        <span className="mt-2 text-sm text-night/65">Toca para ocultar</span>
+      </span>
     );
   }
   return (
-    <>
-      <span className="text-3xl font-bold text-red-700">Eres el impostor</span>
-      <span className="text-xl">
-        Pista: <strong>{secret.clue}</strong>
+    <span className={`${CARD} rounded-card card-wine`}>
+      <MaskIcon className="size-12 text-ember" />
+      <span className="font-display text-3xl font-bold text-ember">Eres el impostor</span>
+      <span className="text-xl text-cream/90">
+        Pista: <strong className="font-display text-2xl text-cream">{secret.clue}</strong>
       </span>
       {secret.category && (
-        <span className="text-lg text-night/80">Categoría: {secret.category}</span>
+        <span className="rounded-full bg-cream/10 px-3 py-1 text-base font-semibold text-cream/80">
+          Categoría: {secret.category}
+        </span>
       )}
-      <span className="mt-2 text-sm text-night/60">Toca para ocultar</span>
-    </>
+      <span className="mt-2 text-sm text-cream/60">Toca para ocultar</span>
+    </span>
   );
 }

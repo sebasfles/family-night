@@ -2,6 +2,7 @@ import { ONLINE_WINDOW_MS, PRESENCE_RECOMPUTE_MS, type RoomSnapshot } from '@fam
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, onTestFinished, test, vi } from 'vitest';
 import { apiError, me, member, mockApi, renderApp, signIn, snapshot } from '../../test/app';
+import { loadIdentity } from '../../identity/storage';
 import { impostorMatch } from '../../test/impostor-match';
 
 const guest = member({ playerId: '22222222-2222-4222-8222-222222222222', name: 'Zorro Astuto' });
@@ -176,6 +177,70 @@ describe('the lobby', () => {
       expect(screen.queryByRole('button', { name: /Opciones para/ })).toBeNull();
     });
     expect(screen.getByText('Esperando a que el host inicie…')).toBeVisible();
+  });
+
+  test('handing over and kicking show at once and a refusal restores the room', async () => {
+    const { mock } = enterRoom('/ABCD');
+    let answer: (response: Response) => void = () => undefined;
+    const deferred = () =>
+      new Promise<Response>((resolve) => {
+        answer = resolve;
+      });
+    mock.on('POST /api/rooms/ABCD/kick', deferred);
+
+    fireEvent.click(await screen.findByRole('button', { name: `Opciones para ${away.name}` }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Sacar de la sala' }));
+    const awayMenu = { name: `Opciones para ${away.name}` };
+    await waitFor(() => {
+      expect(screen.queryByRole('button', awayMenu)).toBeNull();
+    });
+    expect(screen.getByText('2 de 2 en línea')).toBeVisible();
+    answer(apiError(409, 'TARGET_NOT_MEMBER', 'Esa persona ya no está en la sala'));
+    expect(await screen.findByText('Esa persona ya no está en la sala')).toBeVisible();
+    expect(screen.getByRole('button', awayMenu)).toBeVisible();
+    expect(screen.getByText('2 de 3 en línea')).toBeVisible();
+
+    mock.on('POST /api/rooms/ABCD/host', deferred);
+    fireEvent.click(screen.getByRole('button', { name: `Opciones para ${guest.name}` }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Hacer host' }));
+    await waitFor(() => {
+      expect(screen.queryByRole('button', { name: /Opciones para/ })).toBeNull();
+    });
+    answer(apiError(403, 'NOT_HOST', 'Solo el host puede hacer eso'));
+    expect(await screen.findByText('Solo el host puede hacer eso')).toBeVisible();
+    expect(screen.getByRole('button', { name: `Opciones para ${guest.name}` })).toBeVisible();
+  });
+
+  test('picking a game marks it chosen before the server answers', async () => {
+    const { mock } = enterRoom('/ABCD');
+    let answer: (response: Response) => void = () => undefined;
+    mock.on(
+      'PUT /api/rooms/ABCD/config',
+      () =>
+        new Promise<Response>((resolve) => {
+          answer = resolve;
+        }),
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Jugar Just One' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Jugar Just One' })).toHaveAttribute(
+        'aria-pressed',
+        'true',
+      );
+    });
+    expect(body(mock, 'PUT /api/rooms/ABCD/config')).toEqual({
+      gameType: 'JUST_ONE',
+      config: { cycles: 1 },
+    });
+    answer(Response.json({ room: room({ version: 4, selectedGame: 'JUST_ONE' }) }));
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Jugar Just One' })).toHaveAttribute(
+        'aria-pressed',
+        'true',
+      );
+    });
   });
 
   test('a member who is not host gets no member menu', async () => {
@@ -524,5 +589,85 @@ describe('the Just One panel', () => {
         config: { cycles: 3 },
       });
     });
+  });
+});
+
+describe('my name', () => {
+  test('I rename myself from the lobby; it shows at once and the device keeps it', async () => {
+    const { mock, queryClient } = enterRoom('/ABCD');
+    let answer: (response: Response) => void = () => undefined;
+    mock.on(
+      'PATCH /api/players/me',
+      () =>
+        new Promise<Response>((resolve) => {
+          answer = resolve;
+        }),
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Cambiar tu nombre' }));
+    const dialog = screen.getByRole('dialog', { name: 'Tu nombre' });
+    fireEvent.change(within(dialog).getByRole('textbox'), { target: { value: '  Tía   Marta ' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Guardar' }));
+
+    expect(await screen.findByText('Tía')).toBeVisible();
+    expect(screen.queryByRole('dialog')).toBeNull();
+    await waitFor(() => {
+      expect(body(mock, 'PATCH /api/players/me')).toEqual({ name: 'Tía Marta', roomCode: 'ABCD' });
+    });
+
+    const renamed = room({
+      version: 4,
+      members: [member({ playerId: me.playerId, name: 'Tía Marta' }), guest, away],
+    });
+    answer(Response.json({ player: { playerId: me.playerId, name: 'Tía Marta' }, room: renamed }));
+    await waitFor(() => {
+      expect(loadIdentity()?.name).toBe('Tía Marta');
+    });
+    expect(queryClient.getQueryData(['identity'])).toMatchObject({ name: 'Tía Marta' });
+    expect(screen.getByText('Marta')).toBeVisible();
+  });
+
+  test('a name taken elsewhere brings my old name back with the server message', async () => {
+    const { mock } = enterRoom('/ABCD');
+    mock.on('PATCH /api/players/me', () =>
+      apiError(409, 'NAME_TAKEN', 'Ese nombre ya lo tiene otra persona'),
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Cambiar tu nombre' }));
+    const dialog = screen.getByRole('dialog', { name: 'Tu nombre' });
+    fireEvent.change(within(dialog).getByRole('textbox'), { target: { value: 'Tía Marta' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Guardar' }));
+
+    expect(await screen.findByText('Ese nombre ya lo tiene otra persona')).toBeVisible();
+    expect(screen.getByText('Veloz')).toBeVisible();
+    expect(screen.queryByText('Marta')).toBeNull();
+    expect(loadIdentity()?.name).toBe(me.name);
+  });
+
+  test('the dialog refuses a name too short, too long or used in the room, and sends nothing', async () => {
+    const { mock } = enterRoom('/ABCD');
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Cambiar tu nombre' }));
+    const dialog = screen.getByRole('dialog', { name: 'Tu nombre' });
+    const input = within(dialog).getByRole('textbox');
+    const save = within(dialog).getByRole('button', { name: 'Guardar' });
+
+    fireEvent.change(input, { target: { value: ' A ' } });
+    expect(save).toBeDisabled();
+    expect(within(dialog).getByText('Entre 2 y 20 caracteres visibles')).toBeVisible();
+    fireEvent.change(input, { target: { value: 'a'.repeat(21) } });
+    expect(save).toBeDisabled();
+    fireEvent.change(input, { target: { value: 'zorro ástuto' } });
+    expect(save).toBeDisabled();
+    expect(within(dialog).getByText('Alguien de la sala ya se llama así')).toBeVisible();
+
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancelar' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(mock.calls.map((call) => call.route)).not.toContain('PATCH /api/players/me');
+  });
+
+  test('only my own row has the rename button', async () => {
+    enterRoom('/ABCD');
+    expect(await screen.findAllByRole('button', { name: 'Cambiar tu nombre' })).toHaveLength(1);
   });
 });

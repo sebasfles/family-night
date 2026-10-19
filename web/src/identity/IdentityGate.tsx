@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { Button } from '../components/Button';
+import { Loading } from '../components/Loading';
 import { Screen } from '../components/Screen';
 import { bootstrapIdentity, IdentityContext } from './identity';
 
@@ -16,13 +17,7 @@ export function IdentityGate({ children }: { children: ReactNode }) {
   });
 
   if (identity.isPending) {
-    return (
-      <Screen>
-        <p role="status" className="text-cream/80">
-          Preparando tu lugar…
-        </p>
-      </Screen>
-    );
+    return <Loading text="Preparando tu lugar…" />;
   }
 
   if (identity.isError) {

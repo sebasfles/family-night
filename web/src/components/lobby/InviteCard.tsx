@@ -23,13 +23,30 @@ export function InviteCard({ code }: { code: string }) {
   return (
     <section
       aria-label="Invitar a la sala"
-      className="flex flex-col items-center gap-5 rounded-3xl bg-night-soft p-6 ring-1 ring-cream/10"
+      className="relative flex flex-col items-center gap-5 overflow-hidden surface p-6"
     >
-      <div className="flex flex-col items-center gap-1">
-        <p className="text-base font-semibold text-cream/70">Código de la sala</p>
-        <p className="pl-[0.2em] font-mono text-6xl font-bold tracking-[0.2em] text-moon">{code}</p>
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute -top-24 left-1/2 size-56 -translate-x-1/2 rounded-full bg-moon/20 blur-3xl"
+      />
+      <div className="relative flex flex-col items-center gap-3">
+        <p className="text-sm font-bold tracking-[0.18em] text-cream/70 uppercase">
+          Código de la sala
+        </p>
+        <p className="flex gap-2">
+          <span className="sr-only">{code}</span>
+          {Array.from(code).map((letter, index) => (
+            <span
+              key={index}
+              aria-hidden="true"
+              className="flex h-18 w-15 items-center justify-center rounded-2xl bg-night font-display text-5xl font-bold text-moon shadow-[inset_0_-4px_0_rgb(0_0_0/0.35)] ring-1 ring-moon/30"
+            >
+              {letter}
+            </span>
+          ))}
+        </p>
       </div>
-      <div className="flex w-full flex-col gap-3 sm:flex-row">
+      <div className="relative flex w-full flex-col gap-3 sm:flex-row">
         <Button variant="secondary" className="sm:flex-1" onClick={() => void copy()}>
           <LinkIcon className="size-5" />
           Copiar link

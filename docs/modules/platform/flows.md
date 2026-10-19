@@ -1,6 +1,6 @@
 ---
-updated: 2026-10-17
-source: 0002_identity_and_rooms
+updated: 2026-10-18
+source: 0006_gameplay_and_redesign
 ---
 
 # Platform: flows
@@ -17,13 +17,14 @@ sequenceDiagram
   participant D as DynamoDB
   participant E as AppSync Events
   participant O as Other phones
+  P->>P: show the command at once over the cached snapshot
   P->>C: POST /api/... with x-player-id and x-player-token
   C->>L: /api/* via Function URL, no cache
   L->>L: check token hash, membership, zod body
   L->>D: conditional write, version + 1, ttl renewed
   D-->>L: ok (on conflict: reread, up to 3 tries)
   L->>E: signed POST of room.updated with the public snapshot
-  L-->>P: 200 with the same snapshot
+  L-->>P: 200 with the same snapshot, the pending command is dropped (on refusal: dropped and the message toasted)
   E-->>O: room.updated over WebSocket
   O->>O: apply only if version is greater than cached
 ```

@@ -2,9 +2,12 @@ import { DIAL_MAX, guessersOf, type RoomMember, type WavelengthPublic } from '@f
 import { useState } from 'react';
 import { Button } from '../../components/Button';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { SoundIcon } from '../../components/icons';
 import { nameOf } from '../../components/match';
+import { Waiting } from '../../components/Waiting';
 import { Dial } from './Dial';
 import type { Seat } from './model';
+import { useDialSound } from './tick';
 
 interface GuessPhaseProps {
   match: WavelengthPublic;
@@ -14,9 +17,8 @@ interface GuessPhaseProps {
   target: number | undefined;
   myGuess: number | null;
   isHost: boolean;
-  committing: boolean;
   closing: boolean;
-  onCommit: (value: number) => Promise<unknown>;
+  onCommit: (value: number) => void;
   onClose: () => void;
 }
 
@@ -28,40 +30,67 @@ export function GuessPhase({
   target,
   myGuess,
   isHost,
-  committing,
   closing,
   onCommit,
   onClose,
 }: GuessPhaseProps) {
   const [value, setValue] = useState(myGuess ?? DIAL_MAX / 2);
-  const [sent, setSent] = useState(false);
   const [confirmClose, setConfirmClose] = useState(false);
+  const [sound, toggleSound] = useDialSound();
   const total = guessersOf(match).length;
   const done = match.committedPlayerIds.length;
   const missing = total - done;
   const committed = match.committedPlayerIds.includes(selfId);
-  const locked = committed || committing || sent;
   const { left, right } = match.spectrum;
   const psychic = nameOf(members, match.psychicId);
 
   return (
     <section aria-labelledby="guess-title" className="flex flex-col gap-5">
-      <div className="flex flex-col items-center gap-1 rounded-3xl bg-cream p-5 text-center text-night">
-        <h2 id="guess-title" className="text-base font-semibold text-night/60">
+      <div className="relative flex flex-col items-center gap-2 overflow-hidden rounded-card px-6 pt-8 pb-6 text-center card-paper">
+        <span
+          aria-hidden="true"
+          className="absolute inset-x-0 top-0 h-2 bg-linear-to-r from-lagoon via-sand to-ember"
+        />
+        <h2
+          id="guess-title"
+          className="font-sans text-sm font-bold tracking-[0.18em] text-night/65 uppercase"
+        >
           {seat === 'PSYCHIC' ? 'Tu pista' : `La pista de ${psychic}`}
         </h2>
-        <p className="text-3xl font-bold text-balance break-words">{match.clue}</p>
+        <p className="font-display text-4xl leading-tight font-bold text-balance break-words">
+          <span aria-hidden="true" className="text-night/30">
+            «
+          </span>
+          {match.clue}
+          <span aria-hidden="true" className="text-night/30">
+            »
+          </span>
+        </p>
       </div>
 
       {seat === 'GUESSER' ? (
-        <Dial
-          label="Tu respuesta"
-          left={left}
-          right={right}
-          value={committed ? (myGuess ?? value) : value}
-          disabled={locked}
-          onChange={setValue}
-        />
+        <div className="flex flex-col gap-2">
+          {!committed && (
+            <button
+              type="button"
+              aria-pressed={sound}
+              aria-label="Sonido del dial"
+              onClick={toggleSound}
+              className="flex size-12 items-center justify-center self-end rounded-full bg-night-soft text-cream/80 ring-1 ring-cream/10 hover:bg-night-raised focus-visible:ring-2 focus-visible:ring-moon focus-visible:outline-none aria-pressed:text-moon"
+            >
+              <SoundIcon muted={!sound} className="size-6" />
+            </button>
+          )}
+          <Dial
+            label="Tu respuesta"
+            left={left}
+            right={right}
+            value={committed ? (myGuess ?? value) : value}
+            disabled={committed}
+            sound={sound}
+            onChange={setValue}
+          />
+        </div>
       ) : (
         <Dial
           label={seat === 'PSYCHIC' ? 'El objetivo' : `Escala entre ${left} y ${right}`}
@@ -71,21 +100,20 @@ export function GuessPhase({
         />
       )}
 
-      <p role="status" className="text-center text-lg text-cream/80">
+      <p
+        role="status"
+        className="self-center rounded-full bg-cream/8 px-4 py-1 text-lg font-semibold text-cream/85 tabular-nums"
+      >
         Adivinaron {done} de {total}
       </p>
 
       {seat === 'GUESSER' &&
         (committed ? (
-          <p className="text-center text-xl font-semibold">Listo. Esperando a los demás…</p>
+          <Waiting>Listo. Esperando a los demás…</Waiting>
         ) : (
           <Button
-            busy={committing || sent}
             onClick={() => {
-              setSent(true);
-              onCommit(value).catch(() => {
-                setSent(false);
-              });
+              onCommit(value);
             }}
           >
             Confirmar

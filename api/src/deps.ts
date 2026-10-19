@@ -37,7 +37,7 @@ export function createRepos(client: DynamoDBDocumentClient, tables: TableNames):
   return {
     client,
     players: new PlayersRepo(client, tables.players),
-    playerNames: new PlayerNamesRepo(tables.playerNames),
+    playerNames: new PlayerNamesRepo(client, tables.playerNames),
     rooms: new RoomsRepo(client, tables.rooms),
     roomMembers: new RoomMembersRepo(client, tables.roomMembers),
     matches: new MatchesRepo(client, tables.matches),

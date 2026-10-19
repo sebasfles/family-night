@@ -284,7 +284,7 @@ describe('abort, lobby and rematch', () => {
 
   test('the lobby is refused while playing and clears a finished match', async () => {
     const room = await roomWith(3);
-    const started = await start(room, { impostorLastGuess: false });
+    const started = await start(room);
     const lobby = () => call(room.harness, room.host, 'POST', `/api/rooms/${room.code}/lobby`);
     await expectError(lobby(), 409, 'MATCH_IN_PROGRESS');
 
@@ -300,7 +300,7 @@ describe('abort, lobby and rematch', () => {
 
   test('a rematch keeps the config and picks a word not seen that night', async () => {
     const room = await roomWith(3);
-    const config = { impostorLastGuess: false, categories: ['animales'] };
+    const config = { categories: ['animales'] };
     let snapshot = await start(room, config);
     const words: string[] = [];
     for (let i = 0; i < 3; i++) {
@@ -340,7 +340,7 @@ describe('abort, lobby and rematch', () => {
 
   test('a rematch is refused while playing and when the config no longer fits', async () => {
     const room = await roomWith(6);
-    const started = await start(room, { impostorCount: 2, impostorLastGuess: false });
+    const started = await start(room, { impostorCount: 2 });
     const match = currentMatch(started);
     await expectError(
       call(room.harness, room.host, 'POST', matchPath(room, match.matchId, 'rematch')),
@@ -349,7 +349,7 @@ describe('abort, lobby and rematch', () => {
     );
 
     await hostAction(room, match, 'abort');
-    const again = await start(room, { impostorCount: 2, impostorLastGuess: false });
+    const again = await start(room, { impostorCount: 2 });
     const roles = await rolesOf(room, currentMatch(again));
     let latest = currentMatch(again);
     for (const impostor of roles.impostors) {
@@ -370,8 +370,72 @@ describe('abort, lobby and rematch', () => {
   });
 });
 
+describe('rooms stored before the last chance was removed', () => {
+  test('a stored Impostor config with the removed setting still starts and rematches', async () => {
+    const room = await roomWith(3);
+    await room.harness.client.send(
+      new UpdateCommand({
+        TableName: room.harness.tables.rooms,
+        Key: { roomCode: room.code },
+        UpdateExpression: 'SET configs = :configs',
+        ExpressionAttributeValues: {
+          ':configs': { IMPOSTOR: { ...impostorConfig(), impostorLastGuess: true } },
+        },
+      }),
+    );
+    const { configs } = await getRoom(room.harness, room.host, room.code);
+
+    const { room: started } = await json<RoomResponse>(startCall(room, configs.IMPOSTOR), 201);
+    expect(currentMatch(started).config).toEqual(impostorConfig());
+    const { finished } = await finishByCatchingImpostor(room, started);
+    const again = await hostAction(room, currentMatch(finished), 'rematch');
+    expect(currentMatch(again)).toMatchObject({ phase: 'VOTING', config: impostorConfig() });
+  });
+
+  test('a match left in the removed last-chance phase can only be aborted', async () => {
+    const room = await roomWith(3);
+    const match = currentMatch(await start(room));
+    const [voter, target] = room.players;
+    if (!voter || !target) throw new Error('missing players');
+    await room.harness.client.send(
+      new UpdateCommand({
+        TableName: room.harness.tables.matches,
+        Key: { roomCode: room.code, matchId: match.matchId },
+        UpdateExpression: 'SET publicState.phase = :phase, publicState.guess = :guess',
+        ExpressionAttributeValues: {
+          ':phase': 'IMPOSTOR_GUESS',
+          ':guess': { guesserId: target.playerId, options: [], chosen: null, correct: null },
+        },
+      }),
+    );
+    const path = (action: string) => matchPath(room, match.matchId, action);
+
+    await expectError(
+      call(room.harness, room.host, 'POST', path('next-round'), { round: 1 }),
+      409,
+      'STALE_ROUND',
+    );
+    await expectError(
+      call(room.harness, room.host, 'POST', path('close-voting'), { round: 1 }),
+      409,
+      'STALE_ROUND',
+    );
+    await expectError(
+      call(room.harness, voter, 'PUT', path('votes'), {
+        round: 1,
+        targetId: target.playerId,
+        confirmed: true,
+      }),
+      409,
+      'STALE_ROUND',
+    );
+    const aborted = await hostAction(room, match, 'abort');
+    expect(aborted.currentMatch).toBeNull();
+  });
+});
+
 describe('a living player leaves or is kicked', () => {
-  test('a kicked civilian is out with the role shown, their ballots are dropped', async () => {
+  test('a kicked civilian is out with the role shown, their confirmed ballots are dropped and voters vote again', async () => {
     const room = await roomWith(5);
     const match = currentMatch(await start(room));
     const roles = await rolesOf(room, match);
@@ -385,12 +449,14 @@ describe('a living player leaves or is kicked', () => {
       call(room.harness, voter, 'PUT', matchPath(room, match.matchId, 'votes'), {
         round: 1,
         targetId: kicked.playerId,
+        confirmed: true,
       }),
     );
     await json(
       call(room.harness, kicked, 'PUT', matchPath(room, match.matchId, 'votes'), {
         round: 1,
         targetId: impostor.playerId,
+        confirmed: true,
       }),
     );
 
@@ -407,9 +473,18 @@ describe('a living player leaves or is kicked', () => {
     ]);
     expect(after.order).not.toContain(kicked.playerId);
     expect(after.votedPlayerIds).toEqual([]);
+
+    const { room: revoted } = await json<RoomResponse>(
+      call(room.harness, voter, 'PUT', matchPath(room, match.matchId, 'votes'), {
+        round: 1,
+        targetId: impostor.playerId,
+        confirmed: true,
+      }),
+    );
+    expect(currentMatch(revoted).votedPlayerIds).toEqual([voter.playerId]);
   });
 
-  test('the last impostor leaving gives civilians the win with no guess', async () => {
+  test('the last impostor leaving gives civilians the win', async () => {
     const room = await roomWith(4);
     const match = currentMatch(await start(room));
     const roles = await rolesOf(room, match);
@@ -420,7 +495,7 @@ describe('a living player leaves or is kicked', () => {
     const snapshot = await getRoom(room.harness, roles.civilians[0] ?? room.host, room.code);
     const after = currentMatch(snapshot);
 
-    expect(after).toMatchObject({ status: 'FINISHED', winner: 'CIVILIANS', guess: null });
+    expect(after).toMatchObject({ status: 'FINISHED', winner: 'CIVILIANS' });
     expect(after.eliminated).toEqual([
       { playerId: impostor.playerId, round: 1, wasImpostor: true, reason: 'LEFT' },
     ]);
@@ -445,6 +520,7 @@ describe('a living player leaves or is kicked', () => {
             player === impostor
               ? (roles.civilians.find((c) => c !== leaver) ?? room.host).playerId
               : impostor.playerId,
+          confirmed: true,
         }),
       );
     }

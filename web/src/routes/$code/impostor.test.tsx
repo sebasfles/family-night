@@ -1,12 +1,19 @@
-import {
-  ONLINE_WINDOW_MS,
-  type ImpostorPublic,
-  type ImpostorSecret,
-  type RoomSnapshot,
-} from '@family-night/shared';
-import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { type ImpostorPublic, type ImpostorSecret, type RoomSnapshot } from '@family-night/shared';
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, test, vi } from 'vitest';
-import { me, member, mockApi, renderApp, signIn, snapshot, type Handler } from '../../test/app';
+import {
+  apiError,
+  me,
+  member,
+  mockApi,
+  renderApp,
+  signIn,
+  snapshot,
+  type Handler,
+} from '../../test/app';
+import { stubReducedMotion } from '../../test/motion';
+import { spokenText } from '../../test/text';
+import { applyRoom } from '../../api/room';
 import { impostorMatch, MATCH_ID } from '../../test/impostor-match';
 
 const zorro = member({ playerId: '22222222-2222-4222-8222-222222222222', name: 'Zorro Astuto' });
@@ -135,7 +142,7 @@ describe('voting', () => {
     expect(screen.queryByRole('button', { name: new RegExp(me.name) })).toBeNull();
   });
 
-  test('a vote is sent with the round and marked only when the server answers', async () => {
+  test('a selection is marked at once, sent as provisional, and undone when refused', async () => {
     let answer: (response: Response) => void = () => undefined;
     const match = impostorMatch(ids, { round: 2 });
     const { mock } = play(room(match), civilian, {
@@ -146,42 +153,113 @@ describe('voting', () => {
     });
 
     await screen.findByRole('heading', { name: 'Ronda 2' });
-    const target = screen.getByRole('button', { name: /Oso Sabio/ });
-    fireEvent.click(target);
+    fireEvent.click(screen.getByRole('button', { name: /Oso Sabio/ }));
 
-    await waitFor(() => {
-      expect(mock.calls.map((call) => call.route)).toContain(`PUT ${base}/votes`);
-    });
-    expect(sent(mock, `PUT ${base}/votes`)).toEqual({ round: 2, targetId: oso.playerId });
-    expect(target).toHaveAttribute('aria-pressed', 'false');
-
-    answer(
-      Response.json({
-        room: room({ ...match, votedPlayerIds: [me.playerId] }, { version: 4 }),
-      }),
+    expect(await screen.findByRole('button', { name: /Oso Sabio tu elección/ })).toHaveAttribute(
+      'aria-pressed',
+      'true',
     );
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /Oso Sabio/ })).toHaveAttribute(
-        'aria-pressed',
-        'true',
-      );
+    expect(sent(mock, `PUT ${base}/votes`)).toEqual({
+      round: 2,
+      targetId: oso.playerId,
+      confirmed: false,
     });
-    expect(screen.getByText('Votaron 1 de 4')).toBeVisible();
+    expect(screen.getByText('Votaron 0 de 4')).toBeVisible();
+
+    answer(apiError(409, 'STALE_ROUND', 'Esa ronda ya terminó'));
+    expect(await screen.findByText('Esa ronda ya terminó')).toBeVisible();
+    expect(screen.getByRole('button', { name: /Oso Sabio/ })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
   });
 
-  test('my vote stays marked after a reload of the same round', async () => {
+  test('confirming shows my check and the count before the server answers', async () => {
+    const answers: ((response: Response) => void)[] = [];
+    const match = impostorMatch(ids);
+    const { mock } = play(room(match), civilian, {
+      [`PUT ${base}/votes`]: () =>
+        new Promise<Response>((resolve) => {
+          answers.push(resolve);
+        }),
+    });
+
+    await screen.findByRole('heading', { name: 'Ronda 1' });
+    expect(screen.getByRole('button', { name: 'Confirmar voto' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: /Oso Sabio/ }));
+    await screen.findByRole('button', { name: /Oso Sabio tu elección/ });
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar voto' }));
+
+    expect(await screen.findByText('Votaron 1 de 4')).toBeVisible();
+    expect(screen.getByText('Votaste por Oso Sabio. Esperando a los demás…')).toBeVisible();
+    expect(screen.getByRole('button', { name: /Zorro Astuto/ })).toBeDisabled();
+    expect(answers).toHaveLength(1);
+
+    answers[0]?.(Response.json({ room: room(match) }));
+    await waitFor(() => {
+      expect(answers).toHaveLength(2);
+    });
+    expect(
+      mock.calls.filter((call) => call.route === `PUT ${base}/votes`).map((call) => call.init.body),
+    ).toEqual([
+      JSON.stringify({ round: 1, targetId: oso.playerId, confirmed: false }),
+      JSON.stringify({ round: 1, targetId: oso.playerId, confirmed: true }),
+    ]);
+    expect(screen.getByText('Votaron 1 de 4')).toBeVisible();
+
+    answers[1]?.(
+      Response.json({ room: room({ ...match, votedPlayerIds: [me.playerId] }, { version: 4 }) }),
+    );
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Oso Sabio tu voto/ })).toBeDisabled();
+    });
+    expect(screen.queryByRole('button', { name: 'Confirmar voto' })).toBeNull();
+  });
+
+  test('a refused confirmation restores the open vote with the server message', async () => {
+    const match = impostorMatch(ids);
+    let refuse: (response: Response) => void = () => undefined;
+    play(room(match), civilian, {
+      [`PUT ${base}/votes`]: (init) =>
+        typeof init.body === 'string' && init.body.includes('"confirmed":true')
+          ? new Promise<Response>((resolve) => {
+              refuse = resolve;
+            })
+          : Response.json({ room: room(match) }),
+    });
+
+    await screen.findByRole('heading', { name: 'Ronda 1' });
+    fireEvent.click(screen.getByRole('button', { name: /Oso Sabio/ }));
+    await screen.findByRole('button', { name: /Oso Sabio tu elección/ });
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar voto' }));
+    expect(await screen.findByText('Votaron 1 de 4')).toBeVisible();
+
+    refuse(apiError(409, 'CONFLICT', 'Hubo cambios al mismo tiempo, intenta de nuevo'));
+
+    expect(await screen.findByText('Hubo cambios al mismo tiempo, intenta de nuevo')).toBeVisible();
+    expect(screen.getByText('Votaron 0 de 4')).toBeVisible();
+    expect(screen.getByRole('button', { name: /Oso Sabio tu elección/ })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Confirmar voto' })).toBeEnabled();
+  });
+
+  test('my confirmed vote stays marked after a reload of the same round', async () => {
     const match = impostorMatch(ids);
     const voted = room({ ...match, votedPlayerIds: [me.playerId] }, { version: 4 });
     play(room(match), civilian, {
-      [`PUT ${base}/votes`]: () => Response.json({ room: voted }),
+      [`PUT ${base}/votes`]: (init) =>
+        Response.json({
+          room:
+            typeof init.body === 'string' && init.body.includes('"confirmed":true')
+              ? voted
+              : room(match),
+        }),
     });
     await screen.findByRole('heading', { name: 'Ronda 1' });
     fireEvent.click(screen.getByRole('button', { name: /Oso Sabio/ }));
+    await screen.findByRole('button', { name: /Oso Sabio tu elección/ });
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar voto' }));
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /Oso Sabio/ })).toHaveAttribute(
-        'aria-pressed',
-        'true',
-      );
+      expect(screen.getByRole('button', { name: /Oso Sabio tu voto/ })).toBeDisabled();
     });
 
     cleanup();
@@ -193,6 +271,44 @@ describe('voting', () => {
       'true',
     );
     expect(screen.getByText('tu voto')).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Confirmar voto' })).toBeNull();
+  });
+
+  test('when the player I voted for is kicked my vote is gone and I must choose again', async () => {
+    const match = impostorMatch(ids);
+    sessionStorage.setItem(
+      `family-night.vote.${MATCH_ID}`,
+      JSON.stringify({ round: 1, targetId: oso.playerId, confirmed: true }),
+    );
+    const { queryClient } = play(room({ ...match, votedPlayerIds: [me.playerId] }));
+    expect(await screen.findByRole('button', { name: /Oso Sabio tu voto/ })).toBeDisabled();
+
+    act(() => {
+      applyRoom(
+        queryClient,
+        room(
+          {
+            ...match,
+            order: ids.filter((id) => id !== oso.playerId),
+            eliminated: [
+              { playerId: oso.playerId, round: 1, wasImpostor: false, reason: 'KICKED' },
+            ],
+          },
+          { version: 9 },
+        ),
+      );
+    });
+
+    expect(
+      await screen.findByText('Quien elegiste ya no está en juego. Elige de nuevo.'),
+    ).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Confirmar voto' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: /Oso Sabio/ })).toBeNull();
+    expect(screen.getByText('Votaron 0 de 3')).toBeVisible();
+
+    fireEvent.click(screen.getByRole('button', { name: /Zorro Astuto/ }));
+    expect(await screen.findByRole('button', { name: /Zorro Astuto tu elección/ })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Confirmar voto' })).toBeEnabled();
   });
 
   test('a stored vote of an earlier round is not shown in the next one', async () => {
@@ -226,7 +342,7 @@ describe('voting', () => {
     expect(screen.getByText('Votaron 0 de 3')).toBeVisible();
   });
 
-  test('the host confirms before closing with votes missing', async () => {
+  test('the host confirms before closing with votes unconfirmed, and is told selections count', async () => {
     const match = impostorMatch(ids, { votedPlayerIds: [zorro.playerId, oso.playerId] });
     const { mock } = play(room(match), civilian, {
       [`POST ${base}/close-voting`]: () => Response.json({ room: room(match, { version: 4 }) }),
@@ -234,7 +350,7 @@ describe('voting', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: 'Cerrar votación' }));
     const dialog = screen.getByRole('alertdialog', {
-      name: 'Faltan 2 votos. ¿Cerrar la votación igual?',
+      name: 'Faltan 2 por confirmar. Si ya eligieron, su elección cuenta. ¿Cerrar la votación?',
     });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Sí, cerrar' }));
 
@@ -252,7 +368,7 @@ describe('voting', () => {
 
 function revealed(
   eliminatedId: string | null,
-  options: { wasImpostor?: boolean; tie?: boolean; lastGuess?: boolean } = {},
+  options: { wasImpostor?: boolean; tie?: boolean } = {},
 ): ImpostorPublic {
   const tally = [
     { playerId: zorro.playerId, votes: 2 },
@@ -260,29 +376,35 @@ function revealed(
     { playerId: me.playerId, votes: 0 },
     { playerId: colibri.playerId, votes: 0 },
   ];
-  return impostorMatch(
-    ids,
-    {
-      phase: 'REVEAL',
-      order: ids.filter((id) => id !== eliminatedId),
-      votedPlayerIds: ids,
-      lastResult: { round: 1, tally, tie: options.tie ?? false, eliminatedId },
-      eliminated: eliminatedId
-        ? [
-            {
-              playerId: eliminatedId,
-              round: 1,
-              wasImpostor: options.wasImpostor ?? false,
-              reason: options.tie ? 'TIE_RANDOM' : 'VOTE',
-            },
-          ]
-        : [],
-    },
-    { impostorLastGuess: options.lastGuess ?? true },
-  );
+  return impostorMatch(ids, {
+    phase: 'REVEAL',
+    order: ids.filter((id) => id !== eliminatedId),
+    votedPlayerIds: ids,
+    lastResult: { round: 1, tally, tie: options.tie ?? false, eliminatedId },
+    eliminated: eliminatedId
+      ? [
+          {
+            playerId: eliminatedId,
+            round: 1,
+            wasImpostor: options.wasImpostor ?? false,
+            reason: options.tie ? 'TIE_RANDOM' : 'VOTE',
+          },
+        ]
+      : [],
+  });
 }
 
 describe('the reveal', () => {
+  test('the eliminated card turns over in 3D before telling what they were', async () => {
+    stubReducedMotion(false);
+    play(room(revealed(zorro.playerId, { wasImpostor: true })));
+
+    await screen.findByRole('heading', { name: 'Zorro Astuto fue eliminado' });
+    expect(screen.queryByText('Era impostor')).toBeNull();
+    const verdict = await screen.findByText('Era impostor');
+    expect(verdict.closest('[data-flip]')).toHaveStyle({ transform: 'rotateY(180deg)' });
+  });
+
   test('ranks the votes and says the eliminated was an impostor', async () => {
     play(room(revealed(zorro.playerId, { wasImpostor: true })));
 
@@ -291,13 +413,13 @@ describe('the reveal', () => {
     ).toBeVisible();
     expect(screen.getByText('Era impostor')).toBeVisible();
     const rows = within(screen.getByRole('list', { name: 'Votos' })).getAllByRole('listitem');
-    expect(rows.map((row) => row.textContent)).toEqual([
+    expect(rows.map(spokenText)).toEqual([
       'Zorro Astuto2 votos',
       'Oso Sabio1 voto',
       'Cóndor Veloz0 votos',
       'Colibrí Risueño0 votos',
     ]);
-    expect(screen.getByRole('button', { name: 'Última oportunidad' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Ver resultado' })).toBeVisible();
   });
 
   test('a civilian out reads "No era impostor" and the host goes on to the next round', async () => {
@@ -328,9 +450,18 @@ describe('the reveal', () => {
     expect(screen.getByText('Oso Sabio no era impostor')).toBeVisible();
   });
 
-  test('a vote that ends the match leads to the result', async () => {
-    play(room(revealed(zorro.playerId, { wasImpostor: true, lastGuess: false })));
-    expect(await screen.findByRole('button', { name: 'Ver resultado' })).toBeVisible();
+  test('voting out the last impostor leads straight to the result, with no last chance', async () => {
+    const match = revealed(zorro.playerId, { wasImpostor: true });
+    const done = finished('CIVILIANS');
+    const { mock } = play(room(match), civilian, {
+      [`POST ${base}/next-round`]: () => Response.json({ room: room(done, { version: 4 }) }),
+    });
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Ver resultado' }));
+
+    expect(await screen.findByRole('heading', { name: 'Ganaron los civiles' })).toBeVisible();
+    expect(sent(mock, `POST ${base}/next-round`)).toEqual({ round: 1 });
+    expect(screen.queryByText(/adivinar la palabra/)).toBeNull();
   });
 
   test('members wait for the host', async () => {
@@ -340,87 +471,21 @@ describe('the reveal', () => {
   });
 });
 
-function guessing(guesserId: string): ImpostorPublic {
+function finished(winner: 'CIVILIANS' | 'IMPOSTORS'): ImpostorPublic {
   return {
-    ...revealed(guesserId, { wasImpostor: true }),
-    phase: 'IMPOSTOR_GUESS',
-    guess: {
-      guesserId,
-      options: ['Gato', 'Perro', 'Loro', 'Vaca', 'Pato'],
-      chosen: null,
-      correct: null,
-    },
-  };
-}
-
-describe('the last chance', () => {
-  test('the caught impostor picks one of five words', async () => {
-    const { mock } = play(room(guessing(me.playerId)), impostor, {
-      [`POST ${base}/guess`]: () => Response.json({ room: room(guessing(me.playerId)) }),
-    });
-
-    expect(await screen.findByRole('heading', { name: '¡Te atraparon!' })).toBeVisible();
-    for (const option of ['Gato', 'Perro', 'Loro', 'Vaca', 'Pato']) {
-      expect(screen.getByRole('button', { name: option })).toBeVisible();
-    }
-    fireEvent.click(screen.getByRole('button', { name: 'Loro' }));
-    await waitFor(() => {
-      expect(sent(mock, `POST ${base}/guess`)).toEqual({ option: 'Loro' });
-    });
-  });
-
-  test('the rest wait, and an online guesser cannot be skipped', async () => {
-    play(room(guessing(zorro.playerId)));
-
-    expect(
-      await screen.findByText('Zorro Astuto está intentando adivinar la palabra…'),
-    ).toBeVisible();
-    expect(screen.queryByRole('button', { name: 'Saltar' })).toBeNull();
-  });
-
-  test('the host skips a guesser who is offline', async () => {
-    const offline = {
-      ...zorro,
-      online: false,
-      lastSeenAt: new Date(Date.now() - 2 * ONLINE_WINDOW_MS).toISOString(),
-    };
-    const { mock } = play(
-      room(guessing(zorro.playerId), { members: [everyone[0] ?? zorro, offline, oso, colibri] }),
-      civilian,
-      {
-        [`POST ${base}/skip-guess`]: () => Response.json({ room: room(guessing(zorro.playerId)) }),
-      },
-    );
-
-    fireEvent.click(await screen.findByRole('button', { name: 'Saltar' }));
-    await waitFor(() => {
-      expect(mock.calls.map((call) => call.route)).toContain(`POST ${base}/skip-guess`);
-    });
-  });
-});
-
-function finished(winner: 'CIVILIANS' | 'IMPOSTORS', correct: boolean | null): ImpostorPublic {
-  const match = guessing(zorro.playerId);
-  return {
-    ...match,
+    ...revealed(zorro.playerId, { wasImpostor: true }),
     status: 'FINISHED',
     phase: 'FINISHED',
     winner,
-    guess: match.guess && {
-      ...match.guess,
-      chosen: correct === null ? null : correct ? 'Perro' : 'Gato',
-      correct,
-    },
     reveal: { word: 'Perro', category: 'Animales', impostorIds: [zorro.playerId] },
   };
 }
 
 describe('the final screen', () => {
   test('civilians win: the word, the impostor, the history and the points', async () => {
-    play(room(finished('CIVILIANS', false)));
+    play(room(finished('CIVILIANS')));
 
     expect(await screen.findByRole('heading', { name: 'Ganaron los civiles' })).toBeVisible();
-    expect(screen.getByText('Zorro Astuto dijo «Gato» y falló')).toBeVisible();
     expect(screen.getByText('Perro')).toBeVisible();
     expect(screen.getByText('Ronda 1:')).toBeVisible();
     const points = screen.getByRole('heading', { name: 'Puntos de esta partida' }).parentElement;
@@ -430,7 +495,7 @@ describe('the final screen', () => {
 
   test('points list only the winners still in the room, as the server credits them', async () => {
     const gone = '55555555-5555-4555-8555-555555555555';
-    const match = finished('CIVILIANS', false);
+    const match = finished('CIVILIANS');
     play(room({ ...match, participants: [...match.participants, gone] }));
 
     const points = (await screen.findByRole('heading', { name: 'Puntos de esta partida' }))
@@ -439,17 +504,16 @@ describe('the final screen', () => {
     expect(screen.queryByText('Alguien que salió')).toBeNull();
   });
 
-  test('a right guess steals the win and the impostor gets 2 points', async () => {
-    play(room(finished('IMPOSTORS', true)));
+  test('impostors win and the impostor gets 2 points', async () => {
+    play(room(finished('IMPOSTORS')));
 
     expect(await screen.findByRole('heading', { name: 'Ganaron los impostores' })).toBeVisible();
-    expect(screen.getByText('¡Robó la victoria!')).toBeVisible();
     expect(screen.getByText('+2')).toBeVisible();
   });
 
   test('the host plays again or goes back to the lobby; members wait', async () => {
-    const { mock, router } = play(room(finished('CIVILIANS', null)), civilian, {
-      [`POST ${base}/rematch`]: () => Response.json({ room: room(finished('CIVILIANS', null)) }),
+    const { mock, router } = play(room(finished('CIVILIANS')), civilian, {
+      [`POST ${base}/rematch`]: () => Response.json({ room: room(finished('CIVILIANS')) }),
       'POST /api/rooms/ABCD/lobby': () => Response.json({ room: room(null, { version: 9 }) }),
     });
 
@@ -464,7 +528,7 @@ describe('the final screen', () => {
   });
 
   test('members see "Esperando al host…"', async () => {
-    play(room(finished('CIVILIANS', null), { hostId: zorro.playerId }));
+    play(room(finished('CIVILIANS'), { hostId: zorro.playerId }));
     expect(await screen.findByText('Esperando al host…')).toBeVisible();
     expect(screen.queryByRole('button', { name: 'Jugar otra vez' })).toBeNull();
   });

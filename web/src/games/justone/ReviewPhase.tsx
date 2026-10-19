@@ -2,6 +2,9 @@ import type { JustOneClue, JustOnePublic, RoomMember } from '@family-night/share
 import { Button } from '../../components/Button';
 import { nameOf } from '../../components/match';
 import type { Seat } from './model';
+import { Waiting } from '../../components/Waiting';
+import { Stagger, StaggerItem } from '../../motion/motion';
+import { ClueCard } from './ClueCard';
 import { WordCard } from './WordCard';
 
 interface ReviewPhaseProps {
@@ -11,7 +14,6 @@ interface ReviewPhaseProps {
   word: string | undefined;
   clues: JustOneClue[] | undefined;
   isHost: boolean;
-  toggling: string | null;
   showing: boolean;
   onToggle: (authorId: string, cancelled: boolean) => void;
   onShow: () => void;
@@ -24,7 +26,6 @@ export function ReviewPhase({
   word,
   clues,
   isHost,
-  toggling,
   showing,
   onToggle,
   onShow,
@@ -52,50 +53,40 @@ export function ReviewPhase({
               Cargando las pistas…
             </p>
           ) : (
-            <ul aria-label="Pistas" className="flex flex-col gap-2">
-              {reviewed.map((clue) => {
-                const cancelled = match.cancelledAuthorIds.includes(clue.authorId);
-                const author = nameOf(members, clue.authorId);
-                return (
-                  <li key={clue.authorId}>
-                    <button
-                      type="button"
-                      aria-pressed={cancelled}
-                      aria-label={`${clue.clue}, de ${author}${cancelled ? ', tachada' : ''}`}
-                      disabled={toggling !== null}
-                      onClick={() => {
-                        onToggle(clue.authorId, !cancelled);
-                      }}
-                      className={`flex min-h-14 w-full items-center justify-between gap-3 rounded-2xl px-4 py-3 text-left focus-visible:ring-2 focus-visible:ring-moon focus-visible:outline-none disabled:cursor-wait ${
-                        cancelled
-                          ? 'bg-night-soft/60 text-cream/50 ring-1 ring-cream/10'
-                          : 'bg-night-soft ring-1 ring-cream/15'
-                      }`}
-                    >
-                      <span className="flex min-w-0 flex-col">
-                        <span
-                          className={`text-xl font-bold break-words ${cancelled ? 'line-through' : ''}`}
-                        >
-                          {clue.clue}
-                        </span>
-                        <span className="text-base text-cream/60">{author}</span>
-                      </span>
-                      <span
-                        aria-hidden="true"
-                        className={`shrink-0 rounded-full px-3 py-1 text-sm font-semibold ${
-                          cancelled ? 'bg-cream/10 text-cream/70' : 'bg-moon text-night'
-                        }`}
+            <Stagger>
+              <ul aria-label="Pistas" className="grid grid-cols-2 gap-3 px-1 pt-2">
+                {reviewed.map((clue, index) => {
+                  const cancelled = match.cancelledAuthorIds.includes(clue.authorId);
+                  const author = nameOf(members, clue.authorId);
+                  return (
+                    <StaggerItem as="li" key={clue.authorId}>
+                      <button
+                        type="button"
+                        aria-pressed={cancelled}
+                        aria-label={`${clue.clue}, de ${author}${cancelled ? ', tachada' : ''}`}
+                        onClick={() => {
+                          onToggle(clue.authorId, !cancelled);
+                        }}
+                        className="flex w-full rounded-2xl focus-visible:ring-2 focus-visible:ring-moon focus-visible:ring-offset-4 focus-visible:ring-offset-night focus-visible:outline-none motion-safe:transition-transform motion-safe:active:scale-95"
                       >
-                        {toggling === clue.authorId ? '…' : cancelled ? 'Tachada' : 'Queda'}
-                      </span>
-                    </button>
+                        <ClueCard
+                          clue={clue.clue}
+                          index={index}
+                          author={author}
+                          cancelled={cancelled}
+                          stamp={cancelled ? 'Tachada' : 'Queda'}
+                        />
+                      </button>
+                    </StaggerItem>
+                  );
+                })}
+                {reviewed.length === 0 && (
+                  <li className="col-span-2 text-center text-lg text-cream/70">
+                    Nadie escribió una pista
                   </li>
-                );
-              })}
-              {reviewed.length === 0 && (
-                <li className="text-center text-lg text-cream/70">Nadie escribió una pista</li>
-              )}
-            </ul>
+                )}
+              </ul>
+            </Stagger>
           )}
         </>
       ) : (
@@ -103,13 +94,16 @@ export function ReviewPhase({
           <h2 id="review-title" className="text-2xl font-bold text-balance">
             {seat === 'GUESSER' ? 'Te toca adivinar' : `Adivina ${guesser}`}
           </h2>
-          <p className="text-xl font-semibold text-balance">
+          <Waiting>
             {seat === 'GUESSER' ? 'Tus compañeros' : 'Los demás'} están revisando las pistas…
-          </p>
+          </Waiting>
         </div>
       )}
 
-      <p role="status" className="text-center text-lg text-cream/80">
+      <p
+        role="status"
+        className="self-center rounded-full bg-cream/8 px-4 py-1 text-lg font-semibold text-cream/85"
+      >
         {surviving === 1 ? 'Queda 1 pista' : `Quedan ${String(surviving)} pistas`}
       </p>
 

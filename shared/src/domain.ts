@@ -22,7 +22,6 @@ export interface ImpostorConfig {
   tieRule: TieRule;
   showCategoryToImpostor: boolean;
   categories: string[];
-  impostorLastGuess: boolean;
 }
 
 export interface WavelengthConfig {
@@ -41,7 +40,7 @@ export interface GameConfigs {
 
 export type MatchStatus = 'PLAYING' | 'FINISHED' | 'ABORTED';
 
-export type ImpostorPhase = 'VOTING' | 'REVEAL' | 'IMPOSTOR_GUESS' | 'FINISHED';
+export type ImpostorPhase = 'VOTING' | 'REVEAL' | 'FINISHED';
 
 export type EliminationReason = 'VOTE' | 'TIE_RANDOM' | 'LEFT' | 'KICKED';
 
@@ -66,13 +65,6 @@ export interface RoundResult {
   eliminatedId: string | null;
 }
 
-export interface ImpostorGuess {
-  guesserId: string;
-  options: string[];
-  chosen: string | null;
-  correct: boolean | null;
-}
-
 export interface ImpostorReveal {
   word: string;
   category: string;
@@ -91,7 +83,6 @@ export interface ImpostorPublic {
   eliminated: Elimination[];
   votedPlayerIds: string[];
   lastResult: RoundResult | null;
-  guess: ImpostorGuess | null;
   winner: ImpostorWinner | null;
   reveal: ImpostorReveal | null;
 }

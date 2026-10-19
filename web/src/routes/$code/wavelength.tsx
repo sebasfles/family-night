@@ -6,10 +6,11 @@ import {
 } from '@family-night/shared';
 import { createFileRoute } from '@tanstack/react-router';
 import { api } from '../../api/client';
-import { useMatchSecret, useRoomMutation } from '../../api/match';
+import { useMatchSecret, useRoomMutation, useRoomView } from '../../api/match';
 import { useRoom } from '../../api/room';
 import { MatchHeader } from '../../components/MatchHeader';
-import { nameOf, usePhaseVibration } from '../../components/match';
+import { SpectatorNotice } from '../../components/SpectatorNotice';
+import { nameOf, usePhaseVibration, useRoundDraft } from '../../components/match';
 import { useNow } from '../../components/useNow';
 import { CluePhase } from '../../games/wavelength/CluePhase';
 import { Final } from '../../games/wavelength/Final';
@@ -18,6 +19,7 @@ import { seatOf } from '../../games/wavelength/model';
 import { useMyGuess } from '../../games/wavelength/myGuess';
 import { RevealPhase } from '../../games/wavelength/RevealPhase';
 import { useIdentity } from '../../identity/identity';
+import { Enter } from '../../motion/motion';
 
 export const Route = createFileRoute('/$code/wavelength')({
   component: WavelengthScreen,
@@ -25,7 +27,8 @@ export const Route = createFileRoute('/$code/wavelength')({
 
 function WavelengthScreen() {
   const { code } = Route.useParams();
-  const room = useRoom(code).data;
+  const room = useRoomView(code);
+  const served = useRoom(code).data?.snapshot.currentMatch;
   const match = room?.snapshot.currentMatch;
   if (!room || match?.gameType !== 'WAVELENGTH') return null;
   return (
@@ -35,6 +38,7 @@ function WavelengthScreen() {
       snapshot={room.snapshot}
       match={match}
       clockOffsetMs={room.clockOffsetMs}
+      servedStep={served ? `${served.phase}:${String(served.round)}` : ''}
     />
   );
 }
@@ -44,9 +48,16 @@ interface WavelengthMatchProps {
   snapshot: RoomSnapshot;
   match: WavelengthPublic;
   clockOffsetMs: number;
+  servedStep: string;
 }
 
-function WavelengthMatch({ code, snapshot, match, clockOffsetMs }: WavelengthMatchProps) {
+function WavelengthMatch({
+  code,
+  snapshot,
+  match,
+  clockOffsetMs,
+  servedStep,
+}: WavelengthMatchProps) {
   const identity = useIdentity();
   const now = useNow(PRESENCE_RECOMPUTE_MS);
   const selfId = identity.playerId;
@@ -58,29 +69,36 @@ function WavelengthMatch({ code, snapshot, match, clockOffsetMs }: WavelengthMat
   const secret = useMatchSecret(code, matchId, round, seat === 'PSYCHIC' && playing && hidden);
   const target = secret.data?.role === 'PSYCHIC' ? secret.data.target : undefined;
   const [myGuess, rememberGuess] = useMyGuess(matchId, round);
-  usePhaseVibration(`${phase}:${String(round)}`);
+  const [clueDraft, setClueDraft] = useRoundDraft(round);
+  usePhaseVibration(servedStep);
 
-  const clue = useRoomMutation((text: string) =>
-    api.giveClue(code, matchId, { round, clue: text }),
+  const clue = useRoomMutation(
+    code,
+    (text: string) => api.giveClue(code, matchId, { round, clue: text }),
+    (text) => ({ kind: 'wavelength-clue', matchId, round, psychicId: selfId, clue: text }),
   );
-  const commit = useRoomMutation(async (value: number) => {
-    const response = await api.commitGuess(code, matchId, { round, value });
-    rememberGuess(value);
-    return response;
-  });
-  const close = useRoomMutation(() => api.closeGuessing(code, matchId, { round }));
-  const skip = useRoomMutation(() => api.skipPsychic(code, matchId, { round }));
-  const next = useRoomMutation(() => api.nextRound(code, matchId, { round }));
-  const abort = useRoomMutation(() => api.abortMatch(code, matchId));
-  const rematch = useRoomMutation(() => api.rematch(code, matchId));
-  const lobby = useRoomMutation(() => api.backToLobby(code));
+  const commit = useRoomMutation(
+    code,
+    async (value: number) => {
+      const response = await api.commitGuess(code, matchId, { round, value });
+      rememberGuess(value);
+      return response;
+    },
+    () => ({ kind: 'wavelength-commit', matchId, round, playerId: selfId }),
+  );
+  const close = useRoomMutation(code, () => api.closeGuessing(code, matchId, { round }));
+  const skip = useRoomMutation(code, () => api.skipPsychic(code, matchId, { round }));
+  const next = useRoomMutation(code, () => api.nextRound(code, matchId, { round }));
+  const abort = useRoomMutation(code, () => api.abortMatch(code, matchId));
+  const rematch = useRoomMutation(code, () => api.rematch(code, matchId));
+  const lobby = useRoomMutation(code, () => api.backToLobby(code));
 
   const psychic = snapshot.members.find((member) => member.playerId === match.psychicId);
   const psychicOnline = psychic ? isOnline(psychic.lastSeenAt, now + clockOffsetMs) : false;
   const rounds = match.round === 1 ? '1 ronda' : `${String(match.round)} rondas`;
 
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 py-6">
+    <Enter as="main" className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 py-6">
       <MatchHeader
         round={round}
         finished={phase === 'FINISHED'}
@@ -99,81 +117,80 @@ function WavelengthMatch({ code, snapshot, match, clockOffsetMs }: WavelengthMat
         }}
       />
 
-      {seat === 'SPECTATOR' && playing && (
-        <p
-          role="status"
-          className="rounded-3xl bg-night-soft p-4 text-center text-lg ring-1 ring-cream/10"
-        >
-          Partida en curso, juegas en la siguiente
-        </p>
-      )}
+      {seat === 'SPECTATOR' && playing && <SpectatorNotice />}
 
-      {phase === 'CLUE' && (
-        <CluePhase
-          key={round}
-          match={match}
-          members={snapshot.members}
-          seat={seat}
-          target={target}
-          isHost={isHost}
-          psychicOnline={psychicOnline}
-          sending={clue.isPending}
-          skipping={skip.isPending}
-          onClue={(text) => clue.mutateAsync(text)}
-          onSkip={() => {
-            skip.mutate();
-          }}
-        />
-      )}
+      <Enter key={`${phase}-${String(round)}`} className="flex flex-col gap-6">
+        {phase === 'CLUE' && (
+          <CluePhase
+            key={round}
+            match={match}
+            members={snapshot.members}
+            seat={seat}
+            target={target}
+            isHost={isHost}
+            psychicOnline={psychicOnline}
+            draft={clueDraft}
+            skipping={skip.isPending}
+            onDraft={setClueDraft}
+            onClue={(text) => {
+              clue.mutate(text);
+            }}
+            onSkip={() => {
+              skip.mutate();
+            }}
+          />
+        )}
 
-      {phase === 'GUESS' && (
-        <GuessPhase
-          key={round}
-          match={match}
-          members={snapshot.members}
-          seat={seat}
-          selfId={selfId}
-          target={target}
-          myGuess={myGuess}
-          isHost={isHost}
-          committing={commit.isPending}
-          closing={close.isPending}
-          onCommit={(value) => commit.mutateAsync(value)}
-          onClose={() => {
-            close.mutate();
-          }}
-        />
-      )}
+        {phase === 'GUESS' && (
+          <GuessPhase
+            key={round}
+            match={match}
+            members={snapshot.members}
+            seat={seat}
+            selfId={selfId}
+            target={target}
+            myGuess={commit.variables ?? myGuess}
+            isHost={isHost}
+            closing={close.isPending}
+            onCommit={(value) => {
+              commit.mutate(value);
+            }}
+            onClose={() => {
+              close.mutate();
+            }}
+          />
+        )}
 
-      {phase === 'REVEAL' && (
-        <RevealPhase
-          match={match}
-          members={snapshot.members}
-          selfId={selfId}
-          isHost={isHost}
-          busy={next.isPending}
-          onNext={() => {
-            next.mutate();
-          }}
-        />
-      )}
+        {phase === 'REVEAL' && (
+          <RevealPhase
+            match={match}
+            members={snapshot.members}
+            selfId={selfId}
+            isHost={isHost}
+            busy={next.isPending}
+            onNext={() => {
+              next.mutate();
+            }}
+          />
+        )}
 
-      {phase === 'FINISHED' && (
-        <Final
-          match={match}
-          members={snapshot.members}
-          selfId={selfId}
-          isHost={isHost}
-          rematching={rematch.isPending}
-          leaving={lobby.isPending}
-          onRematch={() => {
-            rematch.mutate();
-          }}
-          onLobby={() => {
-            lobby.mutate();
-          }}
-        />
-      )}
-    </main>
+        {phase === 'FINISHED' && (
+          <Final
+            match={match}
+            members={snapshot.members}
+            selfId={selfId}
+            isHost={isHost}
+            rematching={rematch.isPending}
+            leaving={lobby.isPending}
+            onRematch={() => {
+              rematch.mutate();
+            }}
+            onLobby={() => {
+              lobby.mutate();
+            }}
+          />
+        )}
+      </Enter>
+    </Enter>
   );
 }

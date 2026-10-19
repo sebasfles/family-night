@@ -85,11 +85,12 @@ export function vote(
   voter: CreatePlayerResponse,
   target: CreatePlayerResponse,
   match: ImpostorPublic,
-  round = match.round,
+  { round = match.round, confirmed = true }: { round?: number; confirmed?: boolean } = {},
 ): Promise<Response> {
   return call(room.harness, voter, 'PUT', matchPath(room, match.matchId, 'votes'), {
     round,
     targetId: target.playerId,
+    confirmed,
   });
 }
 
@@ -98,8 +99,10 @@ export async function voted(
   voter: CreatePlayerResponse,
   target: CreatePlayerResponse,
   match: ImpostorPublic,
+  confirmed = true,
 ): Promise<ImpostorPublic> {
-  return currentMatch((await json<RoomResponse>(vote(room, voter, target, match))).room);
+  const response = vote(room, voter, target, match, { confirmed });
+  return currentMatch((await json<RoomResponse>(response)).room);
 }
 
 export async function hostAction(

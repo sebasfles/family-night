@@ -1,5 +1,7 @@
 import { DIAL_BANDS, DIAL_MAX } from '@family-night/shared';
-import { useRef, type KeyboardEvent, type PointerEvent } from 'react';
+import { useId, useRef, type KeyboardEvent, type PointerEvent } from 'react';
+import { FlipReveal } from '../../motion/Flip';
+import { playTick, unlockTick } from './tick';
 
 export interface DialMarker {
   id: string;
@@ -17,6 +19,8 @@ interface DialProps {
   markers?: DialMarker[];
   onChange?: (value: number) => void;
   disabled?: boolean;
+  sound?: boolean;
+  reveal?: boolean;
 }
 
 const WIDTH = 260;
@@ -25,7 +29,8 @@ const CX = 130;
 const CY = 140;
 const R = 100;
 const LABEL_SPACE = 30;
-const BAND_COLORS = ['#f97316', '#ffd166', '#22c55e', '#3b82f6'];
+const BAND_FILLS = ['fill-moon-bright', 'fill-ember', 'fill-orchid'];
+const LABEL_MIN_WIDTH = 2;
 const STEP_KEYS: Record<string, number> = {
   ArrowLeft: -1,
   ArrowDown: -1,
@@ -48,10 +53,44 @@ function fmt(n: number): string {
   return n.toFixed(2);
 }
 
+function arc(from: number, to: number, radius: number): string {
+  const [x1, y1] = point(from, radius);
+  const [x2, y2] = point(to, radius);
+  return `M${fmt(x1)} ${fmt(y1)} A${String(radius)} ${String(radius)} 0 0 1 ${fmt(x2)} ${fmt(y2)}`;
+}
+
 function wedge(from: number, to: number): string {
   const [x1, y1] = point(Math.max(0, from), R);
   const [x2, y2] = point(Math.min(DIAL_MAX, to), R);
   return `M${String(CX)} ${String(CY)} L${fmt(x1)} ${fmt(y1)} A${String(R)} ${String(R)} 0 0 1 ${fmt(x2)} ${fmt(y2)} Z`;
+}
+
+interface BandLabel {
+  points: number;
+  at: number;
+}
+
+function bandEdge(index: number): number {
+  return index < 0 ? -0.5 : (DIAL_BANDS[index]?.within ?? 0) + 0.5;
+}
+
+function bandLabels(target: number): BandLabel[] {
+  return DIAL_BANDS.flatMap((band, index) => {
+    const inner = bandEdge(index - 1);
+    const outer = bandEdge(index);
+    const segments: [number, number][] =
+      index === 0
+        ? [[target - outer, target + outer]]
+        : [
+            [target - outer, target - inner],
+            [target + inner, target + outer],
+          ];
+    return segments.flatMap(([from, to]) => {
+      const lo = Math.max(0, from);
+      const hi = Math.min(DIAL_MAX, to);
+      return hi - lo >= LABEL_MIN_WIDTH ? [{ points: band.points, at: (lo + hi) / 2 }] : [];
+    });
+  });
 }
 
 function staggered(markers: DialMarker[]): (DialMarker & { lift: number })[] {
@@ -72,13 +111,20 @@ export function Dial({
   markers = [],
   onChange,
   disabled = false,
+  sound = false,
+  reveal = false,
 }: DialProps) {
   const svg = useRef<SVGSVGElement>(null);
   const dragging = useRef(false);
+  const ids = useId().replace(/[^a-zA-Z0-9_-]/g, '');
   const interactive = onChange !== undefined && !disabled;
 
   const set = (next: number) => {
-    if (interactive) onChange(clamp(next));
+    if (!interactive) return;
+    const clamped = clamp(next);
+    if (clamped === value) return;
+    onChange(clamped);
+    if (sound) playTick();
   };
 
   const fromPointer = (event: PointerEvent<SVGSVGElement>) => {
@@ -93,6 +139,7 @@ export function Dial({
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (!interactive) return;
+    if (sound) unlockTick();
     const step = STEP_KEYS[event.key];
     const current = value ?? DIAL_MAX / 2;
     if (step !== undefined) set(current + step);
@@ -102,11 +149,13 @@ export function Dial({
     event.preventDefault();
   };
 
-  const needle = value === null ? null : point(value, R - 8);
+  const needle = value === null ? null : point(value, R - 10);
   const top = markers.length > 0 ? 0 : LABEL_SPACE;
+  const viewBox = `0 ${String(top)} ${String(WIDTH)} ${String(HEIGHT - top)}`;
+  const bands = target === null ? null : <Bands target={target} viewBox={viewBox} />;
 
   return (
-    <div className="flex w-full flex-col gap-2">
+    <div className="flex w-full flex-col gap-3">
       <div
         role={onChange ? 'slider' : 'img'}
         aria-label={label}
@@ -121,15 +170,63 @@ export function Dial({
             }
           : {})}
         onKeyDown={onKeyDown}
-        className="rounded-3xl focus-visible:ring-2 focus-visible:ring-moon focus-visible:outline-none"
+        className="relative rounded-3xl focus-visible:ring-2 focus-visible:ring-moon focus-visible:outline-none"
       >
+        <svg viewBox={viewBox} className="block w-full" aria-hidden="true">
+          <defs>
+            <radialGradient id={`${ids}-face`} cx={CX} cy={CY} r={R} gradientUnits="userSpaceOnUse">
+              <stop offset="0" style={{ stopColor: 'var(--color-night-raised)' }} />
+              <stop offset="1" style={{ stopColor: 'var(--color-night-soft)' }} />
+            </radialGradient>
+            <linearGradient
+              id={`${ids}-rim`}
+              x1={CX - R}
+              x2={CX + R}
+              y1={0}
+              y2={0}
+              gradientUnits="userSpaceOnUse"
+            >
+              <stop offset="0" style={{ stopColor: 'var(--color-lagoon)' }} />
+              <stop offset="0.5" style={{ stopColor: 'var(--color-sand)' }} />
+              <stop offset="1" style={{ stopColor: 'var(--color-ember)' }} />
+            </linearGradient>
+          </defs>
+          <path
+            d={wedge(0, DIAL_MAX)}
+            fill={`url(#${ids}-face)`}
+            className="stroke-cream"
+            strokeOpacity={0.12}
+          />
+          <path
+            d={arc(0, DIAL_MAX, R + 5)}
+            fill="none"
+            stroke={`url(#${ids}-rim)`}
+            strokeWidth={4}
+            strokeLinecap="round"
+          />
+        </svg>
+
+        {bands && (
+          <div data-layer="bands" className="absolute inset-0">
+            {reveal ? (
+              <FlipReveal back={<Shutter viewBox={viewBox} pattern={`${ids}-shutter`} />}>
+                {bands}
+              </FlipReveal>
+            ) : (
+              bands
+            )}
+          </div>
+        )}
+
         <svg
           ref={svg}
-          viewBox={`0 ${String(top)} ${String(WIDTH)} ${String(HEIGHT - top)}`}
-          className={`block w-full select-none ${interactive ? 'cursor-grab touch-none active:cursor-grabbing' : ''}`}
+          data-layer="hand"
+          viewBox={viewBox}
+          className={`absolute inset-0 block size-full select-none ${interactive ? 'cursor-grab touch-none active:cursor-grabbing' : ''}`}
           aria-hidden="true"
           onPointerDown={(event) => {
             if (!interactive) return;
+            if (sound) unlockTick();
             dragging.current = true;
             event.currentTarget.setPointerCapture(event.pointerId);
             fromPointer(event);
@@ -139,59 +236,27 @@ export function Dial({
           }}
           onPointerUp={() => {
             dragging.current = false;
+            if (interactive && sound) unlockTick();
           }}
           onPointerCancel={() => {
             dragging.current = false;
           }}
         >
-          <path d={wedge(0, DIAL_MAX)} fill="#241f55" stroke="#fdf6e3" strokeOpacity={0.15} />
-          {target !== null &&
-            DIAL_BANDS.toReversed().map((band, index) => (
-              <path
-                key={band.points}
-                d={wedge(target - band.within, target + band.within)}
-                fill={BAND_COLORS[DIAL_BANDS.length - 1 - index]}
-              />
-            ))}
-          {target !== null &&
-            DIAL_BANDS.map((band, index) => {
-              const inner = index === 0 ? 0 : (DIAL_BANDS[index - 1]?.within ?? 0);
-              const middle =
-                index === 0 ? [0] : [-1, 1].map((s) => (s * (inner + band.within)) / 2);
-              return middle
-                .map((offset) => target + offset)
-                .filter((at) => at >= 0 && at <= DIAL_MAX)
-                .map((at) => {
-                  const [x, y] = point(at, R * 0.8);
-                  return (
-                    <text
-                      key={`${String(band.points)}-${String(at)}`}
-                      x={x}
-                      y={y}
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                      fontSize={11}
-                      fontWeight={700}
-                      fill="#16133a"
-                    >
-                      {band.points}
-                    </text>
-                  );
-                });
-            })}
-          {Array.from({ length: 11 }, (_, i) => i * 10).map((at) => {
+          {Array.from({ length: 21 }, (_, i) => i * 5).map((at) => {
+            const major = at % 10 === 0;
             const [x1, y1] = point(at, R);
-            const [x2, y2] = point(at, R - 6);
+            const [x2, y2] = point(at, R - (major ? 8 : 4));
             return (
               <line
                 key={at}
-                x1={x1}
-                y1={y1}
-                x2={x2}
-                y2={y2}
-                stroke="#fdf6e3"
-                strokeOpacity={0.4}
-                strokeWidth={1.5}
+                x1={fmt(x1)}
+                y1={fmt(y1)}
+                x2={fmt(x2)}
+                y2={fmt(y2)}
+                className="stroke-cream"
+                strokeOpacity={major ? 0.5 : 0.25}
+                strokeWidth={major ? 1.5 : 1}
+                strokeLinecap="round"
               />
             );
           })}
@@ -199,23 +264,25 @@ export function Dial({
             const [x, y] = point(marker.value, R);
             const [lx, ly] = point(marker.value, R + marker.lift);
             return (
-              <g key={marker.id}>
+              <g key={marker.id} data-marker={marker.id}>
                 <circle
-                  cx={x}
-                  cy={y}
-                  r={5}
-                  fill={marker.highlight ? '#ffd166' : '#fdf6e3'}
-                  stroke="#16133a"
-                  strokeWidth={2}
+                  cx={fmt(x)}
+                  cy={fmt(y)}
+                  r={5.5}
+                  className={`stroke-night ${marker.highlight ? 'fill-moon' : 'fill-cream'}`}
+                  strokeWidth={2.5}
                 />
                 <text
-                  x={lx}
-                  y={ly}
+                  x={fmt(lx)}
+                  y={fmt(ly)}
                   textAnchor="middle"
                   dominantBaseline="middle"
                   fontSize={10}
-                  fontWeight={marker.highlight ? 700 : 600}
-                  fill={marker.highlight ? '#ffd166' : '#fdf6e3'}
+                  fontWeight={marker.highlight ? 800 : 700}
+                  paintOrder="stroke"
+                  strokeWidth={3}
+                  strokeLinejoin="round"
+                  className={`stroke-night ${marker.highlight ? 'fill-moon' : 'fill-cream'}`}
                 >
                   {marker.label}
                 </text>
@@ -223,44 +290,62 @@ export function Dial({
             );
           })}
           {needle && (
-            <>
+            <g className="drop-shadow-[0_0_5px_rgb(246_178_60/0.55)]">
               <line
                 x1={CX}
                 y1={CY}
-                x2={needle[0]}
-                y2={needle[1]}
-                stroke="#ffd166"
+                x2={fmt(needle[0])}
+                y2={fmt(needle[1])}
+                className="stroke-moon"
                 strokeWidth={4}
                 strokeLinecap="round"
               />
-              <circle cx={needle[0]} cy={needle[1]} r={8} fill="#ffd166" />
-            </>
+              <circle
+                cx={fmt(needle[0])}
+                cy={fmt(needle[1])}
+                r={9}
+                className="fill-moon-bright stroke-night"
+                strokeWidth={2.5}
+              />
+            </g>
           )}
-          <circle cx={CX} cy={CY} r={7} fill="#ffd166" />
+          <circle data-hub cx={CX} cy={CY} r={7} className="fill-moon" />
+          <circle cx={CX} cy={CY} r={2.5} className="fill-night" />
         </svg>
       </div>
-      <div className="flex items-start justify-between gap-3 text-lg font-bold">
-        <span className="max-w-[45%] break-words text-sky-300">{left}</span>
-        <span className="max-w-[45%] text-right break-words text-orange-300">{right}</span>
+      <div className="flex items-start justify-between gap-3 font-display text-base font-bold sm:text-lg">
+        <span className="flex max-w-[48%] gap-1 break-words text-lagoon">
+          <span aria-hidden="true">←</span>
+          {left}
+        </span>
+        <span className="flex max-w-[48%] justify-end gap-1 text-right break-words text-ember">
+          {right}
+          <span aria-hidden="true">→</span>
+        </span>
       </div>
       {onChange && !disabled && (
-        <div className="flex items-center justify-center gap-4">
+        <div className="flex items-center justify-center gap-5">
           <StepButton
             label="Un punto hacia la izquierda"
             disabled={value === 0}
             onClick={() => {
+              if (sound) unlockTick();
               set((value ?? DIAL_MAX / 2) - 1);
             }}
           >
             −
           </StepButton>
-          <output aria-live="polite" className="w-14 text-center text-3xl font-bold tabular-nums">
+          <output
+            aria-live="polite"
+            className="w-16 text-center font-display text-4xl font-bold text-moon tabular-nums"
+          >
             {value ?? DIAL_MAX / 2}
           </output>
           <StepButton
             label="Un punto hacia la derecha"
             disabled={value === DIAL_MAX}
             onClick={() => {
+              if (sound) unlockTick();
               set((value ?? DIAL_MAX / 2) + 1);
             }}
           >
@@ -269,6 +354,80 @@ export function Dial({
         </div>
       )}
     </div>
+  );
+}
+
+function Bands({ target, viewBox }: { target: number; viewBox: string }) {
+  return (
+    <svg viewBox={viewBox} className="block w-full" aria-hidden="true">
+      {DIAL_BANDS.map((band, index) => ({ band, index }))
+        .toReversed()
+        .map(({ band, index }) => (
+          <path
+            key={band.points}
+            data-points={band.points}
+            d={wedge(target - bandEdge(index), target + bandEdge(index))}
+            className={`${BAND_FILLS[index] ?? ''} stroke-night`}
+            strokeOpacity={0.35}
+            strokeWidth={0.75}
+          />
+        ))}
+      {bandLabels(target).map(({ points, at }) => {
+        const [x, y] = point(at, R * 0.8);
+        return (
+          <text
+            key={`${String(points)}-${String(at)}`}
+            x={fmt(x)}
+            y={fmt(y)}
+            textAnchor="middle"
+            dominantBaseline="central"
+            fontSize={12}
+            fontWeight={800}
+            className="fill-night font-display"
+          >
+            {points}
+          </text>
+        );
+      })}
+    </svg>
+  );
+}
+
+function Shutter({ viewBox, pattern }: { viewBox: string; pattern: string }) {
+  return (
+    <svg viewBox={viewBox} className="block w-full" aria-hidden="true">
+      <defs>
+        <pattern
+          id={pattern}
+          width={10}
+          height={10}
+          patternUnits="userSpaceOnUse"
+          patternTransform="rotate(45)"
+        >
+          <rect width={10} height={10} className="fill-night-raised" />
+          <rect width={2} height={10} className="fill-moon" fillOpacity={0.16} />
+        </pattern>
+      </defs>
+      <path
+        d={wedge(0, DIAL_MAX)}
+        fill={`url(#${pattern})`}
+        className="stroke-moon"
+        strokeOpacity={0.45}
+        strokeWidth={1.5}
+      />
+      <text
+        x={CX}
+        y={CY - R * 0.48}
+        textAnchor="middle"
+        dominantBaseline="central"
+        fontSize={34}
+        fontWeight={700}
+        className="fill-cream font-display"
+        fillOpacity={0.75}
+      >
+        ?
+      </text>
+    </svg>
   );
 }
 
@@ -289,7 +448,7 @@ function StepButton({
       aria-label={label}
       disabled={disabled}
       onClick={onClick}
-      className="flex size-12 items-center justify-center rounded-full bg-night-soft text-2xl font-bold ring-1 ring-cream/15 focus-visible:ring-2 focus-visible:ring-moon focus-visible:outline-none disabled:opacity-40"
+      className="flex size-14 items-center justify-center rounded-full bg-night-raised text-3xl font-bold text-cream ring-1 ring-cream/15 transition-transform duration-150 focus-visible:ring-2 focus-visible:ring-moon focus-visible:outline-none disabled:opacity-40 motion-safe:active:scale-95"
     >
       {children}
     </button>

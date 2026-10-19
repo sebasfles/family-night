@@ -19,7 +19,6 @@ export function impostorMatch(
     eliminated: [],
     votedPlayerIds: [],
     lastResult: null,
-    guess: null,
     winner: null,
     reveal: null,
     ...overrides,

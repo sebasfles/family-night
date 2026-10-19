@@ -1,6 +1,6 @@
 ---
 updated: 2026-10-18
-source: 0005_just_one
+source: 0006_gameplay_and_redesign
 ---
 
 # Just One: product
@@ -33,10 +33,10 @@ Everyone plays for the same score, so the table cheers together.
 ### Guess and reveal
 
 1. The adivinador sees only the surviving clues, types a guess and taps Adivinar, or taps Pasar.
-2. Everyone sees the word, the verdict ("¡Acertaste!" for the adivinador, the name for the rest), every clue with the crossed ones marked, the round's points and the team score.
+2. The word card turns over to show the word and the verdict ("¡Acertaste!" for the adivinador, the name for the rest), then every clue card with the crossed ones marked, the round's points and the team score counting from where it was.
 3. A wrong guess that was really right (a typo, a synonym the family accepts) can be counted by the host with "Contar como acierto".
 4. The host taps "Siguiente ronda", or "Ver resultado" after the last turn.
-5. The final screen shows the team score and the rounds won; the host chooses "Jugar otra vez" (same settings, unseen words) or "Volver al lobby".
+5. The final screen counts up the team score and shows the rounds won; the host chooses "Jugar otra vez" (same settings, unseen words) or "Volver al lobby".
 
 ### Leaving and latecomers
 

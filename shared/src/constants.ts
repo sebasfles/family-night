@@ -16,13 +16,15 @@ export const PLAYER_TOKEN_HEADER = 'x-player-token';
 
 export const EVENTS_NAMESPACE = 'rooms';
 
+export const PLAYER_NAME_MIN = 2;
+export const PLAYER_NAME_MAX = 20;
+
 export const MIN_IMPOSTOR_PLAYERS = 3;
 export const IMPOSTOR_CAPS = [
   { minPlayers: 9, maxImpostors: 3 },
   { minPlayers: 6, maxImpostors: 2 },
   { minPlayers: 3, maxImpostors: 1 },
 ] as const;
-export const IMPOSTOR_GUESS_OPTIONS = 5;
 export const CIVILIAN_WIN_POINTS = 1;
 export const IMPOSTOR_WIN_POINTS = 2;
 export const IMPOSTOR_DEFAULTS = {
@@ -30,7 +32,6 @@ export const IMPOSTOR_DEFAULTS = {
   randomOrder: true,
   tieRule: 'RANDOM',
   showCategoryToImpostor: false,
-  impostorLastGuess: true,
 } as const;
 
 export const MIN_WAVELENGTH_PLAYERS = 3;
@@ -39,10 +40,9 @@ export const WAVELENGTH_MAX_CYCLES = 3;
 export const WAVELENGTH_CLUE_MAX = 40;
 export const DIAL_MAX = 100;
 export const DIAL_BANDS = [
-  { within: 5, points: 4 },
-  { within: 10, points: 3 },
-  { within: 15, points: 2 },
-  { within: 25, points: 1 },
+  { within: 2, points: 4 },
+  { within: 7, points: 3 },
+  { within: 12, points: 2 },
 ] as const;
 export const WAVELENGTH_DEFAULTS = { cycles: 1 } as const;
 

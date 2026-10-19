@@ -1,6 +1,8 @@
 import { isOnline, type RoomMember } from '@family-night/shared';
-import { useEffect, useRef, useState } from 'react';
-import { CrownIcon, MoreIcon } from '../icons';
+import { Stagger, StaggerItem } from '../../motion/motion';
+import { Avatar } from '../Avatar';
+import { CrownIcon, PencilIcon } from '../icons';
+import { Menu } from '../Menu';
 
 interface MemberListProps {
   members: RoomMember[];
@@ -9,6 +11,7 @@ interface MemberListProps {
   nowMs: number;
   onMakeHost: (member: RoomMember) => void;
   onKick: (member: RoomMember) => void;
+  onRename: () => void;
 }
 
 export function MemberList({
@@ -18,35 +21,39 @@ export function MemberList({
   nowMs,
   onMakeHost,
   onKick,
+  onRename,
 }: MemberListProps) {
   const isHost = hostId === selfId;
   const online = members.filter((member) => isOnline(member.lastSeenAt, nowMs)).length;
 
   return (
     <section aria-labelledby="members-title" className="flex flex-col gap-3">
-      <div className="flex items-baseline justify-between">
-        <h2 id="members-title" className="text-xl font-bold">
+      <div className="flex items-center justify-between gap-3">
+        <h2 id="members-title" className="text-2xl font-bold">
           Jugadores
         </h2>
-        <p className="text-base text-cream/70">
+        <p className="flex items-center gap-2 rounded-full bg-sage/12 px-3 py-1 text-base font-semibold text-sage">
+          <span aria-hidden="true" className="size-2 rounded-full bg-sage" />
           {online} de {members.length} en línea
         </p>
       </div>
-      <ul className="flex flex-col divide-y divide-cream/10 rounded-3xl bg-night-soft ring-1 ring-cream/10">
-        {members.map((member) => (
-          <MemberRow
-            key={member.playerId}
-            member={member}
-            online={isOnline(member.lastSeenAt, nowMs)}
-            host={member.playerId === hostId}
-            self={member.playerId === selfId}
-            canManage={isHost && member.playerId !== selfId}
-            menuColumn={isHost}
-            onMakeHost={onMakeHost}
-            onKick={onKick}
-          />
-        ))}
-      </ul>
+      <Stagger className="surface p-2">
+        <ul className="flex flex-col gap-1">
+          {members.map((member) => (
+            <MemberRow
+              key={member.playerId}
+              member={member}
+              online={isOnline(member.lastSeenAt, nowMs)}
+              host={member.playerId === hostId}
+              self={member.playerId === selfId}
+              canManage={isHost && member.playerId !== selfId}
+              onMakeHost={onMakeHost}
+              onKick={onKick}
+              onRename={onRename}
+            />
+          ))}
+        </ul>
+      </Stagger>
     </section>
   );
 }
@@ -57,9 +64,9 @@ interface MemberRowProps {
   host: boolean;
   self: boolean;
   canManage: boolean;
-  menuColumn: boolean;
   onMakeHost: (member: RoomMember) => void;
   onKick: (member: RoomMember) => void;
+  onRename: () => void;
 }
 
 function MemberRow({
@@ -68,21 +75,32 @@ function MemberRow({
   host,
   self,
   canManage,
-  menuColumn,
   onMakeHost,
   onKick,
+  onRename,
 }: MemberRowProps) {
   const cut = member.name.lastIndexOf(' ') + 1;
   const leading = member.name.slice(0, cut);
   const last = member.name.slice(cut);
   return (
-    <li className="flex min-h-16 items-center gap-3 px-4 py-2">
-      <span
-        aria-hidden="true"
-        className={`size-3 shrink-0 rounded-full ${online ? 'bg-emerald-400' : 'bg-cream/30'}`}
-      />
+    <StaggerItem
+      as="li"
+      className={`flex min-h-16 items-center gap-3 rounded-2xl py-2 pr-1 pl-2 ${self ? 'bg-cream/5' : ''}`}
+    >
+      <span className="relative shrink-0">
+        <Avatar
+          playerId={member.playerId}
+          name={member.name}
+          dimmed={!online}
+          className="size-11 text-base"
+        />
+        <span
+          aria-hidden="true"
+          className={`absolute -right-0.5 -bottom-0.5 size-3.5 rounded-full ring-3 ring-night-soft ${online ? 'bg-sage' : 'bg-cream/30'}`}
+        />
+      </span>
       <div className="flex min-w-0 flex-1 flex-col">
-        <p className={`font-semibold break-words ${online ? '' : 'text-cream/50'}`}>
+        <p className={`font-bold break-words ${online ? '' : 'text-cream/50'}`}>
           {leading}
           <span className="whitespace-nowrap">
             {last}
@@ -97,93 +115,41 @@ function MemberRow({
         </p>
         <p className="text-sm text-cream/60">{online ? 'en línea' : 'ausente'}</p>
       </div>
-      <p className="shrink-0 text-base font-semibold text-cream/80 tabular-nums">
-        {member.totalScore} <span className="text-sm font-normal text-cream/60">pts</span>
+      <p className="shrink-0 rounded-full bg-night px-3 py-1 font-display text-lg font-bold text-moon tabular-nums">
+        {member.totalScore}{' '}
+        <span className="font-sans text-sm font-semibold text-cream/60">pts</span>
       </p>
-      {canManage ? (
-        <MemberMenu member={member} onMakeHost={onMakeHost} onKick={onKick} />
-      ) : (
-        menuColumn && <span aria-hidden="true" className="size-12 shrink-0" />
+      {canManage && (
+        <Menu
+          label={`Opciones para ${member.name}`}
+          items={[
+            {
+              label: 'Hacer host',
+              onSelect: () => {
+                onMakeHost(member);
+              },
+            },
+            {
+              label: 'Sacar de la sala',
+              danger: true,
+              onSelect: () => {
+                onKick(member);
+              },
+            },
+          ]}
+        />
       )}
-    </li>
-  );
-}
-
-interface MemberMenuProps {
-  member: RoomMember;
-  onMakeHost: (member: RoomMember) => void;
-  onKick: (member: RoomMember) => void;
-}
-
-function MemberMenu({ member, onMakeHost, onKick }: MemberMenuProps) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const close = (event: Event) => {
-      if (
-        event instanceof KeyboardEvent
-          ? event.key === 'Escape'
-          : !ref.current?.contains(event.target as Node)
-      ) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener('pointerdown', close);
-    document.addEventListener('keydown', close);
-    return () => {
-      document.removeEventListener('pointerdown', close);
-      document.removeEventListener('keydown', close);
-    };
-  }, [open]);
-
-  const choose = (action: (member: RoomMember) => void) => {
-    setOpen(false);
-    action(member);
-  };
-
-  return (
-    <div ref={ref} className="relative shrink-0">
-      <button
-        type="button"
-        aria-label={`Opciones para ${member.name}`}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        onClick={() => {
-          setOpen((value) => !value);
-        }}
-        className="flex size-12 items-center justify-center rounded-full text-cream/80 hover:bg-cream/10 focus-visible:ring-2 focus-visible:ring-moon focus-visible:outline-none"
-      >
-        <MoreIcon className="size-6" />
-      </button>
-      {open && (
-        <div
-          role="menu"
-          className="absolute top-full right-0 z-30 mt-1 flex w-52 flex-col overflow-hidden rounded-2xl bg-cream text-night shadow-xl"
+      {self && (
+        <button
+          type="button"
+          aria-label="Cambiar tu nombre"
+          onClick={onRename}
+          className="flex size-12 shrink-0 items-center justify-center rounded-full text-cream/80 transition-colors hover:bg-cream/8 focus-visible:ring-2 focus-visible:ring-moon focus-visible:outline-none"
         >
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => {
-              choose(onMakeHost);
-            }}
-            className="min-h-12 px-4 text-left font-semibold hover:bg-night/10"
-          >
-            Hacer host
-          </button>
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => {
-              choose(onKick);
-            }}
-            className="min-h-12 px-4 text-left font-semibold text-red-700 hover:bg-night/10"
-          >
-            Sacar de la sala
-          </button>
-        </div>
+          <PencilIcon className="size-6" />
+        </button>
       )}
-    </div>
+      {!canManage && !self && <span aria-hidden="true" className="size-12 shrink-0" />}
+    </StaggerItem>
   );
 }

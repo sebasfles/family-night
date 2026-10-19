@@ -1,12 +1,18 @@
 import { matchScores, type ImpostorPublic, type RoomMember } from '@family-night/shared';
 import type { ReactNode } from 'react';
+import { Avatar } from '../../components/Avatar';
 import { Button } from '../../components/Button';
+import { CrownIcon, MaskIcon } from '../../components/icons';
 import { nameOf } from '../../components/match';
+import { Scoreboard } from '../../components/Scoreboard';
+import { FlipReveal } from '../../motion/Flip';
+import { CardBack } from './Card';
 import { reasonLabels } from './model';
 
 interface FinalProps {
   match: ImpostorPublic;
   members: RoomMember[];
+  selfId: string;
   isHost: boolean;
   rematching: boolean;
   leaving: boolean;
@@ -17,6 +23,7 @@ interface FinalProps {
 export function Final({
   match,
   members,
+  selfId,
   isHost,
   rematching,
   leaving,
@@ -26,42 +33,65 @@ export function Final({
   const reveal = match.reveal;
   if (!reveal || !match.winner) return null;
   const civilians = match.winner === 'CIVILIANS';
-  const scores = Object.entries(matchScores(match, reveal.impostorIds)).filter(([playerId]) =>
-    members.some((member) => member.playerId === playerId),
-  );
-  const guess = match.guess;
+  const points = matchScores(match, reveal.impostorIds);
+  const present = (playerId: string) => members.some((member) => member.playerId === playerId);
+  const rows = match.participants
+    .filter(present)
+    .map((playerId) => ({ playerId, from: 0, to: points[playerId] ?? 0 }));
 
   return (
-    <section aria-labelledby="final-title" className="flex flex-col gap-5">
+    <section aria-labelledby="final-title" className="flex flex-col gap-6">
       <div
-        className={`flex flex-col items-center gap-1 rounded-3xl p-6 text-center ${
-          civilians ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'
+        className={`flex flex-col items-center gap-3 px-6 py-7 text-center ${
+          civilians
+            ? 'rounded-card bg-linear-to-b from-sage to-sage-deep text-night shadow-lift'
+            : 'rounded-card card-wine'
         }`}
       >
-        <h2 id="final-title" className="text-3xl font-bold text-balance">
+        <span
+          className={`flex size-16 items-center justify-center rounded-full ${
+            civilians ? 'bg-night/10 text-night' : 'bg-ember text-night'
+          }`}
+        >
+          {civilians ? <CrownIcon className="size-9" /> : <MaskIcon className="size-10" />}
+        </span>
+        <h2 id="final-title" className="text-4xl font-bold text-balance">
           {civilians ? 'Ganaron los civiles' : 'Ganaron los impostores'}
         </h2>
-        {guess?.correct && <p className="text-xl font-semibold">¡Robó la victoria!</p>}
-        {guess?.chosen && !guess.correct && (
-          <p className="text-lg">
-            {nameOf(members, guess.guesserId)} dijo «{guess.chosen}» y falló
-          </p>
-        )}
       </div>
 
-      <div className="flex flex-col items-center gap-1 rounded-3xl bg-cream p-5 text-center text-night">
-        <p className="text-base font-semibold text-night/60">La palabra era</p>
-        <p className="text-4xl font-bold break-words">{reveal.word}</p>
-        <p className="text-lg text-night/80">Categoría: {reveal.category}</p>
-      </div>
+      <FlipReveal
+        back={
+          <CardBack>
+            <span className="mt-2 font-display text-2xl font-bold text-cream/80">
+              La palabra era…
+            </span>
+          </CardBack>
+        }
+      >
+        <div className="flex min-h-60 flex-col items-center justify-center gap-2 rounded-card p-7 text-center card-paper">
+          <p className="font-sans text-sm font-bold tracking-[0.18em] text-night/65 uppercase">
+            La palabra era
+          </p>
+          <p className="font-display text-5xl leading-tight font-bold break-words">{reveal.word}</p>
+          <p className="rounded-full bg-night/8 px-3 py-1 text-base font-semibold text-night/75">
+            Categoría: {reveal.category}
+          </p>
+        </div>
+      </FlipReveal>
 
       <Block title={reveal.impostorIds.length === 1 ? 'El impostor' : 'Los impostores'}>
         <ul className="flex flex-wrap gap-2">
           {reveal.impostorIds.map((playerId) => (
             <li
               key={playerId}
-              className="rounded-full bg-red-600/20 px-4 py-2 text-base font-semibold text-red-200 ring-1 ring-red-400/40"
+              className="flex items-center gap-2 rounded-full bg-ember/14 py-1.5 pr-4 pl-1.5 text-base font-bold text-ember ring-1 ring-ember/35"
             >
+              <Avatar
+                playerId={playerId}
+                name={nameOf(members, playerId)}
+                className="size-8 text-xs"
+              />
               {nameOf(members, playerId)}
             </li>
           ))}
@@ -72,19 +102,32 @@ export function Final({
         {match.eliminated.length === 0 ? (
           <p className="text-base text-cream/70">Nadie fue eliminado.</p>
         ) : (
-          <ol className="flex flex-col divide-y divide-cream/10 rounded-2xl bg-night-soft ring-1 ring-cream/10">
+          <ol className="flex flex-col gap-1.5 surface p-2">
             {match.eliminated.map((elimination) => (
               <li
                 key={`${elimination.playerId}-${String(elimination.round)}`}
-                className="flex flex-wrap items-baseline justify-between gap-x-3 px-4 py-3"
+                className="flex items-center gap-3 rounded-2xl px-3 py-2.5"
               >
-                <span className="font-semibold">
-                  <span className="text-cream/60">Ronda {elimination.round}:</span>{' '}
-                  {nameOf(members, elimination.playerId)}
+                <Avatar
+                  playerId={elimination.playerId}
+                  name={nameOf(members, elimination.playerId)}
+                  className="size-10 text-sm"
+                />
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <span className="font-semibold break-words">
+                    <span className="text-cream/60">Ronda {elimination.round}:</span>{' '}
+                    {nameOf(members, elimination.playerId)}
+                  </span>
+                  <span className="text-base text-cream/70">
+                    {reasonLabels[elimination.reason]}
+                  </span>
                 </span>
-                <span className="text-base text-cream/70">
-                  {elimination.wasImpostor ? 'impostor' : 'civil'},{' '}
-                  {reasonLabels[elimination.reason]}
+                <span
+                  className={`shrink-0 rounded-full px-3 py-1 text-sm font-bold ${
+                    elimination.wasImpostor ? 'bg-ember/16 text-ember' : 'bg-sage/14 text-sage'
+                  }`}
+                >
+                  {elimination.wasImpostor ? 'impostor' : 'civil'}
                 </span>
               </li>
             ))}
@@ -92,16 +135,13 @@ export function Final({
         )}
       </Block>
 
-      <Block title="Puntos de esta partida">
-        <ul className="flex flex-col divide-y divide-cream/10 rounded-2xl bg-night-soft ring-1 ring-cream/10">
-          {scores.map(([playerId, points]) => (
-            <li key={playerId} className="flex items-center justify-between gap-3 px-4 py-3">
-              <span className="min-w-0 break-words">{nameOf(members, playerId)}</span>
-              <span className="shrink-0 font-bold text-moon tabular-nums">+{points}</span>
-            </li>
-          ))}
-        </ul>
-      </Block>
+      <Scoreboard
+        title="Puntos de esta partida"
+        rows={rows}
+        members={members}
+        selfId={selfId}
+        signed
+      />
 
       {isHost ? (
         <div className="flex flex-col gap-3">
@@ -123,8 +163,8 @@ export function Final({
 
 function Block({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div className="flex flex-col gap-2">
-      <h3 className="text-lg font-bold">{title}</h3>
+    <div className="flex flex-col gap-3">
+      <h3 className="text-xl font-bold">{title}</h3>
       {children}
     </div>
   );

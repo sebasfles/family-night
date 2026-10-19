@@ -22,4 +22,44 @@ updated: 2026-10-18
 
 ## om-developer notes
 
+### Round 1
+
+Done:
+
+- Cards as surfaces in `web/src/index.css`: `card-paper` (cream paper), `card-wine` (the impostor), `card-back` (patterned back, accent per game through `--card-accent`), radius token `rounded-card`; new tokens `paper-deep`, `wine`, `wine-deep`, `sage-deep`, `orchid-deep`, keyframe `fade-in`.
+- Motion in `web/src/motion/`: `Flip` (a card turned by hand, the face unmounts once it has turned away) and `FlipReveal` (shows the back, turns over after 450 ms), CSS `rotateY` with `preserve-3d` and `backface-visibility`; `CountUp` (rAF, the final value always read by screen readers); `useShuffleIn` (rows start at their old place and slide to the new one through the Web Animations API, measured with layout boxes); `Meter` (bars grow); timings in `timing.ts`. Reduced motion renders the face only, final numbers, no shift.
+- Impostor: tap-to-flip card (back with the mask, paper face for civilians, wine face for the impostor), turn order and ballot with avatars and a confirmed-votes bar, reveal flips the eliminated player's card, the tally counts up and rows slide into vote order, final with winner banner, the word flipping in, impostors and eliminations with avatars, animated scoreboard.
+- Wavelength: dial in three layers (face with a lagoon to ember rim, the bands, the hand with ticks, pins and needle); bands in `moon-bright`, `ember`, `orchid`; on REVEAL the bands turn over from a striped shutter; clue card with the spectrum strip; round points pills in their band colour; shared scoreboard counting from the totals before the round, places shifting, gains under the score.
+- Just One: word card, clue cards (paper, tilted, crossed in ember with a stamp) in review, guess and reveal; the word card flips with the verdict; team score counts from `scoreBefore`; final counts from 0.
+- Shared: `components/Scoreboard.tsx` (+ `scores.ts`), `Notice` (skipped turns), `Waiting`, `field.ts` (the rename dialog's input, now used by every game form). Removed `games/wavelength/Scoreboard.tsx` and every cream input and non-token colour of the game screens.
+- Tests: `motion/Flip.test.tsx`, `motion/CountUp.test.tsx`, `motion/shuffle.test.ts`, `components/Scoreboard.test.tsx`, one 3D reveal test per game route, dial tests pointed at the layers, contrast pairs for the new surfaces in `theme.test.ts` (it caught the paper labels at `night/55`, now `night/65`). List assertions read `spokenText` (`test/text.ts`), what assistive tech reads, since avatars and gain pills are decorative.
+- Screenshots: `screenshots/phase_3/`, every screen at 390, 768 and 1280 with reduced motion, plus `*-motion-*` shots taken mid-flip and mid-count with motion on; dial zones at 0, 3, 50, 97, 100.
+- Bundle against phase 2: no new dependency, initial JS +0.2 KB gzip, game chunks +6.5 KB gzip in total, CSS +0.9 KB gzip.
+
+Decisions the plan did not record:
+
+- Places shifting without `domMax`: a FLIP through the Web Animations API (zero bundle), not motion layout animations.
+- Scoreboard sequence: flip at 450 ms, count from 1 s for 0.9 s, rows shift after it, ranks fade in last.
+- Wavelength REVEAL counts from the totals before the round; finals of Impostor and Wavelength count from 0 and shift from seat order. The Impostor final scoreboard lists every participant still in the room, losers at +0 (before, winners only).
+- Just One has a team score, so its "scoreboard" is the team score counting; nothing shifts.
+- The leader row is highlighted only when there is a single leader.
+- The psychic's dial during CLUE and GUESS shows the target without a flip; only REVEAL flips.
+
+Deferred: none.
+
+Pending: none.
+
+### Round 2
+
+Applied the one finding, not disputed: the scoreboard rank is its own `size-7` column before a `size-10` avatar, so it no longer covers the initials (row gap 2.5, left padding 2 to keep the names' width). Screenshots refreshed in `screenshots/phase_3/`.
+
+Let pass by the om-reviewer, for the decisions: the Impostor final lists every participant still in the room, losers at +0; ranks stay competition ranks (1, 2, 2, 4) as in phase 1.
+
+### Docs
+
+`document-task` over the three phases: platform prd, trd, ard, database, flows and README; impostor prd, trd, ard, database, flows and README; wavelength prd, trd, ard and README; justone prd (screens only, rules unchanged).
+Beyond the skill's files, as the task's Context & decisions asks: `docs/PRD.md` (rename, last chance gone, "Not in the product", theme and motion) and a `docs/ARD.md` decision "Players can change their name", which overrides the 2026-10-17 identity entry without editing it; the om-reviewer carries it to the PR's Decisions.
+Superseded by new entries, not rewritten: platform "The room snapshot decides the screen" (its no-optimistic clause) and impostor "No optimistic updates on votes"; the impostor debt on a vote changed at the close now covers unconfirmed choices only.
+Debt index: added the stale name in other rooms, the `IMPOSTOR_GUESS` leftover and the fast-drag tick; reworded the changed-vote row.
+
 ## Result

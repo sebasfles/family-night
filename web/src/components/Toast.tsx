@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { Pop } from '../motion/motion';
 import { ToastContext, type ShowToast } from './useToast';
 
 const TOAST_MS = 2_500;
@@ -28,13 +29,14 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         className="pointer-events-none fixed inset-x-0 bottom-6 z-50 flex justify-center px-4"
       >
         {toast && (
-          <p
-            key={toast.id}
-            role="status"
-            className="max-w-sm rounded-2xl bg-cream px-5 py-3 text-center text-base font-semibold text-night shadow-lg"
-          >
-            {toast.text}
-          </p>
+          <Pop key={toast.id} className="max-w-sm">
+            <p
+              role="status"
+              className="rounded-full bg-cream px-5 py-3 text-center text-base font-bold text-night shadow-lift"
+            >
+              {toast.text}
+            </p>
+          </Pop>
         )}
       </div>
     </ToastContext>

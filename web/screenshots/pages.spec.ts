@@ -133,6 +133,19 @@ test('lobby as host with members online and away', async ({ page }) => {
   await capture(page, 'lobby-host-menu');
 });
 
+test('lobby, renaming myself', async ({ page }) => {
+  await signIn(page);
+  await serveRoom(page, room({ members: family }));
+  await page.goto('/KXPR');
+  await page.getByRole('button', { name: 'Cambiar tu nombre' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Tu nombre' });
+  await dialog.getByRole('textbox').fill('Tía Marta');
+  await capture(page, 'lobby-rename', false);
+  await dialog.getByRole('textbox').fill('zorro astuto');
+  await expect(dialog.getByText('Alguien de la sala ya se llama así')).toBeVisible();
+  await capture(page, 'lobby-rename-taken', false);
+});
+
 test('lobby as member', async ({ page }) => {
   await signIn(page);
   await serveRoom(page, room({ members: family, hostId: family[1]?.playerId ?? '' }));
@@ -225,23 +238,9 @@ function revealed(eliminatedId: string | null, wasImpostor: boolean, tie = false
   });
 }
 
-function guessing(guesserId: string): ImpostorPublic {
-  return {
-    ...revealed(guesserId, true),
-    phase: 'IMPOSTOR_GUESS',
-    guess: {
-      guesserId,
-      options: ['Mango', 'Palta', 'Choclo', 'Fresa', 'Queso'],
-      chosen: null,
-      correct: null,
-    },
-  };
-}
-
 function finished(winner: 'CIVILIANS' | 'IMPOSTORS'): ImpostorPublic {
-  const match = guessing(zorro);
   return {
-    ...match,
+    ...revealed(zorro, true),
     round: 2,
     status: 'FINISHED',
     phase: 'FINISHED',
@@ -250,11 +249,6 @@ function finished(winner: 'CIVILIANS' | 'IMPOSTORS'): ImpostorPublic {
       { playerId: hipo, round: 1, wasImpostor: false, reason: 'VOTE' },
       { playerId: zorro, round: 2, wasImpostor: true, reason: 'VOTE' },
     ],
-    guess: match.guess && {
-      ...match.guess,
-      chosen: winner === 'IMPOSTORS' ? 'Palta' : 'Mango',
-      correct: winner === 'IMPOSTORS',
-    },
     reveal: { word: 'Palta', category: 'Comida', impostorIds: [zorro] },
   };
 }
@@ -293,21 +287,26 @@ test('impostor card shown, impostor', async ({ page }) => {
   await capture(page, 'impostor-card-impostor');
 });
 
-test('impostor voting with my vote and the close confirmation', async ({ page }) => {
+test('impostor voting: my selection, my confirmed vote and the close confirmation', async ({
+  page,
+}) => {
   await serveMatch(page, voting());
-  await page.route(`**/api/rooms/KXPR/matches/${MATCH_ID}/votes`, (route) =>
-    route.fulfill({
+  await page.route(`**/api/rooms/KXPR/matches/${MATCH_ID}/votes`, (route) => {
+    const { confirmed } = route.request().postDataJSON() as { confirmed: boolean };
+    const votedPlayerIds = confirmed ? [zorro, colibri, me.playerId] : [zorro, colibri];
+    return route.fulfill({
       json: {
-        room: room({
-          members: online,
-          version: 8,
-          currentMatch: voting({ votedPlayerIds: [zorro, colibri, me.playerId] }),
-        }),
+        room: room({ members: online, version: 8, currentMatch: voting({ votedPlayerIds }) }),
       },
-    }),
-  );
+    });
+  });
+  await capture(page, 'impostor-voting-open');
   await page.getByRole('button', { name: /Oso Sabio/ }).click();
+  await expect(page.getByText('tu elección')).toBeVisible();
+  await capture(page, 'impostor-voting-selected');
+  await page.getByRole('button', { name: 'Confirmar voto' }).click();
   await expect(page.getByText('Votaron 3 de 5')).toBeVisible();
+  await expect(page.getByText('tu voto')).toBeVisible();
   await capture(page, 'impostor-voting');
   await page.getByRole('button', { name: 'Cerrar votación' }).click();
   await expect(page.getByRole('alertdialog')).toBeVisible();
@@ -353,23 +352,6 @@ test('impostor reveal, tie broken by lot', async ({ page }) => {
   await serveMatch(page, revealed(oso, false, true));
   await expect(page.getByText('Empate: eliminado por sorteo')).toBeVisible();
   await capture(page, 'impostor-reveal-tie-random');
-});
-
-test('impostor last chance, guesser', async ({ page }) => {
-  await serveMatch(page, guessing(me.playerId), impostor);
-  await expect(page.getByText('¡Te atraparon!')).toBeVisible();
-  await capture(page, 'impostor-last-chance-guesser');
-});
-
-test('impostor last chance, others with the guesser offline', async ({ page }) => {
-  const members = online.map((player) =>
-    player.playerId === zorro
-      ? { ...player, online: false, lastSeenAt: new Date(Date.now() - 120_000).toISOString() }
-      : player,
-  );
-  await serveMatch(page, guessing(zorro), civilian, { members });
-  await expect(page.getByRole('button', { name: 'Saltar' })).toBeVisible();
-  await capture(page, 'impostor-last-chance-others');
 });
 
 test('impostor final, civilians win', async ({ page }) => {
@@ -441,8 +423,8 @@ function wavelengthRevealed(overrides: Partial<WavelengthPublic> = {}): Waveleng
       psychicId: zorro,
       target: 68,
       guesses: [
-        { playerId: me.playerId, value: 71, points: 4 },
-        { playerId: oso, value: 55, points: 2 },
+        { playerId: me.playerId, value: 70, points: 4 },
+        { playerId: oso, value: 60, points: 2 },
         { playerId: colibri, value: 30, points: 0 },
         { playerId: hipo, value: null, points: 0 },
       ],
@@ -482,6 +464,20 @@ test('wavelength clue, psychic', async ({ page }) => {
   await page.getByLabel('Tu pista').fill('Shrek 2');
   await capture(page, 'wavelength-clue-psychic');
 });
+
+for (const at of [0, 3, 50, 97, 100]) {
+  test(`wavelength dial zones around a target at ${String(at)}`, async ({ page }) => {
+    await serveWavelength(page, wave(), { ...target, target: at });
+    const dial = page.getByRole('img', { name: 'El objetivo' });
+    await expect(dial).toBeVisible();
+    await dial.screenshot({
+      path: join(
+        process.env.SCREENSHOTS_DIR ?? '',
+        `${String(page.viewportSize()?.width ?? 0)}-wavelength-dial-${String(at)}.png`,
+      ),
+    });
+  });
+}
 
 test('wavelength clue, others', async ({ page }) => {
   await serveWavelength(page, wave(othersTurn), null, { hostId: zorro });
@@ -827,4 +823,49 @@ test('just one spectator', async ({ page }) => {
   });
   await expect(page.getByText('Partida en curso, juegas en la siguiente')).toBeVisible();
   await capture(page, 'justone-spectator');
+});
+
+test.describe('in motion', () => {
+  test.use({ reducedMotion: 'no-preference' });
+
+  async function snap(page: Page, name: string) {
+    const width = String(page.viewportSize()?.width ?? 0);
+    await page.screenshot({
+      path: join(process.env.SCREENSHOTS_DIR ?? '', `${width}-motion-${name}.png`),
+      animations: 'allow',
+    });
+  }
+
+  async function midFlip(page: Page, name: string) {
+    const flip = page.locator('[data-flip]').first();
+    await flip.scrollIntoViewIfNeeded();
+    await page.locator('[data-flip="front"]').first().waitFor();
+    await page.waitForTimeout(110);
+    await snap(page, name);
+  }
+
+  test('impostor reveal, the eliminated card flipping', async ({ page }) => {
+    await serveMatch(page, revealed(zorro, true));
+    await midFlip(page, 'impostor-reveal-flip');
+  });
+
+  test('wavelength reveal, the target flipping and the scores counting', async ({ page }) => {
+    await serveWavelength(page, wavelengthRevealed());
+    await midFlip(page, 'wavelength-reveal-flip');
+    await page.getByRole('list', { name: 'Puntaje' }).scrollIntoViewIfNeeded();
+    await page.waitForTimeout(1100);
+    await snap(page, 'wavelength-reveal-counting');
+  });
+
+  test('just one reveal, the word flipping', async ({ page }) => {
+    await serveJustOne(page, joRevealed('CORRECT'), null, { hostId: zorro });
+    await midFlip(page, 'justone-reveal-flip');
+  });
+
+  test('impostor final, the points counting', async ({ page }) => {
+    await serveMatch(page, finished('CIVILIANS'));
+    await page.getByRole('list', { name: 'Puntos de esta partida' }).scrollIntoViewIfNeeded();
+    await page.waitForTimeout(1300);
+    await snap(page, 'impostor-final-counting');
+  });
 });

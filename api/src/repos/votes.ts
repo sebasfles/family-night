@@ -1,6 +1,11 @@
-import { PutCommand, QueryCommand, type DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
+import {
+  GetCommand,
+  PutCommand,
+  QueryCommand,
+  type DynamoDBDocumentClient,
+} from '@aws-sdk/lib-dynamodb';
 import { epochSeconds } from '../lib/time.ts';
-import type { TransactItem } from './db.ts';
+import { isWriteConflict, type TransactItem } from './db.ts';
 
 export interface VoteItem {
   matchId: string;
@@ -8,6 +13,7 @@ export interface VoteItem {
   round: number;
   voterId: string;
   targetId: string;
+  confirmed?: boolean;
   createdAt: string;
   ttl: number;
 }
@@ -29,13 +35,38 @@ export class VotesRepo {
     this.table = table;
   }
 
-  async put(vote: Omit<VoteItem, 'roundVoter'>): Promise<void> {
-    await this.client.send(
-      new PutCommand({
+  async putUnlessConfirmed(vote: Omit<VoteItem, 'roundVoter'>): Promise<boolean> {
+    try {
+      await this.client.send(
+        new PutCommand({
+          TableName: this.table,
+          Item: { ...vote, roundVoter: roundVoter(vote.round, vote.voterId) },
+          ConditionExpression: 'attribute_not_exists(confirmed) OR confirmed = :false',
+          ExpressionAttributeValues: { ':false': false },
+        }),
+      );
+      return true;
+    } catch (error) {
+      if (isWriteConflict(error)) return false;
+      throw error;
+    }
+  }
+
+  async get(
+    matchId: string,
+    round: number,
+    voterId: string,
+    nowMs: number,
+  ): Promise<VoteItem | null> {
+    const { Item } = await this.client.send(
+      new GetCommand({
         TableName: this.table,
-        Item: { ...vote, roundVoter: roundVoter(vote.round, vote.voterId) },
+        Key: { matchId, roundVoter: roundVoter(round, voterId) },
+        ConsistentRead: true,
       }),
     );
+    const vote = Item as VoteItem | undefined;
+    return vote && vote.ttl > epochSeconds(nowMs) ? vote : null;
   }
 
   async listRound(matchId: string, round: number, nowMs: number): Promise<VoteItem[]> {

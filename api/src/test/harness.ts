@@ -124,7 +124,7 @@ export async function newPlayer(harness: Harness): Promise<CreatePlayerResponse>
 export function call(
   harness: Harness,
   player: CreatePlayerResponse,
-  method: 'GET' | 'POST' | 'PUT',
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH',
   path: string,
   body?: unknown,
 ): Promise<Response> {

@@ -1,6 +1,6 @@
 ---
 updated: 2026-10-18
-source: 0005_just_one
+source: 0006_gameplay_and_redesign
 ---
 
 # Platform: decisions
@@ -256,3 +256,39 @@ source: 0005_just_one
 - Debt created: none
 - Revisit when: a game's config request needs more than its config.
 - Source: 0005_just_one
+
+## 2026-10-18: Own commands show at once through an overlay of pending commands
+
+- Decision: the screen is the served snapshot plus the phone's pending commands (`web/src/api/optimistic.ts`); the overlay is never written into the room cache, a refusal drops it and toasts the server message, and all room commands of a phone share one mutation scope so they reach the server in tap order. Lobby pick, config, host, kick and rename are optimistic; start, rematch, lobby and leave keep their busy button. Supersedes the no-optimistic clause of "The room snapshot decides the screen"; navigation still follows the snapshot.
+- Alternatives rejected: waiting for the snapshot; writing the optimistic state into the cache.
+- Reason: Sebastian's call: taps must feel instant; an overlay rolls back exactly on `CONFLICT` or `STALE_ROUND` because the snapshot underneath was never touched.
+- Debt created: none
+- Revisit when: a command's effect cannot be expressed from the caller's own data.
+- Source: 0006_gameplay_and_redesign
+
+## 2026-10-18: A rename is one room write, and the old name is released
+
+- Decision: `PATCH /api/players/me { name, roomCode }` renames the player conditional on the old name, claims the new `PlayerNames` item unless the caller owns it, deletes the old one conditional on its `playerId`, and updates that room's member, all in the room's version-conditional write that publishes. Name rules live once in `shared/src/players.ts`: trimmed, spaces collapsed, 2 to 20 graphemes, visible characters only. Other rooms catch up on rejoin.
+- Alternatives rejected: an index of rooms by player to update them all (infra was out of clearance); keeping old names reserved forever.
+- Reason: one transaction keeps global uniqueness exact as at assignment; graphemes make an emoji one character; invisible fillers would make names nobody can read.
+- Debt created: other rooms show the old name until the player opens them again.
+- Revisit when: a stale name in another room matters.
+- Source: 0006_gameplay_and_redesign
+
+## 2026-10-18: A warm dark design system with motion behind one folder
+
+- Decision: one warm dark palette as tokens in `web/src/index.css` (token names kept from the blue one), Fraunces for headings and numbers and Nunito for text, self-hosted; `motion` with LazyMotion `domAnimation` and `m` components only, reached through `web/src/motion/`; transitions enter only, no exit animations; `useReducedMotion` on `matchMedia` makes every piece render its settled state.
+- Alternatives rejected: WebGL or three.js; a light theme; layout animations (`domMax`, about 10 KB more); exit animations, which delay the new phase.
+- Reason: Sebastian's call for a warm family night look on phones; transforms and opacity are cheap on low-end phones and the bundle grew about 31 KB gzip once.
+- Debt created: none (the light theme debt of 2026-10-17 stands).
+- Revisit when: a screen needs an exit or layout animation.
+- Source: 0006_gameplay_and_redesign
+
+## 2026-10-18: Reveals flip in CSS 3D and scoreboards count, then shift places
+
+- Decision: reveals are `FlipReveal` (back first, turn after 450 ms, `rotateY` with `preserve-3d`); a card turned by hand is `Flip`, whose face unmounts once turned away. Scoreboards count up from the points before (`CountUp`, the final value always read by screen readers) and then slide rows from their old place (`useShuffleIn`, Web Animations API on layout boxes); ranks fade in last. Reduced motion shows the face, the final numbers and the final order. The leader row is highlighted only when one player leads alone.
+- Alternatives rejected: motion layout animations for the shift (needs `domMax`); flips on SVG groups (no real 3D inside SVG).
+- Reason: zero bundle for the shift and the flip; one sequence (flip, count, shift) reads as a reveal.
+- Debt created: none
+- Revisit when: a list must animate while it changes, not only on mount.
+- Source: 0006_gameplay_and_redesign

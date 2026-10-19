@@ -1,9 +1,10 @@
-import { nextTurn, type RoomMember, type WavelengthPublic } from '@family-night/shared';
+import { DIAL_BANDS, nextTurn, type RoomMember, type WavelengthPublic } from '@family-night/shared';
+import { Avatar } from '../../components/Avatar';
 import { Button } from '../../components/Button';
 import { nameOf } from '../../components/match';
+import { Scoreboard } from '../../components/Scoreboard';
 import { Dial } from './Dial';
-import { firstWord, pointsLabel } from './model';
-import { Scoreboard } from './Scoreboard';
+import { firstWord, pointsLabel, scoreRows } from './model';
 
 interface RevealPhaseProps {
   match: WavelengthPublic;
@@ -12,6 +13,13 @@ interface RevealPhaseProps {
   isHost: boolean;
   busy: boolean;
   onNext: () => void;
+}
+
+const POINT_TONES = ['bg-moon-bright text-night', 'bg-ember text-night', 'bg-orchid text-night'];
+
+function pointsTone(points: number): string {
+  const band = DIAL_BANDS.findIndex((entry) => entry.points === points);
+  return POINT_TONES[band] ?? 'bg-cream/8 text-cream/55';
 }
 
 export function RevealPhase({ match, members, selfId, isHost, busy, onNext }: RevealPhaseProps) {
@@ -31,11 +39,25 @@ export function RevealPhase({ match, members, selfId, isHost, busy, onNext }: Re
         ],
   );
   const last = nextTurn(match) === null;
+  const rows = [
+    {
+      playerId: result.psychicId,
+      note: '(psíquico)',
+      points: result.psychicPoints,
+      tone: 'bg-moon/16 text-moon',
+    },
+    ...result.guesses.map((guess) => ({
+      playerId: guess.playerId,
+      note: guess.value === null ? 'no respondió' : `marcó ${String(guess.value)}`,
+      points: guess.points,
+      tone: pointsTone(guess.points),
+    })),
+  ];
 
   return (
-    <section aria-labelledby="reveal-title" className="flex flex-col gap-5">
+    <section aria-labelledby="reveal-title" className="flex flex-col gap-6">
       <div className="flex flex-col items-center gap-1 text-center">
-        <h2 id="reveal-title" className="text-2xl font-bold">
+        <h2 id="reveal-title" className="text-3xl font-bold">
           El objetivo era {result.target}
         </h2>
         <p className="text-lg break-words text-cream/80">
@@ -49,42 +71,40 @@ export function RevealPhase({ match, members, selfId, isHost, busy, onNext }: Re
         right={right}
         target={result.target}
         markers={markers}
+        reveal
       />
 
-      <div className="flex flex-col gap-2">
-        <h3 className="text-lg font-bold">Puntos de la ronda</h3>
-        <ul
-          aria-label="Puntos de la ronda"
-          className="flex flex-col divide-y divide-cream/10 rounded-2xl bg-night-soft ring-1 ring-cream/10"
-        >
-          <li className="flex items-center justify-between gap-3 px-4 py-3">
-            <span className="min-w-0 break-words">
-              {nameOf(members, result.psychicId)} <span className="text-cream/60">(psíquico)</span>
-            </span>
-            <span className="shrink-0 font-bold text-moon tabular-nums">
-              +{result.psychicPoints}
-            </span>
-          </li>
-          {result.guesses.map((guess) => (
-            <li key={guess.playerId} className="flex items-center justify-between gap-3 px-4 py-3">
-              <span className="min-w-0 break-words">
-                {nameOf(members, guess.playerId)}{' '}
-                <span className="text-cream/60">
-                  {guess.value === null ? 'no respondió' : `marcó ${String(guess.value)}`}
+      <section className="flex flex-col gap-3">
+        <h3 className="text-xl font-bold">Puntos de la ronda</h3>
+        <ul aria-label="Puntos de la ronda" className="flex flex-col gap-1.5 surface p-2">
+          {rows.map(({ playerId, note, points, tone }) => {
+            const name = nameOf(members, playerId);
+            return (
+              <li key={playerId} className="flex items-center gap-3 rounded-2xl px-3 py-2.5">
+                <Avatar playerId={playerId} name={name} className="size-10 text-sm" />
+                <span className="min-w-0 flex-1 break-words">
+                  <span className="font-semibold">{name}</span>{' '}
+                  <span className="text-cream/60">{note}</span>
                 </span>
-              </span>
-              <span
-                aria-label={pointsLabel(guess.points)}
-                className={`shrink-0 font-bold tabular-nums ${guess.points > 0 ? 'text-moon' : 'text-cream/50'}`}
-              >
-                +{guess.points}
-              </span>
-            </li>
-          ))}
+                <span
+                  aria-label={pointsLabel(points)}
+                  className={`flex h-9 min-w-11 shrink-0 items-center justify-center rounded-full px-2.5 font-display text-lg font-bold tabular-nums ${tone}`}
+                >
+                  +{points}
+                </span>
+              </li>
+            );
+          })}
         </ul>
-      </div>
+      </section>
 
-      <Scoreboard match={match} members={members} selfId={selfId} title="Puntaje" />
+      <Scoreboard
+        title="Puntaje"
+        rows={scoreRows(match, 'round')}
+        members={members}
+        selfId={selfId}
+        gains
+      />
 
       {isHost ? (
         <Button busy={busy} onClick={onNext}>

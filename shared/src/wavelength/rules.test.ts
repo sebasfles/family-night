@@ -50,15 +50,16 @@ function playRound(state: WavelengthPublic, target = 50): WavelengthPublic {
 describe('scoring', () => {
   test.each([
     [50, 50, 4],
-    [45, 50, 4],
-    [55, 50, 4],
-    [44, 50, 3],
-    [60, 50, 3],
-    [61, 50, 2],
-    [35, 50, 2],
-    [34, 50, 1],
-    [75, 50, 1],
-    [76, 50, 0],
+    [48, 50, 4],
+    [52, 50, 4],
+    [47, 50, 3],
+    [57, 50, 3],
+    [58, 50, 2],
+    [38, 50, 2],
+    [37, 50, 0],
+    [63, 50, 0],
+    [0, 2, 4],
+    [100, 93, 3],
     [0, 100, 0],
   ])('a guess of %i on target %i scores %i, bands inclusive', (value, target, points) => {
     expect(dialPoints(value, target)).toBe(points);
@@ -91,13 +92,13 @@ describe('scoring', () => {
       psychicId: 'b',
       target: 40,
       guesses: [
-        { playerId: 'a', value: 43, points: 4 },
+        { playerId: 'a', value: 43, points: 3 },
         { playerId: 'c', value: 52, points: 2 },
         { playerId: 'd', value: null, points: 0 },
       ],
       psychicPoints: 3,
     });
-    expect(revealed.totals).toEqual({ a: 4, b: 3, c: 2, d: 0 });
+    expect(revealed.totals).toEqual({ a: 3, b: 3, c: 2, d: 0 });
     expect(revealed.committedPlayerIds).toEqual(['a', 'c']);
   });
 
@@ -121,9 +122,9 @@ describe('scoring', () => {
     state = guessing(openRound(state, turn, other));
     state = revealRound(state, 10, [{ playerId: 'b', value: 12 }]);
 
-    expect(state.totals).toEqual({ a: 4, b: 7, c: 5 });
+    expect(state.totals).toEqual({ a: 4, b: 6, c: 4 });
     const { state: afterLeave } = dropWavelengthPlayer(state, 'c');
-    expect(wavelengthScores(afterLeave)).toEqual({ a: 4, b: 7 });
+    expect(wavelengthScores(afterLeave)).toEqual({ a: 4, b: 6 });
   });
 });
 

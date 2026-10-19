@@ -1,6 +1,6 @@
 ---
 updated: 2026-10-18
-source: 0005_just_one
+source: 0006_gameplay_and_redesign
 ---
 
 # Architecture and Debt Record
@@ -37,6 +37,15 @@ Module-level decisions live in `modules/{{module}}/ard.md`.
 - Revisit when: players want their name or score across devices.
 - Source: setup
 
+## 2026-10-18: Players can change their name
+
+- Decision: the random name stays as the start, and a player renames themselves from the lobby with `PATCH /api/players/me`: 2 to 20 visible characters, unique among all players and, ignoring case and accents, inside the room; the old name is released in the same write.
+- Alternatives rejected: keeping names fixed (the 2026-10-17 identity entry); a name per room.
+- Reason: Sebastian's call after playing: the family wants to be called by their names; one global name keeps the scoreboard and the snapshot simple.
+- Debt created: other rooms show the old name until the player opens them again.
+- Revisit when: a player sees a stale name in another room that matters.
+- Source: 0006_gameplay_and_redesign
+
 ## 2026-10-17: Single production environment deployed from main
 
 - Decision: `main` is production at `family-night.fless.dev`; no dev stage.
@@ -63,9 +72,12 @@ Rebuilt by `write-ard` on every run, kept current by `document-task` on every ta
 | platform | 2026-10-17 | A failed host-only command does not hand over a silent host's crown | A silent host seen after such a failure |
 | platform | 2026-10-17 | A removed member can resubscribe within the 300 s authorizer cache | A removed member still receives events |
 | platform | 2026-10-17 | No light theme | A player asks for it |
-| impostor | 2026-10-17 | A vote changed in the instant of the close answers 200 but counts the earlier choice | A changed vote reported as not counted |
+| platform | 2026-10-18 | A rename reaches other rooms only when the player opens them again | A stale name in another room matters |
+| impostor | 2026-10-17 | A selection changed in the instant of the close answers 200 but counts the earlier choice | A changed selection reported as not counted |
+| impostor | 2026-10-18 | A match left in `IMPOSTOR_GUESS` at deploy shows only the header and card until the host aborts it | Such a match is seen after the deploy |
 | impostor | 2026-10-17 | Secrets and ballots expire 24 h after written, not renewed | A match runs past a day |
 | wavelength | 2026-10-18 | Right after the spectra restart, the spectrum just played can come up again | A family plays through the bank in one night |
+| wavelength | 2026-10-18 | On a fast drag one pointer move ticks once, however many points it jumps | The tick feels uneven on a phone |
 | justone | 2026-10-18 | Plural matching can over-match rare short words; the review restores them | A clue cancelled that was not a repeat |
 | justone | 2026-10-18 | Right after the word bank restarts, the word just played can come up again | A family plays through the bank in one night |
 | infra | 2026-10-17 | Requests with a body need `x-amz-content-sha256`; no per-route throttle beyond reserved concurrency | Abuse shows up in logs |

@@ -24,10 +24,12 @@ export function LobbyPanel({ code, snapshot, isHost, nowMs }: LobbyPanelProps) {
   const stored = snapshot.configs.IMPOSTOR;
   const config = { ...stored, impostorCount: Math.min(stored.impostorCount, cap) };
 
-  const update = useRoomMutation((next: ImpostorConfig) =>
-    api.updateConfig(code, { gameType: 'IMPOSTOR', config: next }),
+  const update = useRoomMutation(
+    code,
+    (next: ImpostorConfig) => api.updateConfig(code, { gameType: 'IMPOSTOR', config: next }),
+    (next) => ({ kind: 'config', request: { gameType: 'IMPOSTOR', config: next } }),
   );
-  const start = useRoomMutation(() => api.startMatch(code, { gameType: 'IMPOSTOR', config }));
+  const start = useRoomMutation(code, () => api.startMatch(code, { gameType: 'IMPOSTOR', config }));
 
   return (
     <>
@@ -37,7 +39,6 @@ export function LobbyPanel({ code, snapshot, isHost, nowMs }: LobbyPanelProps) {
         playerCount={players.length}
         categories={categories.data}
         editable={isHost}
-        busy={update.isPending}
         onChange={(next) => {
           update.mutate(next);
         }}

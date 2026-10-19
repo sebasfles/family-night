@@ -1,5 +1,5 @@
 import type { RoomMember } from '@family-night/shared';
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 export function nameOf(members: RoomMember[], playerId: string): string {
   return members.find((member) => member.playerId === playerId)?.name ?? 'Alguien que salió';
@@ -15,4 +15,16 @@ export function usePhaseVibration(step: string): void {
     if (previous.current !== step) vibrate();
     previous.current = step;
   }, [step]);
+}
+
+export function useRoundDraft(round: number) {
+  const [draft, setDraft] = useState({ round, text: '' });
+  const text = draft.round === round ? draft.text : '';
+  const update = useCallback(
+    (next: string) => {
+      setDraft({ round, text: next });
+    },
+    [round],
+  );
+  return [text, update] as const;
 }

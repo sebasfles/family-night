@@ -289,8 +289,8 @@ describe('a round', () => {
     if (!a || !b || !c) throw new Error('missing guessers');
     room.harness.published.length = 0;
 
-    await guessed(room, a, match, 55);
-    await guessed(room, b, match, 72);
+    await guessed(room, a, match, 58);
+    await guessed(room, b, match, 70);
     const revealed = await guessed(room, c, match, 10);
 
     expect(revealed.phase).toBe('REVEAL');
@@ -303,7 +303,7 @@ describe('a round', () => {
         .sort((x, y) => match.participants.indexOf(x) - match.participants.indexOf(y))
         .map((playerId) => ({
           playerId,
-          value: { [a.playerId]: 55, [b.playerId]: 72, [c.playerId]: 10 }[playerId],
+          value: { [a.playerId]: 58, [b.playerId]: 70, [c.playerId]: 10 }[playerId],
           points: { [a.playerId]: 4, [b.playerId]: 2, [c.playerId]: 0 }[playerId],
         })),
       psychicPoints: 2,
@@ -345,7 +345,7 @@ describe('a round', () => {
     const match = await giveClue(room, await start(room));
     const [early] = guessersOf(room, match);
     if (!early) throw new Error('missing guesser');
-    await guessed(room, early, match, 33);
+    await guessed(room, early, match, 32);
     const notHost = room.players.find((p) => p.playerId !== room.host.playerId) ?? room.host;
     await expectError(
       call(room.harness, notHost, 'POST', matchPath(room, match.matchId, 'close-guessing'), {
@@ -361,7 +361,7 @@ describe('a round', () => {
     for (const guess of revealed.lastResult?.guesses ?? []) {
       expect(guess).toEqual(
         guess.playerId === early.playerId
-          ? { playerId: early.playerId, value: 33, points: 4 }
+          ? { playerId: early.playerId, value: 32, points: 4 }
           : { playerId: guess.playerId, value: null, points: 0 },
       );
     }
