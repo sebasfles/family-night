@@ -123,7 +123,7 @@ export function ConfigPanel({
             </span>
           </span>
           <ChevronDownIcon
-            className={`size-6 text-cream/70 transition-transform duration-200 ease-soft ${categoriesOpen ? 'rotate-180' : ''}`}
+            className={`size-6 text-cream/70 transition-transform duration-200 ease-soft motion-reduce:transition-none ${categoriesOpen ? 'rotate-180' : ''}`}
           />
         </button>
         {categoriesOpen && categories && (
@@ -232,10 +232,10 @@ function Switch({
       </span>
       <span
         aria-hidden="true"
-        className={`relative h-8 w-14 shrink-0 rounded-full transition-colors duration-200 ${checked ? 'bg-moon shadow-glow' : 'bg-cream/18'}`}
+        className={`relative h-8 w-14 shrink-0 rounded-full transition-colors duration-200 motion-reduce:transition-none ${checked ? 'bg-moon shadow-glow' : 'bg-cream/18'}`}
       >
         <span
-          className={`absolute top-1 left-1 size-6 rounded-full bg-night shadow-md transition-transform duration-200 ease-soft ${checked ? 'translate-x-6' : 'translate-x-0'}`}
+          className={`absolute top-1 left-1 size-6 rounded-full bg-night shadow-md transition-transform duration-200 ease-soft motion-reduce:transition-none ${checked ? 'translate-x-6' : 'translate-x-0'}`}
         />
       </span>
     </button>

@@ -96,7 +96,7 @@ export const impostorSteps: HowToPlayStep[] = [
   },
   {
     title: '¿Quién gana?',
-    text: 'Los civiles ganan cuando no queda ningún impostor, y suman 1 punto cada uno. Los impostores ganan si llegan a ser tantos como los civiles, y suman 2.',
+    text: 'Los civiles ganan cuando no queda ningún impostor, y suman 1 punto cada uno. Los impostores ganan si llegan a ser tantos como los civiles que siguen en juego, y suman 2.',
     Scene: () => (
       <Scoreboard
         title="Puntaje de la noche"

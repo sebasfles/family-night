@@ -132,3 +132,16 @@ Pending: none.
 Deferred:
 
 - Names with one word longer than about 11 letters still break mid-word in member rows at 360 (`break-words` fallback); only a layout change of the row would avoid it.
+
+### Round 2
+
+Applied all 4 findings:
+
+1. `verify.log` round 1 had the api and web unit counts swapped; round 2 blocks take every code and count from the `.verify/` artefacts (api 202, web 205).
+2. `motion-reduce:transition-none` on the drawer snap-back and step dots (`HowToPlay.tsx`), and on the categories chevron and the switch track and knob (`ConfigPanel.tsx`).
+3. Impostor "¿Quién gana?": impostors win when they are as many as the civilians "que siguen en juego".
+4. Just One "Las repetidas se tachan": "Quienes dan pistas pueden tachar otra o recuperarla antes de mostrarlas".
+
+Screenshots of the Impostor and Just One how-to-play steps and of the Impostor config refreshed at every width.
+
+Pending: none. Deferred: unchanged from round 1.

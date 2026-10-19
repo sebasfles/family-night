@@ -58,7 +58,7 @@ export const justOneSteps: HowToPlayStep[] = [
   },
   {
     title: 'Las repetidas se tachan',
-    text: 'Las pistas iguales se tachan solas, aunque cambien tildes o plurales. Cualquiera puede tachar otra o recuperarla antes de mostrarlas.',
+    text: 'Las pistas iguales se tachan solas, aunque cambien tildes o plurales. Quienes dan pistas pueden tachar otra o recuperarla antes de mostrarlas.',
     Scene: () => clueList({ review: true }),
   },
   {

@@ -124,7 +124,9 @@ function Drawer({
         <div
           style={drag ? { transform: `translateY(${String(drag)}px)` } : undefined}
           className={`flex max-h-[92dvh] flex-col rounded-t-card bg-night-soft pb-[env(safe-area-inset-bottom)] shadow-lift ring-1 ring-cream/8 ${
-            drag === null ? 'transition-transform duration-200 ease-soft' : ''
+            drag === null
+              ? 'transition-transform duration-200 ease-soft motion-reduce:transition-none'
+              : ''
           }`}
         >
           <button
@@ -235,7 +237,7 @@ function Carousel({ titleId, game, steps, index, from, closeRef, onGo, onClose }
           {steps.map((entry, dot) => (
             <li
               key={entry.title}
-              className={`h-2 rounded-full transition-[width,background-color] duration-300 ease-soft ${
+              className={`h-2 rounded-full transition-[width,background-color] duration-300 ease-soft motion-reduce:transition-none ${
                 dot === index ? 'w-6 bg-moon' : 'w-2 bg-cream/25'
               }`}
             />
