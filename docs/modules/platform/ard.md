@@ -320,6 +320,15 @@ source: 0008_scoring_and_manada
 - Revisit when: a family uses such a name.
 - Source: 0007_lobby_polish
 
+## 2026-10-19: Night points on one scale for every game
+
+- Decision: a finished match adds to the night by podium: with N players still in the match, place p (shared places 1, 1, 3) gets N - p + 1, and the winners of La manada share first place. Impostor gives each impostor ceil(civilians at start / impostors) on an impostor win and each civilian 1 on a civilian win; Just One gives 0; a Wavelength match that started with 2 gives 0; a player who left or was removed scores nothing. Each game's minimum of online players is a `MIN_*_PLAYERS` constant in `shared`, read by the api's start check and the lobby's button.
+- Alternatives rejected: each game's raw match points; splitting the points of a shared place; Impostor's flat 1 and 2; Just One's team score; minimums stored in DynamoDB or kept in the web.
+- Reason: every game weighs the same on the night, so a mixed night is not decided by the game with the biggest numbers; minimums are rules both sides must agree on, not data.
+- Debt created: none
+- Revisit when: a new game does not fit a podium.
+- Source: 0008_scoring_and_manada
+
 ## 2026-10-19: Night points show as a line under each name
 
 - Decision: a match scoreboard takes optional `night` points and shows "+N a la noche" under each player's name; the lobby scoreboard keeps its shape.
@@ -363,13 +372,4 @@ source: 0008_scoring_and_manada
 - Reason: with a wrapped message at 360 px the flex text took the full width and left the dots far from it, in every game.
 - Debt created: none
 - Revisit when: waiting messages get longer than two lines.
-- Source: 0008_scoring_and_manada
-
-## 2026-10-19: The start button says what is missing in the singular too
-
-- Decision: below a game's minimum the button reads "Falta 1 jugador" or "Faltan N jugadores".
-- Alternatives rejected: "Faltan 1 jugadores".
-- Reason: the copy is Spanish and must read right.
-- Debt created: none
-- Revisit when: the copy moves to a translation layer.
 - Source: 0008_scoring_and_manada

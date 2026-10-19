@@ -1,6 +1,6 @@
 ---
 updated: 2026-10-19
-source: 0006_gameplay_and_redesign
+source: 0008_scoring_and_manada
 ---
 
 # Architecture and Debt Record
