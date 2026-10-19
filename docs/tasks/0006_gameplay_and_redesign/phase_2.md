@@ -56,3 +56,11 @@ Applied both findings, none disputed:
 Screenshots refreshed in `screenshots/phase_2/`.
 
 ## Result
+
+Clean at 5148779 after 2 rounds; no gate per the 2026-10-18 adjustment, phase 3 started at once.
+
+- Delivered: warm dark tokens (names kept, so every screen left the blue), Fraunces and Nunito self-hosted, `motion` with LazyMotion `domAnimation` behind `web/src/motion/`, enter-only transitions on screens and phases, reduced motion honoured; home, lobby, match header, Espectador, dialogs, menus, toast restyled.
+- Deviations: "scoreboard" here is the lobby member list; per-game scoreboards are phase 3. No exit animations; no layout animations (`domMax`) yet.
+- Cost: initial JS +30.6 KB gzip, CSS +3 KB gzip, fonts about 100 KB woff2.
+- For phase 3: the dial still carries its band colors and blue-ish labels; game screens still use the old components.
+
