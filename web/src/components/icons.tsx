@@ -342,3 +342,17 @@ export function CowIcon({ className }: IconProps) {
     </svg>
   );
 }
+
+export function DeviceIcon({ className }: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      fill="none"
+      className={`shrink-0 ${className ?? ''}`}
+    >
+      <rect x="6.5" y="2.5" width="11" height="19" rx="2.5" stroke="currentColor" strokeWidth="2" />
+      <path d="M10.5 18h3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}

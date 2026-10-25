@@ -1,6 +1,6 @@
 ---
-updated: 2026-10-19
-source: 0008_scoring_and_manada
+updated: 2026-10-25
+source: 0009_wavelength_one_phone
 ---
 
 # Technical Requirements Document
@@ -24,7 +24,7 @@ Node comes from `.nvmrc` (24).
 ### shared
 
 - Stack: TypeScript 6 strict (`noUncheckedIndexedAccess`), Vitest.
-- Layout: `src/api.ts` request and response types per endpoint, `src/events.ts` realtime event types, `src/domain.ts` room, player and match types, `src/constants.ts` limits, `src/random.ts` shared random helpers, `src/scoring.ts` the podium of night points, `src/{impostor,wavelength,justone,manada}/rules.ts` pure game rules.
+- Layout: `src/api.ts` request and response types per endpoint, `src/events.ts` realtime event types, `src/domain.ts` room, player and match types, `src/constants.ts` limits, `src/random.ts` shared random helpers, `src/scoring.ts` the podium of night points, `src/{impostor,wavelength,justone,manada}/rules.ts` pure game rules, `src/wavelength/spectra.json` the spectra bank behind the subpath export `./wavelength-spectra`.
 - Install: `pnpm install --frozen-lockfile` at the root.
 - Workspace files: none.
 - API spec: none; the types in `src/api.ts` are the contract and the api handler tests pin the shapes.
@@ -34,7 +34,7 @@ Node comes from `.nvmrc` (24).
 ### api
 
 - Stack: TypeScript, Hono as internal router, one Lambda handler (`src/index.ts`) and a Node server entry for local runs (`@hono/node-server`), AWS SDK v3 (`lib-dynamodb`) left external to the bundle, SigV4-signed `fetch` to AppSync Events, Vitest.
-- Layout: `src/handlers/` routes, `src/services/` players, rooms, presence, matches, the game registry (`games.ts`), impostor, wavelength, justone, manada, `src/repos/` one class per table, `src/realtime/publish.ts`, `src/lib/` errors, validation, auth, `src/data/` names, the two word banks, the spectra bank and the question bank.
+- Layout: `src/handlers/` routes, `src/services/` players, rooms, presence, matches, the game registry (`games.ts`), impostor, wavelength, justone, manada, `src/repos/` one class per table, `src/realtime/publish.ts`, `src/lib/` errors, validation, auth, `src/data/` names, the two word banks and the question bank.
 - Install: `pnpm install --frozen-lockfile` at the root.
 - Workspace files: none; table names and `EVENTS_HTTP_DOMAIN` come from the Lambda environment, locally from `.env` (ignored).
 - API spec: none; `shared/src/api.ts` is the contract.
@@ -44,7 +44,7 @@ Node comes from `.nvmrc` (24).
 ### web
 
 - Stack: React 19, Vite, `@tanstack/react-router` with `@tanstack/router-plugin`, `@tanstack/react-query`, Tailwind CSS, own components, Vitest with Testing Library.
-- Layout: `src/routes/` file-based routes, `src/api/` typed client and query hooks, `src/realtime/` AppSync Events WebSocket client, `src/identity/` player in localStorage, `src/components/`, `src/games/{impostor,wavelength,justone,manada}/`, `public/og.png`.
+- Layout: `src/routes/` file-based routes (home, `$code/` the room and its games, `un-dispositivo/` the one device picker and matches), `src/api/` typed client and query hooks, `src/realtime/` AppSync Events WebSocket client, `src/identity/` player in localStorage, `src/components/`, `src/games/{impostor,wavelength,justone,manada}/`, `public/og.png`.
 - Install: `pnpm install --frozen-lockfile` at the root.
 - Workspace files: `.env.production` is not committed; `deploy-web.yml` passes `VITE_EVENTS_HTTP_DOMAIN` and `VITE_EVENTS_REALTIME_DOMAIN` from repository variables. Locally a `.env.local` (ignored) with the same two.
 - API spec: none; calls `/api/...` relatively.

@@ -1,4 +1,4 @@
-import type { RoomMember } from '@family-night/shared';
+import type { Player } from '@family-night/shared';
 import { CountUp } from '../motion/CountUp';
 import { useShuffleIn } from '../motion/shuffle';
 import { SHIFT_DELAY_MS, SHIFT_MS } from '../motion/timing';
@@ -12,7 +12,7 @@ const medals = ['bg-moon text-night', 'bg-sand text-night', 'bg-ember text-night
 interface ScoreboardProps {
   title: string;
   rows: ScoreRow[];
-  members: RoomMember[];
+  members: readonly Player[];
   selfId: string;
   signed?: boolean;
   gains?: boolean;

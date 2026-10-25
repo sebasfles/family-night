@@ -19,6 +19,8 @@ export const EVENTS_NAMESPACE = 'rooms';
 export const PLAYER_NAME_MIN = 2;
 export const PLAYER_NAME_MAX = 20;
 
+export const ONE_DEVICE_MAX_PLAYERS = 12;
+
 export const MIN_IMPOSTOR_PLAYERS = 3;
 export const IMPOSTOR_CAPS = [
   { minPlayers: 9, maxImpostors: 3 },

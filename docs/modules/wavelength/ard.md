@@ -1,6 +1,6 @@
 ---
-updated: 2026-10-19
-source: 0008_scoring_and_manada
+updated: 2026-10-25
+source: 0009_wavelength_one_phone
 ---
 
 # Wavelength: decisions
@@ -157,3 +157,39 @@ source: 0008_scoring_and_manada
 - Debt created: a match that started with 2 and lost one player still finishes with "Con 2 jugadores siempre empatan", though only one was left.
 - Revisit when: the minimum or the podium changes.
 - Source: 0008_scoring_and_manada
+
+## 2026-10-25: The one device match is a WavelengthPublic driven by the shared rules
+
+- Decision: the local match keeps a `WavelengthPublic` and moves it with `startWavelength`, `recordCommits`, `revealRound`, `openRound(turn + 1)` and `finishWavelength`; `psychicOfTurn` wraps the ever growing `turn`; players are `seat-1` to `seat-12`.
+- Alternatives rejected: a one device state shape with its own scoring.
+- Reason: the points, bands and psychic average cannot drift from the room mode, and the reveal and final pieces render the same state.
+- Debt created: none
+- Revisit when: a rule of the room mode does not apply to one device.
+- Source: 0009_wavelength_one_phone
+
+## 2026-10-25: The stored one device match is validated whole and gated on reload
+
+- Decision: one versioned localStorage key holds players, match, target and confirmed guesses; on load every field is checked against the others (seats, order, psychic of the turn, guesses in pass order, reveal points recomputed) and anything that does not hold is dropped; Terminar clears it.
+- Alternatives rejected: trusting the stored JSON; a schema library in the web bundle.
+- Reason: a corrupt or hand edited key must not crash the screen or show a wrong score.
+- Debt created: a reload on the final screen opens a new setup, because Terminar already cleared the match.
+- Revisit when: a family asks to see the final again after a reload.
+- Source: 0009_wavelength_one_phone
+
+## 2026-10-25: Pin names sit above their pin, anchored inward near the ends
+
+- Decision: on the dial a guess's name sits straight above its pin (15 units, 28 when crowded); below 17 it starts at the pin and above 83 it ends at it, so it runs toward the centre.
+- Alternatives rejected: the label along the radius.
+- Reason: near either end the radius is almost horizontal, so the name covered its own pin and ran past the rim, in both modes.
+- Debt created: none
+- Revisit when: a name longer than about 12 letters sits near an end.
+- Source: 0009_wavelength_one_phone
+
+## 2026-10-25: Keyboard confirm is opt-in on the dial
+
+- Decision: `Dial` takes `autoFocus` and `onSubmit`; only the one device guesser uses them, so Enter confirms there and a held Enter does nothing; the room mode keeps its keys.
+- Alternatives rejected: Enter to confirm in both modes.
+- Reason: on one device a laptop is a likely device; in a room each phone confirms by touch, and the plan kept multiplayer keys as they were.
+- Debt created: the keyboard hint on the guesser screen shows only from 1024 px, so a tablet with a keyboard does not see it.
+- Revisit when: tablets with keyboards are used.
+- Source: 0009_wavelength_one_phone

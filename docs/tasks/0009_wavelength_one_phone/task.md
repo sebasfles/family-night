@@ -122,6 +122,66 @@ Review beyond the Pipeline:
 - Privacy: no target or earlier guess is reachable from a gate screen, exit animations included.
 - One test per Acceptance item: fetch never called (1), gated target and a centred dial per guesser (2), points equal to the shared rules over two rounds (3), cycling past a full turn and a tie on Terminar (4), reload at every step (5), each name rule (6).
 
+Reiteration 1 (2026-10-25, retakes before the first round; these override the lines above where they differ):
+
+- The mode is one device: user copy says "Un solo dispositivo" (home entry, picker, titles) and never "celular"; the gate reads "Pasa el dispositivo a Y"; every "Un solo celular" above now means this label.
+- Naming is `oneDevice` everywhere (files, folders, types, storage key, docs) and the route is `/un-dispositivo`; no `onePhone` left in code or docs.
+- Desktop and tablet are first class: every new screen must look composed at 768 and 1280 px, not a stretched phone column; the screenshots at those widths are reviewed as strictly as 390.
+- Keyboard: on a guesser's turn the dial takes focus, arrows, PageUp/PageDown, Home and End move it as in multiplayer, and Enter confirms; on gate screens Enter taps the main button. Multiplayer keeps its current keys, no Enter added there.
+- Tests add: Enter confirms a guess, and no rendered text contains "celular".
+
 clearance: repo
 
 ## om-developer notes
+
+### Round 1
+
+Done:
+
+- Spectra bank moved to `shared/src/wavelength/spectra.json` behind the subpath `@family-night/shared/wavelength-spectra`; the api and its bank test import it there; in web it lands only in the `/un-dispositivo/wavelength` chunk (checked in the build).
+- `IdentityGate` moved from `__root.tsx` into the home and `$code` route components, so `/un-dispositivo` and `/un-dispositivo/wavelength` never call `/api`, also on reload.
+- Home: "Un solo dispositivo" under a new "o sin sala" divider; the games chip row now maps the shared catalog, so La manada shows.
+- Game agnostic pieces in `components/`: `OneDevicePicker`, `PlayerSetup`, `HandOff`, `games.ts` (the catalog, moved out of `GamePicker.tsx`), `random.ts` (crypto `RandomInt`), `keys.ts` (`useEnterKey`), `DeviceIcon`.
+- Wavelength: `oneDevice.ts` (state machine over `WavelengthPublic` and the shared rules, storage and validation), `OneDeviceWavelength.tsx`; `RoundResult`, `Standings` and `SoundToggle` extracted from `RevealPhase`, `Final` and `GuessPhase`, which render the same.
+- Reiteration 1 folded in: one device copy and naming, route `/un-dispositivo`, two column layouts at 768 and up, Enter on gates and on the dial.
+- Screenshots at 390, 768 and 1280 of every new screen and home in `.workspaces/0009_wavelength_one_phone/screenshots/`.
+
+Decisions not in the plan:
+
+- The local match is a `WavelengthPublic` driven by `startWavelength`, `openRound(turn + 1)`, `recordCommits`, `revealRound` and `finishWavelength`; `turn` grows forever and `psychicOfTurn` wraps it, so no new rule code.
+- Player ids are `seat-N`; avatars keep their colour across "Jugar otra vez".
+- Storage keys `family-night.one-device.wavelength` (v1, dropped when invalid) and `family-night.one-device.wavelength.spectra`; the match key is cleared on Terminar, so a reload of the final screen opens a new setup.
+- `nameOf` and `Scoreboard` take `readonly Player[]` instead of `RoomMember[]`, so local players need no fake presence fields.
+- `GAMES` moved to `web/src/components/games.ts` (picker, home chips, lobby share it); `docs/checks/game-tutorial.md` and `docs/conventions/game-tutorial.md` point there now.
+- Duplicate name message is "Otro jugador ya se llama así", not RenameDialog's "Alguien de la sala ya se llama así": there is no room here. The length message is the same.
+- `MatchHeader` takes an optional `abortTitle`; one device says "¿Terminar la partida? Esta ronda no suma puntos." mid-round and "¿Terminar la partida?" on the reveal; Terminar on the reveal also asks.
+- Gates take Enter through a page listener (only when focus is on the body, never on a held key) instead of autofocusing the button, which drew a focus ring on fresh loads; the dial gets `autoFocus` and `onSubmit` props, unused by multiplayer.
+
+Pending: none.
+
+Deferred:
+
+- One device for Impostor, Just One and La manada (out of scope).
+- The keyboard hint on the guesser screen shows only at 1024 px and up; tablets with keyboards do not see it.
+
+Note to the om-reviewer: Reiteration 1 was inserted inside the YAML frontmatter of this file, between `crew` and `clearance`; it should move under `Context & decisions`.
+
+### Round 2
+
+Done, the three findings:
+
+1. `Dial` pin names now sit straight above their pin (lift 15, or 28 when crowded) instead of along the radius; below 17 they anchor at their start and above 83 at their end, so they run toward the centre and stay inside the face. This also changes the multiplayer reveal, which had the same flaw. A test in `Dial.test.tsx` checks pins at 0, 2, 9, 20, 50, 80, 91, 97 and 100 for no overlap with the pin and no overflow of the dial; it fails on the previous `Dial`. The reveal screenshot data now has pins at 2 and 97.
+2. The guesser heading uses the full name ("Ana María, mueve el dial").
+3. The guesser dial shot moves the dial with the + button after "Soy Y"; the keyboard state has its own shot, `one-device-guesser-dial-keyboard`, reached by Enter on the gate.
+
+Also committed: the om-reviewer's move of Reiteration 1 into `Context & decisions`.
+
+Decisions not in the plan: the label placement rule above (vertical lift, inward anchor near the ends) replaces the radial one for every dial.
+
+Pending: none. Deferred: none new.
+
+### Documentation
+
+- Updated: `platform` README, prd, trd, ard; `wavelength` README, prd, trd, flows, ard; the `Debt index` of `docs/ARD.md` (two wavelength rows).
+- Unchanged: both `database.md` (no table or invariant changed), `platform/flows.md` (the room command flow is untouched).
+- Flagged for the om-reviewer, outside what `document-task` may edit: `docs/TRD.md` still lists the spectra bank under the api's `src/data/` (it is now `shared/src/wavelength/spectra.json`); `docs/PRD.md` says each player uses their own phone and has no line for one device play, which Scope asked for "if it lists modes".

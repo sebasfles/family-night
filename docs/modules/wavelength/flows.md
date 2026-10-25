@@ -1,6 +1,6 @@
 ---
-updated: 2026-10-18
-source: 0004_wavelength
+updated: 2026-10-25
+source: 0009_wavelength_one_phone
 ---
 
 # Wavelength: flows
@@ -32,3 +32,23 @@ stateDiagram-v2
 
 - A cancelled round records `skipped` (who and why), shown in the next CLUE until the clue is given.
 - After `FINISHED` or `ABORTED` the host goes back to the lobby or starts a rematch; both belong to `platform`.
+
+## One device steps
+
+Only CLUE, GUESS and REVEAL are stored; the open target and an open dial live in memory, so a reload lands on the gate before them.
+
+```mermaid
+stateDiagram-v2
+  [*] --> PsychicGate: Empezar or Jugar otra vez
+  PsychicGate --> Target: Ver el objetivo
+  Target --> GuesserGate: Listo (phase GUESS)
+  GuesserGate --> Dial: Soy Y
+  Dial --> GuesserGate: Confirmar, a guesser is left
+  Dial --> AllGuessed: Confirmar, nobody left
+  AllGuessed --> Reveal: Revelar
+  Reveal --> PsychicGate: Siguiente ronda
+  Reveal --> Final: Terminar
+  PsychicGate --> Final: Terminar from the menu
+  GuesserGate --> Final: Terminar from the menu
+  Final --> [*]: Volver al inicio, the stored match is gone
+```

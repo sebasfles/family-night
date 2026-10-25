@@ -2,15 +2,21 @@ import { isRoomCode, ROOM_CODE_LENGTH } from '@family-night/shared';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useState, type SubmitEvent } from 'react';
 import { Button } from '../components/Button';
-import { CluesIcon, DialIcon, MaskIcon, MoonIcon, PencilIcon } from '../components/icons';
+import { GAMES } from '../components/games';
+import { MoonIcon, PencilIcon, DeviceIcon } from '../components/icons';
 import { RenameDialog } from '../components/lobby/RenameDialog';
 import { useCreateRoom } from '../components/useCreateRoom';
 import { useRenameFromHome } from '../components/useRenameFromHome';
 import { useIdentity } from '../identity/identity';
+import { IdentityGate } from '../identity/IdentityGate';
 import { Enter, Stagger, StaggerItem } from '../motion/motion';
 
 export const Route = createFileRoute('/')({
-  component: Home,
+  component: () => (
+    <IdentityGate>
+      <Home />
+    </IdentityGate>
+  ),
 });
 
 function Home() {
@@ -126,6 +132,20 @@ function Home() {
             </Button>
           </div>
         </form>
+
+        <div className="flex items-center gap-3 text-base text-cream/60" aria-hidden="true">
+          <span className="h-px flex-1 bg-cream/12" />o sin sala
+          <span className="h-px flex-1 bg-cream/12" />
+        </div>
+
+        <Button
+          variant="secondary"
+          className="w-full"
+          onClick={() => void navigate({ to: '/un-dispositivo' })}
+        >
+          <DeviceIcon className="size-6 text-moon" />
+          Un solo dispositivo
+        </Button>
       </Enter>
 
       <Enter delay={0.3}>
@@ -133,18 +153,15 @@ function Home() {
           aria-label="Juegos"
           className="flex flex-wrap justify-center gap-2 text-base font-semibold text-cream/70"
         >
-          <li className="flex items-center gap-2 rounded-full bg-cream/6 py-1.5 pr-4 pl-2">
-            <MaskIcon className="size-6 text-ember" />
-            Impostor
-          </li>
-          <li className="flex items-center gap-2 rounded-full bg-cream/6 py-1.5 pr-4 pl-2">
-            <DialIcon className="size-6 text-moon" />
-            Wavelength
-          </li>
-          <li className="flex items-center gap-2 rounded-full bg-cream/6 py-1.5 pr-4 pl-2">
-            <CluesIcon className="size-6 text-orchid" />
-            Just One
-          </li>
+          {GAMES.map(({ id, name, Icon, color }) => (
+            <li
+              key={id}
+              className="flex items-center gap-2 rounded-full bg-cream/6 py-1.5 pr-4 pl-2"
+            >
+              <Icon className={`size-6 ${color}`} />
+              {name}
+            </li>
+          ))}
         </ul>
       </Enter>
 

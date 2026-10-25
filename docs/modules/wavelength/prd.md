@@ -1,6 +1,6 @@
 ---
-updated: 2026-10-19
-source: 0008_scoring_and_manada
+updated: 2026-10-25
+source: 0009_wavelength_one_phone
 ---
 
 # Wavelength: product
@@ -39,6 +39,16 @@ Everyone plays on their own dial, so nobody waits for a team to agree.
 3. The final screen names the winner (or the tie) and the scoreboard; the host chooses "Jugar otra vez" (same settings, unseen scales) or "Volver al lobby".
 4. The host can end a match at any time without points.
 
+### One device
+
+1. The psychic order is drawn at the start; the device goes round the table in the seating order of the names, starting after the psychic.
+2. "Le toca a X": X taps Ver el objetivo, sees the scale with the zones, says a clue aloud and taps Listo, which hides it.
+3. For each other player, "Pasa el dispositivo a Y": Y taps "Soy Y" and sets a dial that starts at the centre, never seeing an earlier guess; Enter confirms on a keyboard.
+4. "Todos adivinaron" asks to put the device where everyone sees it; Revelar shows the same reveal as a room, with totals across rounds.
+5. Siguiente ronda passes to the next psychic, round after round with no end; Terminar, on the reveal or in the header menu at any step, shows the winner (or the tie) and the scoreboard, and mid-round drops the unrevealed round.
+6. "Jugar otra vez" keeps the players, draws a new order and resets the scores; "Volver al inicio" goes home.
+7. A reload or a locked screen comes back to the gate of the current step: confirmed guesses stay, a dial not yet confirmed starts over.
+
 ### Leaving and latecomers
 
 - A guesser who leaves or is removed drops out of the round and of the match, and their confirmed guess is discarded.
@@ -52,12 +62,13 @@ Everyone plays on their own dial, so nobody waits for a team to agree.
 - The psychic order is drawn at the start and repeats every cycle.
 - The target is a whole number from 0 to 100; a guess scores 4 points within 2 of it, 3 within 7, 2 within 12, otherwise 0 (on the dial the zones end half a point further, at 2.5, 7.5 and 12.5).
 - The psychic scores the average of the confirmed guesses' points, rounded half up; 0 when nobody confirmed. Guessers who did not confirm score 0.
-- Scales do not repeat within a night; when all have been played they start over.
+- Scales do not repeat within a night; when all have been played they start over. On one device the device remembers the scales played across matches, with the same restart.
 - The night gets podium points when the match ends, only for players still in it: first gets one point per such player, each place one less, and tied players share the place and its points. A match that started with 2 players gives the night nothing, because the two always tie; one that ends with 2 after a departure uses the podium.
 
 ## Out of scope
 
 - Teams and the original left/right counter-guess.
+- On one device: a typed clue, a night score, other games.
 - Timers.
 - Sounds other than the dial tick.
 

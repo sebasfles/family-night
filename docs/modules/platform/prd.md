@@ -1,13 +1,13 @@
 ---
-updated: 2026-10-19
-source: 0008_scoring_and_manada
+updated: 2026-10-25
+source: 0009_wavelength_one_phone
 ---
 
 # Platform: product
 
 ## Purpose
 
-A family of ages 20 to 60 plays party games together, each on their own phone, with no accounts and nothing to install.
+A family of ages 20 to 60 plays party games together, each on their own phone or passing one device around, with no accounts and nothing to install.
 The platform gets everyone into the same room in seconds and keeps all phones in step, so the games can focus on being games.
 A room lasts the whole night and holds many matches of different games.
 
@@ -36,6 +36,13 @@ Errors and empty states: if the stored identity is no longer valid, the player s
 3. Opening an invitation link `/{CODE}` joins directly, also on a reload, without losing the place.
 
 Errors and empty states: a code that does not exist or expired shows "Esta sala no existe o ya expiró" with a button to create a new room; a full room (20) refuses the newcomer; a malformed code goes back to the home page.
+
+### Play on one device
+
+1. On the home page, under "o sin sala", the player taps "Un solo dispositivo"; a match already stored on the device opens straight away.
+2. Otherwise a picker shows every game; those without a one device mode yet read "Todavía no se juega en un solo dispositivo".
+3. After picking, the player types 2 to 12 names in seating order, with the same name rules as a rename and unique among them ("Otro jugador ya se llama así"), and taps Empezar.
+4. The match runs on that device alone: no room, no server, no night score; each secret sits behind a hand off screen ("Le toca a X", "Pasa el dispositivo a Y") whose button, or Enter, reveals it to that player only.
 
 ### Invite
 
@@ -85,7 +92,7 @@ Errors and empty states: every game card is playable.
 - Rooms and matches vanish after 24 h without activity; players and names stay.
 - Changes show on every phone in under a second.
 - Secrets of a match (words, roles, the Wavelength target, Just One clues before they are shown, La manada answers before the reveal) are never visible to other players, not even by inspecting the network.
-- The UI is Spanish only, built for a vertical phone from 360 px wide, buttons at least 48 px, base text 18 px, one warm dark theme; screens, phases, card flips and scores animate, and the system's reduced motion setting turns every animation off.
+- The UI is Spanish only, built for a vertical phone from 360 px wide (one device screens also lay out for tablet and desktop), buttons at least 48 px, base text 18 px, one warm dark theme; screens, phases, card flips and scores animate, and the system's reduced motion setting turns every animation off.
 
 ## Out of scope
 

@@ -1,6 +1,6 @@
 ---
-updated: 2026-10-19
-source: 0008_scoring_and_manada
+updated: 2026-10-25
+source: 0009_wavelength_one_phone
 ---
 
 # Platform: decisions
@@ -373,3 +373,30 @@ source: 0008_scoring_and_manada
 - Debt created: none
 - Revisit when: waiting messages get longer than two lines.
 - Source: 0008_scoring_and_manada
+
+## 2026-10-25: The identity bootstrap belongs to the routes that need it
+
+- Decision: `IdentityGate` wraps the home and `/$code` route components instead of the root layout.
+- Alternatives rejected: a pathless layout route for identified pages; skipping the gate by path inside the root.
+- Reason: the one device routes play with no server, and the root gate called `GET /api/players/me` on every load, reloads included.
+- Debt created: none
+- Revisit when: a third route family needs identity.
+- Source: 0009_wavelength_one_phone
+
+## 2026-10-25: One game catalog and names from plain players
+
+- Decision: the games' names, descriptions, icons and colours live in `web/src/components/games.ts` for the lobby picker, the home chips and the one device picker; `nameOf` and `Scoreboard` take `Player` (`playerId`, `name`) instead of `RoomMember`.
+- Alternatives rejected: a second list for the one device picker; fake `RoomMember`s for local players.
+- Reason: one list cannot drift, and local players have no presence or night score to fake.
+- Debt created: none
+- Revisit when: a screen needs member fields from a scoreboard.
+- Source: 0009_wavelength_one_phone
+
+## 2026-10-25: Hand off screens answer Enter through the page
+
+- Decision: a hand off screen listens for Enter on the document, only when the focus is on the page body and never on a held key, instead of focusing its button.
+- Alternatives rejected: autofocusing the button.
+- Reason: a focused button drew the focus ring on a fresh load, and a held Enter could skip a gate and show the next player's secret.
+- Debt created: none
+- Revisit when: a hand off screen gains a second action.
+- Source: 0009_wavelength_one_phone

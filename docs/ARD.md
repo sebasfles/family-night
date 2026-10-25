@@ -1,5 +1,5 @@
 ---
-updated: 2026-10-19
+updated: 2026-10-25
 source: 0008_scoring_and_manada
 ---
 
@@ -82,6 +82,8 @@ Rebuilt by `write-ard` on every run, kept current by `document-task` on every ta
 | wavelength | 2026-10-18 | Right after the spectra restart, the spectrum just played can come up again | A family plays through the bank in one night |
 | wavelength | 2026-10-18 | On a fast drag one pointer move ticks once, however many points it jumps | The tick feels uneven on a phone |
 | wavelength | 2026-10-19 | A match started with 2 that lost a player still reads "Con 2 jugadores siempre empatan" | The minimum or the podium changes |
+| wavelength | 2026-10-25 | A reload on the one device final screen opens a new setup | A family asks to see the final again after a reload |
+| wavelength | 2026-10-25 | The one device keyboard hint shows only from 1024 px | Tablets with keyboards are used |
 | justone | 2026-10-18 | Plural matching can over-match rare short words; the review restores them | A clue cancelled that was not a repeat |
 | justone | 2026-10-18 | Right after the word bank restarts, the word just played can come up again | A family plays through the bank in one night |
 | manada | 2026-10-19 | Answers that differ in word count or are synonyms do not group; the host merges them | The host merges the same kind of pair often |

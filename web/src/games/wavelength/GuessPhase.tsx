@@ -2,11 +2,11 @@ import { DIAL_MAX, guessersOf, type RoomMember, type WavelengthPublic } from '@f
 import { useState } from 'react';
 import { Button } from '../../components/Button';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
-import { SoundIcon } from '../../components/icons';
 import { nameOf } from '../../components/match';
 import { Waiting } from '../../components/Waiting';
 import { ClueBanner } from './ClueBanner';
 import { Dial } from './Dial';
+import { SoundToggle } from './SoundToggle';
 import type { Seat } from './model';
 import { useDialSound } from './tick';
 
@@ -55,17 +55,7 @@ export function GuessPhase({
 
       {seat === 'GUESSER' ? (
         <div className="flex flex-col gap-2">
-          {!committed && (
-            <button
-              type="button"
-              aria-pressed={sound}
-              aria-label="Sonido del dial"
-              onClick={toggleSound}
-              className="flex size-12 items-center justify-center self-end rounded-full bg-night-soft text-cream/80 ring-1 ring-cream/10 hover:bg-night-raised focus-visible:ring-2 focus-visible:ring-moon focus-visible:outline-none aria-pressed:text-moon"
-            >
-              <SoundIcon muted={!sound} className="size-6" />
-            </button>
-          )}
+          {!committed && <SoundToggle sound={sound} onToggle={toggleSound} />}
           <Dial
             label="Tu respuesta"
             left={left}

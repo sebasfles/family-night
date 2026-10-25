@@ -1,7 +1,7 @@
-import type { RoomMember } from '@family-night/shared';
+import type { Player } from '@family-night/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-export function nameOf(members: RoomMember[], playerId: string): string {
+export function nameOf(members: readonly Player[], playerId: string): string {
   return members.find((member) => member.playerId === playerId)?.name ?? 'Alguien que salió';
 }
 

@@ -27,6 +27,7 @@ import {
   type WavelengthPublic,
 } from '@family-night/shared';
 import { wavelengthConfigSchema } from '@family-night/shared/schemas';
+import { spectraBank } from '@family-night/shared/wavelength-spectra';
 import type { Deps } from '../../deps.ts';
 import { AppError, notEnoughPlayers } from '../../lib/errors.ts';
 import { iso, ttlFrom } from '../../lib/time.ts';
@@ -44,7 +45,6 @@ import {
   type MatchUpdate,
 } from '../matches/match-change.ts';
 import { updateRoom } from '../room-state.ts';
-import { spectraBank } from './spectra.ts';
 
 function parseWavelengthConfig(raw: unknown): WavelengthConfig {
   const parsed = wavelengthConfigSchema.safeParse(raw);
