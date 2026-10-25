@@ -2,7 +2,17 @@ import { useState } from 'react';
 import { ConfirmDialog } from './ConfirmDialog';
 import { Menu } from './Menu';
 
-export function AbortMatchMenu({ aborting, onAbort }: { aborting: boolean; onAbort: () => void }) {
+interface AbortMatchMenuProps {
+  aborting: boolean;
+  onAbort: () => void;
+  title?: string;
+}
+
+export function AbortMatchMenu({
+  aborting,
+  onAbort,
+  title = '¿Terminar la partida? Nadie suma puntos.',
+}: AbortMatchMenuProps) {
   const [confirm, setConfirm] = useState(false);
   return (
     <>
@@ -20,7 +30,7 @@ export function AbortMatchMenu({ aborting, onAbort }: { aborting: boolean; onAbo
       />
       {confirm && (
         <ConfirmDialog
-          title="¿Terminar la partida? Nadie suma puntos."
+          title={title}
           confirmLabel="Sí, terminar"
           busy={aborting}
           onConfirm={onAbort}

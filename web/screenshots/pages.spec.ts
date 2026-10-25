@@ -19,6 +19,13 @@ import {
   type WavelengthSecret,
 } from '@family-night/shared';
 import { expect, type Page, test } from '@playwright/test';
+import {
+  clueGiven,
+  confirmGuess,
+  revealOneDevice,
+  startOneDevice,
+  type OneDeviceMatch,
+} from '../src/games/wavelength/oneDevice';
 import { impostorMatch, MATCH_ID } from '../src/test/impostor-match';
 import { JUST_ONE_MATCH_ID, justOneMatch } from '../src/test/justone-match';
 import { MANADA_MATCH_ID, manadaMatch } from '../src/test/manada-match';
@@ -1194,5 +1201,107 @@ test.describe('in motion', () => {
     await page.getByRole('list', { name: 'Puntos para la noche' }).scrollIntoViewIfNeeded();
     await page.waitForTimeout(1300);
     await snap(page, 'impostor-final-counting');
+  });
+});
+
+const oneDeviceNames = ['Mamá', 'Papá', 'Abuela Rosa', 'Tomás', 'Valentina'];
+
+function oneDeviceStart(): OneDeviceMatch {
+  const draws = [2, 3, 1, 0, 0, 68];
+  let next = 0;
+  return startOneDevice(oneDeviceNames, {
+    spectra: [
+      { id: 'mala-pelicula.buena-pelicula', left: 'Mala película', right: 'Buena película' },
+    ],
+    usedSpectrumIds: [],
+    randomInt: (max) => Math.min(max - 1, draws[next++] ?? 0),
+    matchId: 'one-device-screens',
+  }).state;
+}
+
+function oneDeviceGuessed(values: number[]): OneDeviceMatch {
+  return values.reduce(confirmGuess, clueGiven(oneDeviceStart()));
+}
+
+async function playOnDevice(page: Page, state: OneDeviceMatch | null) {
+  const requests: string[] = [];
+  page.on('request', (request) => {
+    if (new URL(request.url()).pathname.startsWith('/api/')) requests.push(request.url());
+  });
+  if (state) {
+    await page.addInitScript(
+      (stored) => {
+        localStorage.setItem('family-night.one-device.wavelength', stored);
+      },
+      JSON.stringify({ version: 1, ...state }),
+    );
+  }
+  await page.goto('/un-dispositivo/wavelength');
+  return requests;
+}
+
+test.describe('one device', () => {
+  test('one device picker', async ({ page }) => {
+    await page.goto('/un-dispositivo');
+    await expect(page.getByRole('heading', { name: 'Un solo dispositivo' })).toBeVisible();
+    await capture(page, 'one-device-picker');
+  });
+
+  test('one device setup', async ({ page }) => {
+    const requests = await playOnDevice(page, null);
+    await expect(page.getByRole('heading', { name: '¿Quiénes juegan?' })).toBeVisible();
+    await capture(page, 'one-device-setup-empty');
+    await page.getByRole('button', { name: 'Agregar jugador' }).click();
+    await page.getByRole('button', { name: 'Agregar jugador' }).click();
+    await page.getByRole('textbox', { name: 'Jugador 1', exact: true }).fill('Mamá');
+    await page.getByRole('textbox', { name: 'Jugador 2', exact: true }).fill('Papá');
+    await page.getByRole('textbox', { name: 'Jugador 3', exact: true }).fill('papa');
+    await page.getByRole('textbox', { name: 'Jugador 4', exact: true }).fill('A');
+    await capture(page, 'one-device-setup-problems');
+    await page.getByRole('textbox', { name: 'Jugador 3', exact: true }).fill('Abuela Rosa');
+    await page.getByRole('textbox', { name: 'Jugador 4', exact: true }).fill('Tomás');
+    await capture(page, 'one-device-setup-ready');
+    expect(requests).toEqual([]);
+  });
+
+  test('one device psychic, before and after looking', async ({ page }) => {
+    const requests = await playOnDevice(page, oneDeviceStart());
+    await expect(page.getByRole('heading', { name: /^Le toca a / })).toBeVisible();
+    await capture(page, 'one-device-psychic-gate');
+    await page.getByRole('button', { name: 'Ver el objetivo' }).click();
+    await expect(page.getByRole('img', { name: 'El objetivo' })).toBeVisible();
+    await capture(page, 'one-device-psychic-target');
+    await page.getByRole('button', { name: 'Opciones de la partida' }).click();
+    await page.getByRole('menuitem', { name: 'Terminar partida' }).click();
+    await capture(page, 'one-device-end-confirm', false);
+    expect(requests).toEqual([]);
+  });
+
+  test('one device guesser, gate and dial', async ({ page }) => {
+    const requests = await playOnDevice(page, oneDeviceGuessed([72]));
+    await expect(page.getByRole('heading', { name: /^Pasa el dispositivo a / })).toBeVisible();
+    await capture(page, 'one-device-guesser-gate');
+    await page.getByRole('button', { name: /^Soy / }).click();
+    await page.getByRole('slider', { name: 'Tu respuesta' }).focus();
+    for (let step = 0; step < 14; step++) await page.keyboard.press('ArrowRight');
+    await capture(page, 'one-device-guesser-dial');
+    expect(requests).toEqual([]);
+  });
+
+  test('one device, everyone guessed', async ({ page }) => {
+    await playOnDevice(page, oneDeviceGuessed([72, 60, 30, 95]));
+    await expect(page.getByRole('heading', { name: 'Todos adivinaron' })).toBeVisible();
+    await capture(page, 'one-device-all-guessed');
+  });
+
+  test('one device reveal and final', async ({ page }) => {
+    const requests = await playOnDevice(page, revealOneDevice(oneDeviceGuessed([72, 60, 30, 95])));
+    await expect(page.getByRole('heading', { name: /^El objetivo era / })).toBeVisible();
+    await capture(page, 'one-device-reveal');
+    await page.getByRole('button', { name: 'Terminar', exact: true }).click();
+    await page.getByRole('button', { name: 'Sí, terminar' }).click();
+    await expect(page.getByRole('heading', { name: 'Fin de la partida' })).toBeVisible();
+    await capture(page, 'one-device-final');
+    expect(requests).toEqual([]);
   });
 });

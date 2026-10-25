@@ -1,7 +1,6 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { createRootRouteWithContext, Outlet } from '@tanstack/react-router';
 import { ToastProvider } from '../components/Toast';
-import { IdentityGate } from '../identity/IdentityGate';
 import { MotionProvider } from '../motion/motion';
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
@@ -9,9 +8,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     <MotionProvider>
       <ToastProvider>
         <div className="flex min-h-dvh flex-col px-4">
-          <IdentityGate>
-            <Outlet />
-          </IdentityGate>
+          <Outlet />
         </div>
       </ToastProvider>
     </MotionProvider>

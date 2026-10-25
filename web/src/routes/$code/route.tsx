@@ -22,6 +22,7 @@ import { RoomSessionContext } from '../../components/roomSession';
 import { Screen } from '../../components/Screen';
 import { useToast } from '../../components/useToast';
 import { useIdentity } from '../../identity/identity';
+import { IdentityGate } from '../../identity/IdentityGate';
 import { useRoomChannel } from '../../realtime/useRoomChannel';
 
 const gamePaths = {
@@ -40,7 +41,11 @@ export const Route = createFileRoute('/$code')({
       redirect({ to: '/$code', params: { code }, replace: true, throw: true });
     }
   },
-  component: RoomRoute,
+  component: () => (
+    <IdentityGate>
+      <RoomRoute />
+    </IdentityGate>
+  ),
 });
 
 function RoomRoute() {

@@ -1,46 +1,7 @@
 import type { GameType } from '@family-night/shared';
-import type { ComponentType } from 'react';
 import { Stagger, StaggerItem } from '../../motion/motion';
-import { CheckIcon, CluesIcon, CowIcon, DialIcon, MaskIcon } from '../icons';
-
-interface Game {
-  id: GameType;
-  name: string;
-  description: string;
-  Icon: ComponentType<{ className?: string }>;
-  tone: string;
-}
-
-const GAMES: Game[] = [
-  {
-    id: 'IMPOSTOR',
-    name: 'Impostor',
-    description: 'Todos tienen la palabra, menos el impostor.',
-    Icon: MaskIcon,
-    tone: 'text-ember bg-ember/14',
-  },
-  {
-    id: 'WAVELENGTH',
-    name: 'Wavelength',
-    description: 'Lee la mente de tu familia en una escala.',
-    Icon: DialIcon,
-    tone: 'text-moon bg-moon/14',
-  },
-  {
-    id: 'JUST_ONE',
-    name: 'Just One',
-    description: 'Pistas de una palabra para adivinar juntos.',
-    Icon: CluesIcon,
-    tone: 'text-orchid bg-orchid/14',
-  },
-  {
-    id: 'MANADA',
-    name: 'La manada',
-    description: 'Responde lo mismo que la mayoría.',
-    Icon: CowIcon,
-    tone: 'text-rose bg-rose/14',
-  },
-];
+import { GAMES } from '../games';
+import { CheckIcon } from '../icons';
 
 interface GamePickerProps {
   selected: GameType;
@@ -70,7 +31,7 @@ export function GamePicker({ selected, editable, onSelect, onHowToPlay }: GamePi
                 }`}
               >
                 <span
-                  className={`flex size-14 shrink-0 items-center justify-center rounded-2xl ${game.tone}`}
+                  className={`flex size-14 shrink-0 items-center justify-center rounded-2xl ${game.color} ${game.tint}`}
                 >
                   <Icon className="size-9" />
                 </span>

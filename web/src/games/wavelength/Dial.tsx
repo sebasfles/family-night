@@ -1,5 +1,5 @@
 import { DIAL_BANDS, DIAL_MAX } from '@family-night/shared';
-import { useId, useRef, type KeyboardEvent, type PointerEvent } from 'react';
+import { useEffect, useId, useRef, type KeyboardEvent, type PointerEvent } from 'react';
 import { FlipReveal } from '../../motion/Flip';
 import { playTick, unlockTick } from './tick';
 
@@ -21,6 +21,8 @@ interface DialProps {
   disabled?: boolean;
   sound?: boolean;
   reveal?: boolean;
+  autoFocus?: boolean;
+  onSubmit?: () => void;
 }
 
 const WIDTH = 260;
@@ -113,11 +115,18 @@ export function Dial({
   disabled = false,
   sound = false,
   reveal = false,
+  autoFocus = false,
+  onSubmit,
 }: DialProps) {
   const svg = useRef<SVGSVGElement>(null);
+  const slider = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
   const ids = useId().replace(/[^a-zA-Z0-9_-]/g, '');
   const interactive = onChange !== undefined && !disabled;
+
+  useEffect(() => {
+    if (autoFocus) slider.current?.focus({ preventScroll: true });
+  }, [autoFocus]);
 
   const set = (next: number) => {
     if (!interactive) return;
@@ -143,7 +152,9 @@ export function Dial({
     const step = STEP_KEYS[event.key];
     const current = value ?? DIAL_MAX / 2;
     if (step !== undefined) set(current + step);
-    else if (event.key === 'Home') set(0);
+    else if (event.key === 'Enter' && onSubmit) {
+      if (!event.repeat) onSubmit();
+    } else if (event.key === 'Home') set(0);
     else if (event.key === 'End') set(DIAL_MAX);
     else return;
     event.preventDefault();
@@ -157,6 +168,7 @@ export function Dial({
   return (
     <div className="flex w-full flex-col gap-3">
       <div
+        ref={slider}
         role={onChange ? 'slider' : 'img'}
         aria-label={label}
         {...(onChange

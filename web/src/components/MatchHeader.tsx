@@ -9,6 +9,7 @@ interface MatchHeaderProps {
   canAbort: boolean;
   aborting: boolean;
   onAbort: () => void;
+  abortTitle?: string;
 }
 
 export function MatchHeader({
@@ -19,6 +20,7 @@ export function MatchHeader({
   canAbort,
   aborting,
   onAbort,
+  abortTitle,
 }: MatchHeaderProps) {
   return (
     <header className="flex items-center justify-between gap-3">
@@ -35,7 +37,7 @@ export function MatchHeader({
             {badge}
           </span>
         )}
-        {canAbort && <AbortMatchMenu aborting={aborting} onAbort={onAbort} />}
+        {canAbort && <AbortMatchMenu aborting={aborting} onAbort={onAbort} title={abortTitle} />}
       </div>
     </header>
   );

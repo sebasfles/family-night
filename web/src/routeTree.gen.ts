@@ -16,6 +16,8 @@ import { Route as CodeImpostorRouteImport } from './routes/$code/impostor'
 import { Route as CodeJustoneRouteImport } from './routes/$code/justone'
 import { Route as CodeManadaRouteImport } from './routes/$code/manada'
 import { Route as CodeWavelengthRouteImport } from './routes/$code/wavelength'
+import { Route as UnDispositivoIndexRouteImport } from './routes/un-dispositivo/index'
+import { Route as UnDispositivoWavelengthRouteImport } from './routes/un-dispositivo/wavelength'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -52,6 +54,16 @@ const CodeWavelengthRoute = CodeWavelengthRouteImport.update({
   path: '/wavelength',
   getParentRoute: () => CodeRouteRoute,
 } as any)
+const UnDispositivoIndexRoute = UnDispositivoIndexRouteImport.update({
+  id: '/un-dispositivo/',
+  path: '/un-dispositivo/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UnDispositivoWavelengthRoute = UnDispositivoWavelengthRouteImport.update({
+  id: '/un-dispositivo/wavelength',
+  path: '/un-dispositivo/wavelength',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -60,7 +72,9 @@ export interface FileRoutesByFullPath {
   '/$code/justone': typeof CodeJustoneRoute
   '/$code/manada': typeof CodeManadaRoute
   '/$code/wavelength': typeof CodeWavelengthRoute
+  '/un-dispositivo/wavelength': typeof UnDispositivoWavelengthRoute
   '/$code/': typeof CodeIndexRoute
+  '/un-dispositivo/': typeof UnDispositivoIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -68,7 +82,9 @@ export interface FileRoutesByTo {
   '/$code/justone': typeof CodeJustoneRoute
   '/$code/manada': typeof CodeManadaRoute
   '/$code/wavelength': typeof CodeWavelengthRoute
+  '/un-dispositivo/wavelength': typeof UnDispositivoWavelengthRoute
   '/$code': typeof CodeIndexRoute
+  '/un-dispositivo': typeof UnDispositivoIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -78,7 +94,9 @@ export interface FileRoutesById {
   '/$code/justone': typeof CodeJustoneRoute
   '/$code/manada': typeof CodeManadaRoute
   '/$code/wavelength': typeof CodeWavelengthRoute
+  '/un-dispositivo/wavelength': typeof UnDispositivoWavelengthRoute
   '/$code/': typeof CodeIndexRoute
+  '/un-dispositivo/': typeof UnDispositivoIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -89,7 +107,9 @@ export interface FileRouteTypes {
     | '/$code/justone'
     | '/$code/manada'
     | '/$code/wavelength'
+    | '/un-dispositivo/wavelength'
     | '/$code/'
+    | '/un-dispositivo/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -97,7 +117,9 @@ export interface FileRouteTypes {
     | '/$code/justone'
     | '/$code/manada'
     | '/$code/wavelength'
+    | '/un-dispositivo/wavelength'
     | '/$code'
+    | '/un-dispositivo'
   id:
     | '__root__'
     | '/'
@@ -106,12 +128,16 @@ export interface FileRouteTypes {
     | '/$code/justone'
     | '/$code/manada'
     | '/$code/wavelength'
+    | '/un-dispositivo/wavelength'
     | '/$code/'
+    | '/un-dispositivo/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CodeRouteRoute: typeof CodeRouteRouteWithChildren
+  UnDispositivoWavelengthRoute: typeof UnDispositivoWavelengthRoute
+  UnDispositivoIndexRoute: typeof UnDispositivoIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -165,6 +191,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CodeWavelengthRouteImport
       parentRoute: typeof CodeRouteRoute
     }
+    '/un-dispositivo/': {
+      id: '/un-dispositivo/'
+      path: '/un-dispositivo'
+      fullPath: '/un-dispositivo/'
+      preLoaderRoute: typeof UnDispositivoIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/un-dispositivo/wavelength': {
+      id: '/un-dispositivo/wavelength'
+      path: '/un-dispositivo/wavelength'
+      fullPath: '/un-dispositivo/wavelength'
+      preLoaderRoute: typeof UnDispositivoWavelengthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -191,6 +231,8 @@ const CodeRouteRouteWithChildren = CodeRouteRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CodeRouteRoute: CodeRouteRouteWithChildren,
+  UnDispositivoWavelengthRoute: UnDispositivoWavelengthRoute,
+  UnDispositivoIndexRoute: UnDispositivoIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
