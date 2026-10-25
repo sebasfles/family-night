@@ -95,12 +95,21 @@ function bandLabels(target: number): BandLabel[] {
   });
 }
 
+const SIDE_VALUE = 17;
+const LABEL_INSET = 6;
+
+function labelAnchor(value: number): { dx: number; anchor: 'start' | 'middle' | 'end' } {
+  if (value < SIDE_VALUE) return { dx: -LABEL_INSET, anchor: 'start' };
+  if (value > DIAL_MAX - SIDE_VALUE) return { dx: LABEL_INSET, anchor: 'end' };
+  return { dx: 0, anchor: 'middle' };
+}
+
 function staggered(markers: DialMarker[]): (DialMarker & { lift: number })[] {
   const sorted = markers.toSorted((a, b) => a.value - b.value);
   return sorted.map((marker, index) => {
     const previous = sorted[index - 1];
     const crowded = previous !== undefined && marker.value - previous.value < 8;
-    return { ...marker, lift: crowded && index % 2 === 1 ? 26 : 13 };
+    return { ...marker, lift: crowded && index % 2 === 1 ? 28 : 15 };
   });
 }
 
@@ -274,7 +283,7 @@ export function Dial({
           })}
           {staggered(markers).map((marker) => {
             const [x, y] = point(marker.value, R);
-            const [lx, ly] = point(marker.value, R + marker.lift);
+            const { dx, anchor } = labelAnchor(marker.value);
             return (
               <g key={marker.id} data-marker={marker.id}>
                 <circle
@@ -285,9 +294,9 @@ export function Dial({
                   strokeWidth={2.5}
                 />
                 <text
-                  x={fmt(lx)}
-                  y={fmt(ly)}
-                  textAnchor="middle"
+                  x={fmt(x + dx)}
+                  y={fmt(y - marker.lift)}
+                  textAnchor={anchor}
                   dominantBaseline="middle"
                   fontSize={10}
                   fontWeight={marker.highlight ? 800 : 700}

@@ -126,3 +126,45 @@ describe('the scoring zones', () => {
     ).toEqual([2, 2, 3, 3, 4]);
   });
 });
+
+describe('the name pins', () => {
+  const VIEW_WIDTH = 260;
+  const FONT = 10;
+  const PIN = 5.5 + 1.25;
+  const values = [0, 2, 9, 20, 50, 80, 91, 97, 100];
+
+  test('no name covers its own pin or leaves the dial at any value', () => {
+    render(
+      <Dial
+        label="Objetivo"
+        left="Frío"
+        right="Caliente"
+        target={50}
+        markers={values.map((value) => ({
+          id: String(value),
+          value,
+          label: 'Valentina',
+        }))}
+        reveal
+      />,
+    );
+
+    for (const value of values) {
+      const pin = document.querySelector(`[data-marker="${String(value)}"]`);
+      const circle = pin?.querySelector('circle');
+      const text = pin?.querySelector('text');
+      if (!circle || !text) throw new Error(`no pin at ${String(value)}`);
+      const cy = Number(circle.getAttribute('cy'));
+      const x = Number(text.getAttribute('x'));
+      const y = Number(text.getAttribute('y'));
+      const width = 'Valentina'.length * FONT * 0.62;
+      const anchor = text.getAttribute('text-anchor');
+      const from = anchor === 'start' ? x : anchor === 'end' ? x - width : x - width / 2;
+
+      expect(y + FONT / 2, `label at ${String(value)}`).toBeLessThanOrEqual(cy - PIN);
+      expect(y - FONT / 2, `label at ${String(value)}`).toBeGreaterThanOrEqual(0);
+      expect(from, `label at ${String(value)}`).toBeGreaterThanOrEqual(0);
+      expect(from + width, `label at ${String(value)}`).toBeLessThanOrEqual(VIEW_WIDTH);
+    }
+  });
+});

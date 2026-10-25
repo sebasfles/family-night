@@ -1282,20 +1282,30 @@ test.describe('one device', () => {
     await expect(page.getByRole('heading', { name: /^Pasa el dispositivo a / })).toBeVisible();
     await capture(page, 'one-device-guesser-gate');
     await page.getByRole('button', { name: /^Soy / }).click();
-    await page.getByRole('slider', { name: 'Tu respuesta' }).focus();
-    for (let step = 0; step < 14; step++) await page.keyboard.press('ArrowRight');
+    const plus = page.getByRole('button', { name: 'Un punto hacia la derecha' });
+    for (let step = 0; step < 14; step++) await plus.click();
     await capture(page, 'one-device-guesser-dial');
     expect(requests).toEqual([]);
   });
 
+  test('one device guesser dial, by keyboard', async ({ page }) => {
+    await playOnDevice(page, oneDeviceGuessed([72]));
+    await expect(page.getByRole('heading', { name: /^Pasa el dispositivo a / })).toBeVisible();
+    await page.keyboard.press('Enter');
+    const slider = page.getByRole('slider', { name: 'Tu respuesta' });
+    await expect(slider).toBeFocused();
+    for (let step = 0; step < 14; step++) await page.keyboard.press('ArrowRight');
+    await capture(page, 'one-device-guesser-dial-keyboard');
+  });
+
   test('one device, everyone guessed', async ({ page }) => {
-    await playOnDevice(page, oneDeviceGuessed([72, 60, 30, 95]));
+    await playOnDevice(page, oneDeviceGuessed([72, 60, 2, 97]));
     await expect(page.getByRole('heading', { name: 'Todos adivinaron' })).toBeVisible();
     await capture(page, 'one-device-all-guessed');
   });
 
   test('one device reveal and final', async ({ page }) => {
-    const requests = await playOnDevice(page, revealOneDevice(oneDeviceGuessed([72, 60, 30, 95])));
+    const requests = await playOnDevice(page, revealOneDevice(oneDeviceGuessed([72, 60, 2, 97])));
     await expect(page.getByRole('heading', { name: /^El objetivo era / })).toBeVisible();
     await capture(page, 'one-device-reveal');
     await page.getByRole('button', { name: 'Terminar', exact: true }).click();

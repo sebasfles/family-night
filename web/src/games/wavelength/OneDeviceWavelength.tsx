@@ -36,7 +36,6 @@ import {
 import { RoundResult } from './RoundResult';
 import { SoundToggle } from './SoundToggle';
 import { Standings } from './Standings';
-import { firstWord } from './model';
 import { useDialSound } from './tick';
 
 interface OneDeviceWavelengthProps {
@@ -354,7 +353,7 @@ function GuesserDial({ state, guesser, psychic, onConfirm }: GuesserDialProps) {
         className={`flex flex-col items-center gap-1 text-center md:items-start md:gap-2 md:text-left ${SIDE_TOP}`}
       >
         <h2 id="dial-title" className="text-3xl font-bold break-words md:text-4xl">
-          {firstWord(guesser)}, mueve el dial
+          {guesser}, mueve el dial
         </h2>
         <p className="text-lg text-balance text-cream/80">¿Adónde apunta la pista de {psychic}?</p>
         <p className="hidden text-base text-cream/60 lg:block">

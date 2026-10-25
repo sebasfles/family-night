@@ -3,14 +3,6 @@ id: "0009"
 title: wavelength_one_phone
 type: feature
 crew: pair
-Reiteration 1 (2026-10-25, retakes before the first round; these override the lines above where they differ):
-
-- The mode is one device: user copy says "Un solo dispositivo" (home entry, picker, titles) and never "celular"; the gate reads "Pasa el dispositivo a Y"; every "Un solo celular" above now means this label.
-- Naming is `oneDevice` everywhere (files, folders, types, storage key, docs) and the route is `/un-dispositivo`; no `onePhone` left in code or docs.
-- Desktop and tablet are first class: every new screen must look composed at 768 and 1280 px, not a stretched phone column; the screenshots at those widths are reviewed as strictly as 390.
-- Keyboard: on a guesser's turn the dial takes focus, arrows, PageUp/PageDown, Home and End move it as in multiplayer, and Enter confirms; on gate screens Enter taps the main button. Multiplayer keeps its current keys, no Enter added there.
-- Tests add: Enter confirms a guess, and no rendered text contains "celular".
-
 clearance: repo
 branch: feat/0009_wavelength_one_phone
 modules: [wavelength, platform]
@@ -130,6 +122,14 @@ Review beyond the Pipeline:
 - Privacy: no target or earlier guess is reachable from a gate screen, exit animations included.
 - One test per Acceptance item: fetch never called (1), gated target and a centred dial per guesser (2), points equal to the shared rules over two rounds (3), cycling past a full turn and a tie on Terminar (4), reload at every step (5), each name rule (6).
 
+Reiteration 1 (2026-10-25, retakes before the first round; these override the lines above where they differ):
+
+- The mode is one device: user copy says "Un solo dispositivo" (home entry, picker, titles) and never "celular"; the gate reads "Pasa el dispositivo a Y"; every "Un solo celular" above now means this label.
+- Naming is `oneDevice` everywhere (files, folders, types, storage key, docs) and the route is `/un-dispositivo`; no `onePhone` left in code or docs.
+- Desktop and tablet are first class: every new screen must look composed at 768 and 1280 px, not a stretched phone column; the screenshots at those widths are reviewed as strictly as 390.
+- Keyboard: on a guesser's turn the dial takes focus, arrows, PageUp/PageDown, Home and End move it as in multiplayer, and Enter confirms; on gate screens Enter taps the main button. Multiplayer keeps its current keys, no Enter added there.
+- Tests add: Enter confirms a guess, and no rendered text contains "celular".
+
 clearance: repo
 
 ## om-developer notes
@@ -165,3 +165,17 @@ Deferred:
 - The keyboard hint on the guesser screen shows only at 1024 px and up; tablets with keyboards do not see it.
 
 Note to the om-reviewer: Reiteration 1 was inserted inside the YAML frontmatter of this file, between `crew` and `clearance`; it should move under `Context & decisions`.
+
+### Round 2
+
+Done, the three findings:
+
+1. `Dial` pin names now sit straight above their pin (lift 15, or 28 when crowded) instead of along the radius; below 17 they anchor at their start and above 83 at their end, so they run toward the centre and stay inside the face. This also changes the multiplayer reveal, which had the same flaw. A test in `Dial.test.tsx` checks pins at 0, 2, 9, 20, 50, 80, 91, 97 and 100 for no overlap with the pin and no overflow of the dial; it fails on the previous `Dial`. The reveal screenshot data now has pins at 2 and 97.
+2. The guesser heading uses the full name ("Ana María, mueve el dial").
+3. The guesser dial shot moves the dial with the + button after "Soy Y"; the keyboard state has its own shot, `one-device-guesser-dial-keyboard`, reached by Enter on the gate.
+
+Also committed: the om-reviewer's move of Reiteration 1 into `Context & decisions`.
+
+Decisions not in the plan: the label placement rule above (vertical lift, inward anchor near the ends) replaces the radial one for every dial.
+
+Pending: none. Deferred: none new.
