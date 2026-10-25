@@ -1,6 +1,6 @@
 ---
-updated: 2026-10-19
-source: 0008_scoring_and_manada
+updated: 2026-10-25
+source: 0009_wavelength_one_phone
 ---
 
 # Product Requirements Document
@@ -9,6 +9,7 @@ source: 0008_scoring_and_manada
 
 Family Night is a web app of party games for one family, ages 20 to 60, gathered in the same room.
 Each player uses their own phone inside a shared room that lasts the whole evening; the host picks a game, several matches are played in a row, and the talking happens in person.
+Without a room, a family can also pass one device around (Wavelength only for now).
 Phase 1 shipped the common platform and the Impostor game; Wavelength, Just One and La manada followed.
 Source spec: [implementation-plan.md](implementation-plan.md) (Spanish).
 
@@ -51,11 +52,11 @@ Details: [modules/manada/prd.md](modules/manada/prd.md)
 - Only the host configures, starts, ends matches and removes players; the host role passes on if the host disappears.
 - Each game has its minimum of online players (Impostor 3, Wavelength 2, Just One 4, La manada 3).
 - The night's score weighs every game alike: a finished match adds podium-like points (Impostor by side and table size), the cooperative Just One adds none.
-- Nobody can learn another player's secret, from the app or from inspecting the network.
+- In a room, nobody can learn another player's secret, from the app or from inspecting the network; on one device, each secret waits behind a hand off screen for its player.
 - Rooms and matches vanish after 24 hours of inactivity; players and their names stay.
 - Everything the user reads is Spanish.
 - Your own taps show at once and step back with the server's message if refused.
-- Phone first: one column, big buttons, readable text, one warm dark theme; phase changes, card flips and scores animate, and reduced motion turns that off.
+- Phone first (one device screens also lay out for tablet and desktop): one column, big buttons, readable text, one warm dark theme; phase changes, card flips and scores animate, and reduced motion turns that off.
 
 ## Not in the product
 

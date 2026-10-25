@@ -1,6 +1,6 @@
 ---
-updated: 2026-10-19
-source: 0008_scoring_and_manada
+updated: 2026-10-25
+source: 0009_wavelength_one_phone
 ---
 
 # Platform
@@ -8,10 +8,11 @@ source: 0008_scoring_and_manada
 The layer every game of Family Night stands on.
 A player gets a permanent anonymous identity, creates or joins a room by a four letter code, waits in a lobby, and the host starts matches of any game.
 Every phone sees the same room in real time.
+Without a room, "Un solo dispositivo" lets a family pass one device around; the platform owns its entry, game picker, player setup and hand off screen, each game its own match.
 
 ## Boundaries
 
-- Owns: identity, the random name and renaming, rooms and membership, host rules and transfer, lobby, presence, invitation, the realtime channel and the room snapshot contract, the match lifecycle shared by every game, the game registry and the selected game, and the web shell (routes, identity bootstrap, state-driven navigation, HTTP and realtime clients, the optimistic overlay), and the design system and motion every screen uses.
+- Owns: identity, the random name and renaming, rooms and membership, host rules and transfer, lobby, presence, invitation, the realtime channel and the room snapshot contract, the match lifecycle shared by every game, the game registry and the selected game, and the web shell (routes, identity bootstrap on the home and room routes, state-driven navigation, HTTP and realtime clients, the optimistic overlay), and the design system and motion every screen uses.
 - Does not own: game rules, endpoints and screens (`impostor`, `wavelength`, `justone`, `manada`), AWS resources (`infra`), workflows (`deploy`).
 - Code: `shared/src/` except the game folders, `api/src/{lib,repos,realtime}`, `api/src/handlers/{context,matches,shared-match,rooms,players}.ts`, `api/src/services/{players,rooms,presence,matches,games.ts}`, `web/src/{routes,identity,api,realtime,components,motion}` and `web/src/index.css`, except the game routes.
 

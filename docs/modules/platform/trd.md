@@ -1,6 +1,6 @@
 ---
-updated: 2026-10-19
-source: 0008_scoring_and_manada
+updated: 2026-10-25
+source: 0009_wavelength_one_phone
 ---
 
 # Platform: technical
@@ -26,14 +26,14 @@ Every payload change starts in `shared`, so an incompatible change breaks compil
 | `api/src/deps.ts` | Repos, publisher, clock and random injected into `createApp`, so tests swap them. |
 | `api/src/realtime/publish.ts` | Builds the public snapshot and posts it, signed with SigV4, to the AppSync Events channel. |
 | `api/src/data/names.json` | 100 animals and 100 adjectives, masculine singular. |
-| `web/src/routes/{__root,index}.tsx` | Layout, providers, toasts, identity bootstrap; home. |
+| `web/src/routes/{__root,index}.tsx`, `web/src/routes/un-dispositivo/index.tsx` | Layout, providers, toasts; home behind the identity bootstrap; the one device game picker, which redirects to a stored match. |
 | `web/src/routes/$code/{route,index}.tsx` | Join and snapshot loader, channel subscription, ping, visibility handling, state-driven navigation; lobby. |
 | `web/src/identity/` | `playerId`, `playerToken` and name in localStorage, guarded by try/catch. |
 | `web/src/api/` | Typed fetch client that adds the identity headers and throws `ApiError`; query and mutation hooks; `optimistic.ts`, the overlay of a phone's pending commands over the snapshot (`useRoomView`, `useRoomMutation`). |
 | `web/src/realtime/` | One WebSocket per tab to AppSync Events, own client, backoff 1 s to 30 s, resubscribe and invalidate the room query on reconnect. |
 | `web/src/index.css` | The design system: warm dark colour tokens, Fraunces and Nunito (self-hosted), the `surface`, `popover` and card surfaces (`card-paper`, `card-wine`, `card-back`). |
 | `web/src/motion/` | The only door to `motion` (LazyMotion `domAnimation`, `m` components): `Enter`, `Stagger`, `Pop`, `Fade`, `Meter`, `SlideUp`, `SlideIn`; plus own CSS 3D `Flip`/`FlipReveal`, `CountUp` and `useShuffleIn` (Web Animations API); `useReducedMotion` turns all of it off. |
-| `web/src/components/` | Shared UI of the lobby, the shell and every game (`MatchHeader`, `AbortMatchMenu`, `Avatar`, `Scoreboard`, `Notice`, `Waiting`, `field.ts`, `lobby/CyclesPanel` for games configured by cycles, `lobby/ConfigSection` with `Segmented`, `Row` and `StepButton`, `match.ts` with `nameOf`, `vibrate`, `usePhaseVibration`, `HowToPlay` with the example family of its steps); games never import each other, and `components/` never imports `games/`: the lobby route maps each game to its panel and its how-to-play steps. |
+| `web/src/components/` | Shared UI of the lobby, the shell and every game (`MatchHeader`, `AbortMatchMenu`, `Avatar`, `Scoreboard`, `Notice`, `Waiting`, `field.ts`, `lobby/CyclesPanel` for games configured by cycles, `lobby/ConfigSection` with `Segmented`, `Row` and `StepButton`, `match.ts` with `nameOf`, `vibrate`, `usePhaseVibration`, `HowToPlay` with the example family of its steps, `games.ts` the game catalog the lobby picker, the home chips and the one device picker share, `OneDevicePicker`, `PlayerSetup`, `HandOff` and `keys.ts` for one device play, `random.ts` the crypto `RandomInt` of the web); games never import each other, and `components/` never imports `games/`: the lobby route maps each game to its panel and its how-to-play steps. |
 | `web/public/og.png` and the Open Graph tags in `web/index.html` | The WhatsApp preview; static because WhatsApp runs no JavaScript. |
 
 ## Endpoints owned
@@ -77,6 +77,7 @@ Channel `/rooms/{ROOMCODE}` in namespace `rooms` carries `room.updated`, `member
 - The version rises, and an event is published, only when the public snapshot changes: host, membership, name, score or a member's online status; plain pings and online rejoins write presence only.
 - On returning to the foreground the web pings, never joins; `NOT_MEMBER` sends it home with "Te sacaron de la sala". Only opening or reloading `/{CODE}` joins.
 - Host transfer is lazy: it happens on the next request of an online member, not on a timer, and counts 60 s of real silence; the away setback of `lastSeenAt` does not count.
+- `IdentityGate` wraps the home and `/$code` routes, not the root: the one device routes must never call `/api`, also on a reload.
 - Every POST carries `x-amz-content-sha256`, computed in `web/src/api/client.ts`; bodyless ones use the constant empty-body hash with no `await` before `fetch`, so the away call leaves inside the `visibilitychange` handler.
 - The realtime connection authenticates with `playerId:playerToken` through the AppSync Lambda authorizer; subscribing to `/rooms/{code}` needs membership of that room.
 - Game endpoints are mounted in the same router by the game modules; start, config, rematch, next-round, `/me` and departures reach the game through the registry by `gameType`. A route several games share lives in the platform: `next-round` in the matches router, and `PUT clue` and `PUT guess`, whose bodies differ per game, in the shared match router; a game without the path answers `STALE_ROUND`.

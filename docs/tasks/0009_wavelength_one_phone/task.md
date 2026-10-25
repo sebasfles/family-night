@@ -179,3 +179,9 @@ Also committed: the om-reviewer's move of Reiteration 1 into `Context & decision
 Decisions not in the plan: the label placement rule above (vertical lift, inward anchor near the ends) replaces the radial one for every dial.
 
 Pending: none. Deferred: none new.
+
+### Documentation
+
+- Updated: `platform` README, prd, trd, ard; `wavelength` README, prd, trd, flows, ard; the `Debt index` of `docs/ARD.md` (two wavelength rows).
+- Unchanged: both `database.md` (no table or invariant changed), `platform/flows.md` (the room command flow is untouched).
+- Flagged for the om-reviewer, outside what `document-task` may edit: `docs/TRD.md` still lists the spectra bank under the api's `src/data/` (it is now `shared/src/wavelength/spectra.json`); `docs/PRD.md` says each player uses their own phone and has no line for one device play, which Scope asked for "if it lists modes".
